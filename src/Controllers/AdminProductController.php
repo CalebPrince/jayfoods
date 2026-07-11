@@ -214,7 +214,7 @@ final class AdminProductController
                 $price = (int) ($size['unit_price_pesewas'] ?? 0);
                 if ($label === '' && $price === 0) continue;
                 if ($label === '' || $price <= 0) { $errors['sizes'] = 'Every bottle size needs a label and price.'; break; }
-                $sizes[] = ['label'=>$label,'unit_price_pesewas'=>$price,'stock_quantity'=>max(0,(int)($size['stock_quantity']??0)),'bulk_min_quantity'=>max(0,(int)($size['bulk_min_quantity']??0)),'bulk_price_pesewas'=>!empty($size['bulk_price_pesewas'])?(int)$size['bulk_price_pesewas']:null];
+                $sizes[] = ['id'=>(int)($size['id']??0),'label'=>$label,'unit_price_pesewas'=>$price,'stock_quantity'=>max(0,(int)($size['stock_quantity']??0)),'bulk_min_quantity'=>max(0,(int)($size['bulk_min_quantity']??0)),'bulk_price_pesewas'=>!empty($size['bulk_price_pesewas'])?(int)$size['bulk_price_pesewas']:null];
             }
         }
         if (!$sizes) $sizes[] = ['label'=>$unitLabel,'unit_price_pesewas'=>$unitPrice,'stock_quantity'=>$stock,'bulk_min_quantity'=>$bulkMin,'bulk_price_pesewas'=>$bulkPrice];
@@ -293,7 +293,7 @@ final class AdminProductController
      */
     private function present(array $r): array
     {
-        $stmt = $this->db->prepare('SELECT id,label,unit_price_pesewas,stock_quantity,bulk_min_quantity,bulk_price_pesewas FROM product_sizes WHERE product_id=:id ORDER BY sort_order,id');
+        $stmt = $this->db->prepare('SELECT id,label,unit_price_pesewas,stock_quantity,bulk_min_quantity,bulk_price_pesewas FROM product_sizes WHERE product_id=:id AND is_active=1 ORDER BY sort_order,id');
         $stmt->execute([':id'=>$r['id']]);
         return [
             'id'                 => (int) $r['id'],
@@ -315,8 +315,10 @@ final class AdminProductController
 
     private function saveSizes(int $productId, array $sizes): void
     {
-        $this->db->prepare('DELETE FROM product_sizes WHERE product_id=:id')->execute([':id'=>$productId]);
-        $stmt=$this->db->prepare('INSERT INTO product_sizes(product_id,label,unit_price_pesewas,stock_quantity,bulk_min_quantity,bulk_price_pesewas,sort_order) VALUES(:product,:label,:price,:stock,:bulk_min,:bulk_price,:sort)');
-        foreach($sizes as $i=>$s)$stmt->execute([':product'=>$productId,':label'=>$s['label'],':price'=>$s['unit_price_pesewas'],':stock'=>$s['stock_quantity'],':bulk_min'=>$s['bulk_min_quantity'],':bulk_price'=>$s['bulk_price_pesewas'],':sort'=>$i]);
+        $this->db->prepare('UPDATE product_sizes SET is_active=0 WHERE product_id=:id')->execute([':id'=>$productId]);
+        $insert=$this->db->prepare('INSERT INTO product_sizes(product_id,label,unit_price_pesewas,stock_quantity,bulk_min_quantity,bulk_price_pesewas,sort_order,is_active) VALUES(:product,:label,:price,:stock,:bulk_min,:bulk_price,:sort,1)');
+        $update=$this->db->prepare('UPDATE product_sizes SET label=:label,unit_price_pesewas=:price,stock_quantity=:stock,bulk_min_quantity=:bulk_min,bulk_price_pesewas=:bulk_price,sort_order=:sort,is_active=1 WHERE id=:id AND product_id=:product');
+        $exists=$this->db->prepare('SELECT COUNT(*) FROM product_sizes WHERE id=:id AND product_id=:product');
+        foreach($sizes as $i=>$s){$params=[':product'=>$productId,':label'=>$s['label'],':price'=>$s['unit_price_pesewas'],':stock'=>$s['stock_quantity'],':bulk_min'=>$s['bulk_min_quantity'],':bulk_price'=>$s['bulk_price_pesewas'],':sort'=>$i];if(($s['id']??0)>0){$exists->execute([':id'=>$s['id'],':product'=>$productId]);if((int)$exists->fetchColumn()===1)$update->execute($params+[':id'=>$s['id']]);else$insert->execute($params);}else$insert->execute($params);}
     }
 }

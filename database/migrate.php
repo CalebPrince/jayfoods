@@ -40,6 +40,11 @@ if (!in_array('image_url', $productCols, true)) {
     $pdo->exec("ALTER TABLE products ADD COLUMN image_url TEXT NOT NULL DEFAULT ''");
     echo "[migrate] Added products.image_url column\n";
 }
+$sizeCols = array_column($pdo->query('PRAGMA table_info(product_sizes)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+if (!in_array('is_active', $sizeCols, true)) {
+    $pdo->exec("ALTER TABLE product_sizes ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1");
+    echo "[migrate] Added product_sizes.is_active\n";
+}
 
 $orderCols = array_column($pdo->query('PRAGMA table_info(orders)')->fetchAll(PDO::FETCH_ASSOC), 'name');
 if (!in_array('payment_status', $orderCols, true)) {
@@ -62,6 +67,19 @@ if (!in_array('total_pesewas', $orderCols, true)) {
     $pdo->exec("ALTER TABLE orders ADD COLUMN total_pesewas INTEGER NOT NULL DEFAULT 0");
     $pdo->exec("UPDATE orders SET total_pesewas = subtotal_pesewas WHERE total_pesewas = 0");
     echo "[migrate] Added orders.total_pesewas\n";
+}
+if (!in_array('stock_state', $orderCols, true)) {
+    $pdo->exec("ALTER TABLE orders ADD COLUMN stock_state TEXT NOT NULL DEFAULT 'none'");
+    echo "[migrate] Added orders.stock_state\n";
+}
+if (!in_array('reservation_expires_at', $orderCols, true)) {
+    $pdo->exec("ALTER TABLE orders ADD COLUMN reservation_expires_at TEXT NOT NULL DEFAULT ''");
+    echo "[migrate] Added orders.reservation_expires_at\n";
+}
+$itemCols = array_column($pdo->query('PRAGMA table_info(order_items)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+if (!in_array('size_id', $itemCols, true)) {
+    $pdo->exec("ALTER TABLE order_items ADD COLUMN size_id INTEGER");
+    echo "[migrate] Added order_items.size_id\n";
 }
 $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_payment_reference ON orders(payment_reference) WHERE payment_reference != ''");
 

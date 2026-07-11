@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS product_sizes (
     stock_quantity      INTEGER NOT NULL DEFAULT 0,
     bulk_min_quantity   INTEGER NOT NULL DEFAULT 0,
     bulk_price_pesewas  INTEGER,
+    is_active           INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
     sort_order          INTEGER NOT NULL DEFAULT 0,
     FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE
 );
@@ -79,6 +80,8 @@ CREATE TABLE IF NOT EXISTS orders (
                                 CHECK (status IN ('pending', 'confirmed', 'processing', 'delivered', 'cancelled')),
     payment_status      TEXT    NOT NULL DEFAULT 'unpaid',
     payment_reference   TEXT    NOT NULL DEFAULT '',
+    stock_state         TEXT    NOT NULL DEFAULT 'none',
+    reservation_expires_at TEXT NOT NULL DEFAULT '',
     created_at          TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -93,6 +96,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     order_id            INTEGER NOT NULL,
     product_id          INTEGER NOT NULL,
+    size_id             INTEGER,
     product_name        TEXT    NOT NULL,
     unit_price_pesewas  INTEGER NOT NULL,
     quantity            INTEGER NOT NULL CHECK (quantity > 0),

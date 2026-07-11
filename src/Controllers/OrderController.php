@@ -27,6 +27,7 @@ final class OrderController
      */
     public function listProducts(): void
     {
+        Inventory::releaseExpired();
         $rows = $this->db->query(
             'SELECT id, sku, name, flavour, description, unit_label, image_url,
                     unit_price_pesewas, bulk_available, bulk_min_quantity,
@@ -36,7 +37,7 @@ final class OrderController
            ORDER BY name ASC'
         )->fetchAll();
 
-        $sizeStmt = $this->db->prepare('SELECT id,label,unit_price_pesewas,stock_quantity,bulk_min_quantity,bulk_price_pesewas FROM product_sizes WHERE product_id=:id ORDER BY sort_order,id');
+        $sizeStmt = $this->db->prepare('SELECT id,label,unit_price_pesewas,stock_quantity,bulk_min_quantity,bulk_price_pesewas FROM product_sizes WHERE product_id=:id AND is_active=1 ORDER BY sort_order,id');
         $products = array_map(static function (array $r) use ($sizeStmt): array {
             $sizeStmt->execute([':id'=>$r['id']]);
             $sizes=array_map(static fn(array $s)=>['id'=>(int)$s['id'],'label'=>$s['label'],'unit_price_pesewas'=>(int)$s['unit_price_pesewas'],'stock_quantity'=>(int)$s['stock_quantity'],'bulk_min_quantity'=>(int)$s['bulk_min_quantity'],'bulk_price_pesewas'=>$s['bulk_price_pesewas']!==null?(int)$s['bulk_price_pesewas']:null],$sizeStmt->fetchAll());
@@ -74,6 +75,7 @@ final class OrderController
      */
     public function create(): void
     {
+        Inventory::releaseExpired();
         $input = json_decode((string) file_get_contents('php://input'), true);
 
         if (!is_array($input)) {
@@ -148,7 +150,7 @@ final class OrderController
         $lines    = [];
         $subtotal = 0;
 
-        $sizeStmt=$this->db->prepare('SELECT id,label,unit_price_pesewas,stock_quantity,bulk_min_quantity,bulk_price_pesewas FROM product_sizes WHERE id=:size AND product_id=:product');
+        $sizeStmt=$this->db->prepare('SELECT id,label,unit_price_pesewas,stock_quantity,bulk_min_quantity,bulk_price_pesewas FROM product_sizes WHERE id=:size AND product_id=:product AND is_active=1');
         foreach ($wanted as $choice) {
             $pid=$choice['product_id']; $qty=$choice['quantity'];
             if (!isset($catalogue[$pid]) || (int) $catalogue[$pid]['is_active'] !== 1) {
@@ -198,14 +200,14 @@ final class OrderController
             $this->db->beginTransaction();
 
             $orderStmt = $this->db->prepare(
-                'INSERT INTO orders
+                "INSERT INTO orders
                     (reference, order_type, customer_name, customer_phone, customer_email,
                      delivery_address, region, delivery_zone_id, notes, subtotal_pesewas,
-                     delivery_fee_pesewas, total_pesewas, status)
+                     delivery_fee_pesewas, total_pesewas, status, stock_state, reservation_expires_at)
                  VALUES
                     (:reference, :order_type, :customer_name, :customer_phone, :customer_email,
                      :delivery_address, :region, :zone_id, :notes, :subtotal,
-                     :delivery_fee, :total, :status)'
+                     :delivery_fee, :total, :status, :stock_state, datetime('now','+30 minutes'))"
             );
             $orderStmt->execute([
                 ':reference'        => $reference,
@@ -221,23 +223,28 @@ final class OrderController
                 ':delivery_fee'     => $deliveryFee,
                 ':total'            => $total,
                 ':status'           => 'pending',
+                ':stock_state'      => 'reserved',
             ]);
 
             $orderId = (int) $this->db->lastInsertId();
 
             $itemStmt = $this->db->prepare(
                 'INSERT INTO order_items
-                    (order_id, product_id, product_name, unit_price_pesewas,
+                    (order_id, product_id, size_id, product_name, unit_price_pesewas,
                      quantity, is_bulk, line_total_pesewas)
                  VALUES
-                    (:order_id, :product_id, :product_name, :unit_price,
+                    (:order_id, :product_id, :size_id, :product_name, :unit_price,
                      :quantity, :is_bulk, :line_total)'
             );
 
             foreach ($lines as $line) {
+                $reserve=$this->db->prepare('UPDATE product_sizes SET stock_quantity=stock_quantity-:qty WHERE id=:size AND is_active=1 AND stock_quantity>=:qty');
+                $reserve->execute([':qty'=>$line['quantity'],':size'=>$line['size_id']]);
+                if($reserve->rowCount()!==1)throw new RuntimeException('Stock changed while checking out. Please review your cart.');
                 $itemStmt->execute([
                     ':order_id'     => $orderId,
                     ':product_id'   => $line['product_id'],
+                    ':size_id'      => $line['size_id'],
                     ':product_name' => $line['product_name'],
                     ':unit_price'   => $line['unit_price_pesewas'],
                     ':quantity'     => $line['quantity'],
@@ -251,7 +258,8 @@ final class OrderController
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
-            Response::json(['error' => 'Could not save your order. Please try again.'], 500);
+            $message = $e instanceof RuntimeException ? $e->getMessage() : 'Could not save your order. Please try again.';
+            Response::json(['error' => $message], $e instanceof RuntimeException ? 409 : 500);
             return;
         }
 

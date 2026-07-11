@@ -51,6 +51,7 @@ final class PaymentController
         if ($o['payment_status'] !== 'paid') {
             $u=$this->db->prepare("UPDATE orders SET payment_status='paid' WHERE id=:id AND payment_status!='paid'"); $u->execute([':id'=>$o['id']]);
             if ($u->rowCount() > 0) {
+                Inventory::finalize((int)$o['id']);
                 $items=$this->db->prepare('SELECT product_name,unit_price_pesewas,quantity,is_bulk,line_total_pesewas FROM order_items WHERE order_id=:id');$items->execute([':id'=>$o['id']]);
                 EmailNotifications::paymentConfirmed($o,$items->fetchAll());
             }

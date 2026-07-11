@@ -69,6 +69,18 @@ https://your-domain.example/api/v1/payments/webhook
 
 Use Paystack test keys until the complete checkout and webhook flow has been tested in the deployment environment.
 
+## Stock reservations
+
+Checkout reserves each selected bottle size for 30 minutes. Successful Paystack payments permanently commit the stock; cancelled or expired unpaid orders return it automatically.
+
+On production hosting, add this cPanel cron job to release expired reservations even when the storefront has no visitors:
+
+```cron
+*/10 * * * * /usr/local/bin/php /home/spribvtm/public_html/jayfoods/database/release-expired-stock.php >/dev/null 2>&1
+```
+
+If cPanel shows a different PHP command, replace `/usr/local/bin/php` with the PHP executable shown by the hosting account.
+
 ## Project structure
 
 ```text
@@ -90,4 +102,3 @@ server.py       Migration and local-server entry point
 ## License
 
 All rights reserved. This repository contains proprietary Jay fooDs project code and brand assets unless otherwise stated.
-

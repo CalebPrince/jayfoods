@@ -24,7 +24,8 @@ final class AdminOrderController
         $rows = $this->db->query(
             'SELECT o.id, o.reference, o.order_type, o.customer_name, o.customer_phone,
                     o.region, o.subtotal_pesewas, o.delivery_fee_pesewas, o.total_pesewas,
-                    o.status, o.payment_status, o.payment_reference, o.created_at,
+                    o.status, o.payment_status, o.payment_reference, o.stock_state,
+                    o.reservation_expires_at, o.created_at,
                     COUNT(oi.id) AS item_count,
                     COALESCE(SUM(oi.quantity), 0) AS unit_count
                FROM orders o
@@ -47,6 +48,8 @@ final class AdminOrderController
                 'status'           => $r['status'],
                 'payment_status'   => $r['payment_status'],
                 'payment_reference'=> $r['payment_reference'],
+                'stock_state'      => $r['stock_state'],
+                'reservation_expires_at'=>$r['reservation_expires_at'],
                 'item_count'       => (int) $r['item_count'],
                 'unit_count'       => (int) $r['unit_count'],
                 'created_at'       => $r['created_at'],
@@ -62,7 +65,7 @@ final class AdminOrderController
             'SELECT id, reference, order_type, customer_name, customer_phone, customer_email,
                     delivery_address, region, notes, subtotal_pesewas,
                     delivery_fee_pesewas, total_pesewas, status,
-                    payment_status, payment_reference, created_at
+                    payment_status, payment_reference, stock_state, reservation_expires_at, created_at
                FROM orders WHERE id = :id'
         );
         $stmt->execute([':id' => $id]);
@@ -96,6 +99,8 @@ final class AdminOrderController
                 'status'           => $order['status'],
                 'payment_status'   => $order['payment_status'],
                 'payment_reference'=> $order['payment_reference'],
+                'stock_state'      => $order['stock_state'],
+                'reservation_expires_at'=>$order['reservation_expires_at'],
                 'created_at'       => $order['created_at'],
                 'items'            => array_map(static function (array $i): array {
                     return [
@@ -130,6 +135,8 @@ final class AdminOrderController
 
         $update = $this->db->prepare('UPDATE orders SET status = :status WHERE id = :id');
         $update->execute([':status' => $status, ':id' => $id]);
+
+        if($status==='cancelled')Inventory::releaseOrder($id);
 
         if ($order['status'] !== $status) EmailNotifications::statusChanged($order, $status);
 

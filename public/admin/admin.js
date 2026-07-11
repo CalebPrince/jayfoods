@@ -137,6 +137,8 @@
       { ic: '💰', num: cedis(data.revenue_pesewas), lbl: 'Revenue' },
       { ic: '🧃', num: `${data.products_active}/${data.products_total}`, lbl: 'Active products' },
       { ic: '✉️', num: data.messages_unread, lbl: 'Unread messages' },
+      { ic: '⚠', num: data.low_stock_sizes, lbl: 'Low-stock sizes' },
+      { ic: '⌛', num: data.reserved_orders, lbl: 'Stock reservations' },
     ];
     const recent = data.recent_orders.length
       ? data.recent_orders.map((o) => `
@@ -187,7 +189,7 @@
         <td>${(p.sizes || []).map(s => esc(s.label)).join('<br>')}</td>
         <td>${(p.sizes || []).map(s => cedis(s.unit_price_pesewas)).join('<br>')}</td>
         <td><label class="checkline"><input type="checkbox" data-bulk-toggle="${p.id}" ${p.bulk_available ? 'checked' : ''} /> ${p.bulk_available && p.bulk_price_pesewas != null ? `${cedis(p.bulk_price_pesewas)} @ ${p.bulk_min_quantity}+` : 'Off'}</label></td>
-        <td>${(p.sizes || []).map(s => `${esc(s.label)}: ${s.stock_quantity}`).join('<br>')}</td>
+        <td>${(p.sizes || []).map(s => `<span class="pill ${s.stock_quantity === 0 ? 'off' : s.stock_quantity <= 10 ? 'pending' : 'on'}">${esc(s.label)}: ${s.stock_quantity}</span>`).join('<br>')}</td>
         <td><span class="pill ${p.is_active ? 'on' : 'off'}">${p.is_active ? 'Active' : 'Hidden'}</span></td>
         <td>
           <div class="row-actions">
@@ -250,13 +252,13 @@
   }
 
   function sizeRowHtml(s) {
-    return `<div class="size-row"><input data-size="label" placeholder="Size (500ml)" value="${esc(s.label || '')}"><input data-size="price" type="number" step="0.01" min="0" placeholder="Price GH₵" value="${s.unit_price_pesewas ? (s.unit_price_pesewas/100).toFixed(2) : ''}"><input data-size="stock" type="number" min="0" placeholder="Stock" value="${s.stock_quantity || 0}"><input data-size="bulk_min" type="number" min="0" placeholder="Bulk min" value="${s.bulk_min_quantity || 0}"><input data-size="bulk_price" type="number" step="0.01" min="0" placeholder="Bulk GH₵" value="${s.bulk_price_pesewas ? (s.bulk_price_pesewas/100).toFixed(2) : ''}"><button type="button" class="btn btn-danger btn-sm" data-remove-size>×</button></div>`;
+    return `<div class="size-row" data-size-id="${s.id || 0}"><input data-size="label" placeholder="Size (500ml)" value="${esc(s.label || '')}"><input data-size="price" type="number" step="0.01" min="0" placeholder="Price GH₵" value="${s.unit_price_pesewas ? (s.unit_price_pesewas/100).toFixed(2) : ''}"><input data-size="stock" type="number" min="0" placeholder="Stock" value="${s.stock_quantity || 0}"><input data-size="bulk_min" type="number" min="0" placeholder="Bulk min" value="${s.bulk_min_quantity || 0}"><input data-size="bulk_price" type="number" step="0.01" min="0" placeholder="Bulk GH₵" value="${s.bulk_price_pesewas ? (s.bulk_price_pesewas/100).toFixed(2) : ''}"><button type="button" class="btn btn-danger btn-sm" data-remove-size>×</button></div>`;
   }
 
   async function submitProduct(existing) {
     const form = $('#product-form');
     const f = new FormData(form);
-    const sizes = [...form.querySelectorAll('.size-row')].map(row => ({ label:row.querySelector('[data-size="label"]').value.trim(), unit_price_pesewas:toPesewas(row.querySelector('[data-size="price"]').value), stock_quantity:parseInt(row.querySelector('[data-size="stock"]').value,10)||0, bulk_min_quantity:parseInt(row.querySelector('[data-size="bulk_min"]').value,10)||0, bulk_price_pesewas:row.querySelector('[data-size="bulk_price"]').value?toPesewas(row.querySelector('[data-size="bulk_price"]').value):null }));
+    const sizes = [...form.querySelectorAll('.size-row')].map(row => ({ id:+row.dataset.sizeId, label:row.querySelector('[data-size="label"]').value.trim(), unit_price_pesewas:toPesewas(row.querySelector('[data-size="price"]').value), stock_quantity:parseInt(row.querySelector('[data-size="stock"]').value,10)||0, bulk_min_quantity:parseInt(row.querySelector('[data-size="bulk_min"]').value,10)||0, bulk_price_pesewas:row.querySelector('[data-size="bulk_price"]').value?toPesewas(row.querySelector('[data-size="bulk_price"]').value):null }));
     f.set('sizes', JSON.stringify(sizes));
     f.set('unit_price_pesewas', toPesewas(f.get('unit_price')));
     f.set('stock_quantity', parseInt(f.get('stock_quantity'), 10) || 0);
@@ -340,6 +342,7 @@
       ${o.notes ? `<div class="detail-row"><span>Notes</span><span style="text-align:right">${esc(o.notes)}</span></div>` : ''}
       <div class="detail-row"><span>Placed</span><span>${fmtDate(o.created_at)}</span></div>
       <div class="detail-row"><span>Payment</span><span>${paymentPill(o.payment_status)}</span></div>
+      <div class="detail-row"><span>Inventory</span><span>${esc(o.stock_state === 'reserved' ? 'Reserved until ' + fmtDate(o.reservation_expires_at) : o.stock_state)}</span></div>
       ${o.payment_reference ? `<div class="detail-row"><span>Paystack reference</span><span style="text-align:right;font-family:monospace">${esc(o.payment_reference)}</span></div>` : ''}
       <div style="margin:16px 0 6px;font-weight:700;color:var(--green-dk)">Items</div>
       ${items}

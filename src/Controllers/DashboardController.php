@@ -26,6 +26,8 @@ final class DashboardController
         $productsTotal  = (int) $db->query('SELECT COUNT(*) FROM products')->fetchColumn();
         $productsActive = (int) $db->query('SELECT COUNT(*) FROM products WHERE is_active = 1')->fetchColumn();
         $messagesUnread = (int) $db->query('SELECT COUNT(*) FROM messages WHERE is_read = 0')->fetchColumn();
+        $lowStockSizes  = (int) $db->query('SELECT COUNT(*) FROM product_sizes ps JOIN products p ON p.id=ps.product_id WHERE ps.is_active=1 AND p.is_active=1 AND ps.stock_quantity<=10')->fetchColumn();
+        $reservedOrders = (int) $db->query("SELECT COUNT(*) FROM orders WHERE stock_state='reserved' AND payment_status!='paid'")->fetchColumn();
 
         $recent = $db->query(
             'SELECT reference, order_type, customer_name, subtotal_pesewas, total_pesewas, status, payment_status, created_at
@@ -56,6 +58,8 @@ final class DashboardController
                 'products_total'   => $productsTotal,
                 'products_active'  => $productsActive,
                 'messages_unread'  => $messagesUnread,
+                'low_stock_sizes'  => $lowStockSizes,
+                'reserved_orders'  => $reservedOrders,
                 'recent_orders'    => $recentOrders,
             ],
         ]);

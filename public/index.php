@@ -36,6 +36,7 @@ require $src . '/Support/Auth.php';
 require $src . '/Support/SmtpMailer.php';
 require $src . '/Support/EmailNotifications.php';
 require $src . '/Support/SecretBox.php';
+require $src . '/Support/Inventory.php';
 require $src . '/Router.php';
 require $src . '/Controllers/OrderController.php';
 require $src . '/Controllers/AuthController.php';
