@@ -71,7 +71,7 @@ $deliveryZones = new DeliveryZoneController();
 // ---- Public API -----------------------------------------------------------
 $router->get('/api/v1/products', static fn(array $p) => $orders->listProducts());
 $router->post('/api/v1/orders', static fn(array $p) => $orders->create());
-$router->get('/api/v1/orders/{reference}', static fn(array $p) => $orders->show($p['reference']));
+$router->post('/api/v1/orders/track', static fn(array $p) => $orders->track());
 $router->post('/api/v1/orders/{reference}/pay', static fn(array $p) => $payments->initialize($p['reference']));
 $router->get('/api/v1/payments/verify/{reference}', static fn(array $p) => $payments->verify($p['reference']));
 $router->post('/api/v1/payments/webhook', static fn(array $p) => $payments->webhook());

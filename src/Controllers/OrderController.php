@@ -289,20 +289,31 @@ final class OrderController
     /**
      * Fetch a single order by its public reference (order confirmation / tracking).
      */
-    public function show(string $reference): void
+    public function track(): void
     {
+        Inventory::releaseExpired();
+        $input = json_decode((string) file_get_contents('php://input'), true);
+        $reference = strtoupper(trim((string) ($input['reference'] ?? '')));
+        $phone = preg_replace('/\D+/', '', (string) ($input['phone'] ?? ''));
+        if ($reference === '' || strlen($phone) < 9) {
+            Response::json(['error' => 'Enter your order reference and phone number.'], 422);
+            return;
+        }
         $stmt = $this->db->prepare(
             'SELECT id, reference, order_type, customer_name, customer_phone,
                     customer_email, delivery_address, region, notes,
-                    subtotal_pesewas, delivery_fee_pesewas, total_pesewas, status, created_at
+                    subtotal_pesewas, delivery_fee_pesewas, total_pesewas, status,
+                    payment_status, stock_state, reservation_expires_at, created_at
                FROM orders
               WHERE reference = :reference'
         );
         $stmt->execute([':reference' => $reference]);
         $order = $stmt->fetch();
 
-        if (!$order) {
-            Response::json(['error' => 'Order not found.'], 404);
+        $savedPhone = $order ? preg_replace('/\D+/', '', (string) $order['customer_phone']) : '';
+        $phoneTail = substr($phone, -9);
+        if (!$order || $phoneTail === '' || substr($savedPhone, -9) !== $phoneTail) {
+            Response::json(['error' => 'No order matches those details. Check the reference and phone number.'], 404);
             return;
         }
 
@@ -318,6 +329,9 @@ final class OrderController
                 'reference'        => $order['reference'],
                 'order_type'       => $order['order_type'],
                 'status'           => $order['status'],
+                'payment_status'   => $order['payment_status'],
+                'stock_state'      => $order['stock_state'],
+                'reservation_expires_at' => $order['reservation_expires_at'],
                 'customer_name'    => $order['customer_name'],
                 'delivery_address' => $order['delivery_address'],
                 'region'           => $order['region'],

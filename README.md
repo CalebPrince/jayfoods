@@ -7,6 +7,7 @@ Jay fooDs is a lightweight juice catalogue, ordering, payment, and administratio
 - Responsive public storefront and individual product pages
 - Multiple bottle sizes with size-specific pricing and stock
 - Retail cart with delivery details and Paystack checkout
+- Private customer order tracking using an order reference and phone number
 - Bulk-order enquiries through prefilled WhatsApp messages
 - Server-side price, stock, currency, and payment verification
 - Paystack callback and signed webhook handling
