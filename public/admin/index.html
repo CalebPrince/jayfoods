@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jay fooDs Control Center</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><img src="../img/logo-white.png" alt="Jay fooDs" /></div>
+      <nav id="nav">
+        <a href="#/dashboard" data-route="dashboard"><span class="ic">📊</span> Dashboard</a>
+        <a href="#/products"  data-route="products"><span class="ic">🧃</span> Products</a>
+        <a href="#/orders"    data-route="orders"><span class="ic">🧾</span> Orders</a>
+        <a href="#/messages"  data-route="messages"><span class="ic">✉️</span> Messages <span class="badge" id="nav-msg-badge" style="display:none"></span></a>
+        <a href="#/settings"  data-route="settings"><span class="ic">⚙️</span> Settings</a>
+      </nav>
+      <div class="foot">
+        <div class="who">Signed in as<b id="admin-name">…</b><span id="admin-email" style="font-size:.78rem;opacity:.8"></span></div>
+        <button class="btn btn-ghost btn-sm btn-block" id="logout">Log out</button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="topbar">
+        <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
+        <h1 id="page-title">Dashboard</h1>
+        <a class="btn btn-ghost btn-sm" href="../index.html" target="_blank">View site ↗</a>
+      </div>
+      <div class="content" id="view">
+        <div class="loading">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generic modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <div class="modal-head">
+        <h2 id="modal-title">Title</h2>
+        <button class="x" id="modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-foot" id="modal-foot"></div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

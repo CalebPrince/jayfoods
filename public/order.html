@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Place an Order — Jay fooDs</title>
+  <style>
+    :root {
+      --jf-green: #1f7a3d; --jf-green-dk: #155c2d; --jf-orange: #f5871f;
+      --jf-ink: #10241a; --jf-muted: #6b7d72; --jf-line: #e2eae4;
+      --jf-bg: #f6faf7; --jf-card: #ffffff; --jf-danger: #c0392b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--jf-ink); background: var(--jf-bg);
+    }
+    a { color: var(--jf-green); }
+    .topbar{background:var(--jf-green-dk);color:#fff;text-align:center;padding:7px 15px;font-size:.82rem}.site-nav{background:#fff;border-bottom:1px solid var(--jf-line);position:sticky;top:0;z-index:20}.nav-inner{max-width:1180px;margin:auto;padding:13px 20px;display:flex;align-items:center;justify-content:space-between;gap:25px}.brand img{height:48px}.nav-links{display:flex;gap:24px}.nav-links a{text-decoration:none;color:var(--jf-ink);font-weight:650;font-size:.9rem}.nav-actions{display:flex;gap:10px;align-items:center}.cart-link{background:var(--jf-green);color:#fff;text-decoration:none;padding:10px 18px;border-radius:9px;font-weight:700}.cart-count{background:var(--jf-orange);border-radius:99px;padding:2px 7px;margin-left:5px}
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 20px 64px; }
+    h1 { color: var(--jf-green-dk); margin: 8px 0 4px; }
+    .lede { color: var(--jf-muted); margin: 0 0 24px; }
+
+    .layout { display: grid; grid-template-columns: 1fr; gap: 24px; }
+    @media (min-width: 900px) { .layout { grid-template-columns: 1fr 360px; align-items: start; } }
+
+    /* Order-type toggle */
+    .modes { display: inline-flex; background: #e8f1ea; border-radius: 12px; padding: 4px; margin-bottom: 20px; }
+    .modes button {
+      border: 0; background: transparent; padding: 10px 20px; border-radius: 9px;
+      font-weight: 600; cursor: pointer; color: var(--jf-green-dk); font-size: .95rem;
+    }
+    .modes button.active { background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .mode-hint {
+      background: #fff6e9; border: 1px solid #f6d9ac; color: #8a5a12;
+      padding: 10px 14px; border-radius: 10px; font-size: .9rem; margin-bottom: 20px;
+    }
+
+    /* Product grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+    .card {
+      background: var(--jf-card); border: 1px solid var(--jf-line); border-radius: 14px;
+      padding: 16px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .card .thumb {
+      height: 430px; border-radius: 14px; display: grid; place-items: center; font-size: 4rem;
+      background: linear-gradient(135deg,#eafaef,#fff2df); overflow: hidden;
+    }
+    .card .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .card h3 { margin: 8px 0 0; font-size: 1.65rem; }
+    .card .flavour { font-size: .78rem; color: var(--jf-orange); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+    .card .desc { font-size: .85rem; color: var(--jf-muted); flex: 1; margin: 0; }
+    .card .price { font-weight: 700; }
+    .card .price small { font-weight: 500; color: var(--jf-muted); }
+    .card .bulk-note { font-size: .78rem; color: var(--jf-green); }
+    .card select { width:100%; padding:10px; border:1px solid var(--jf-line); border-radius:9px; background:#fff; }
+    .qty { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .qty button {
+      width: 32px; height: 32px; border: 1px solid var(--jf-line); background: #fff;
+      border-radius: 8px; font-size: 1.1rem; cursor: pointer; line-height: 1;
+    }
+    .qty input {
+      width: 60px; text-align: center; padding: 6px; border: 1px solid var(--jf-line); border-radius: 8px;
+      font-size: 1rem;
+    }
+    .out-of-stock { opacity: .55; }
+
+    /* Summary + form */
+    .panel {
+      background: var(--jf-card); border: 1px solid var(--jf-line); border-radius: 14px;
+      padding: 18px; position: sticky; top: 16px;
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 1.1rem; }
+    .summary-line { display: flex; justify-content: space-between; font-size: .9rem; padding: 6px 0; border-bottom: 1px dashed var(--jf-line); }
+    .summary-line .q { color: var(--jf-muted); }
+    .summary-empty { color: var(--jf-muted); font-size: .9rem; padding: 8px 0; }
+    .total { display: flex; justify-content: space-between; font-weight: 700; font-size: 1.15rem; margin-top: 12px; }
+
+    form.details { display:none; }
+    form.details label { font-size: .82rem; font-weight: 600; display: block; margin-bottom: 4px; }
+    form.details input, form.details textarea, form.details select {
+      width: 100%; padding: 10px; border: 1px solid var(--jf-line); border-radius: 9px; font-size: .95rem;
+      font-family: inherit;
+    }
+    form.details .field.invalid input,
+    form.details .field.invalid textarea { border-color: var(--jf-danger); }
+    .err { color: var(--jf-danger); font-size: .78rem; margin: 4px 0 0; min-height: 0; }
+    .btn-primary {
+      background: var(--jf-green); color: #fff; border: 0; padding: 14px; border-radius: 11px;
+      font-weight: 700; font-size: 1rem; cursor: pointer; margin-top: 4px;
+    }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-secondary { width:100%;background:#fff;color:var(--jf-green);border:1px solid var(--jf-green);padding:12px;border-radius:11px;font-weight:700;cursor:pointer }
+    .form-error { color: var(--jf-danger); font-size: .88rem; }
+
+    /* Confirmation */
+    .confirm {
+      background: #eafaef; border: 1px solid #bfe6cb; border-radius: 14px; padding: 24px; text-align: center;
+    }
+    .confirm .ref { font-size: 1.4rem; font-weight: 800; color: var(--jf-green-dk); letter-spacing: 1px; }
+    .confirm .again { margin-top: 16px; display: inline-block; }
+    .hidden { display: none; }
+    .loading { color: var(--jf-muted); padding: 24px 0; }
+    .buy-actions{display:grid;gap:10px;margin-top:18px}.buy-actions .btn-secondary{background:var(--jf-green);color:#fff;border:0;padding:15px;font-size:1rem}.site-footer{background:var(--jf-green-dk);color:#bfd5c5;padding:45px 0 24px}.footer-grid{max-width:1080px;margin:auto;padding:0 20px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:35px}.site-footer h4{color:#fff;margin:0 0 12px}.site-footer ul{list-style:none;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px 15px}.site-footer a{color:#bfd5c5;text-decoration:none;font-size:.88rem}.footer-bottom{max-width:1080px;margin:28px auto 0;padding:18px 20px 0;border-top:1px solid rgba(255,255,255,.14);display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap;font-size:.82rem}
+    @media(max-width:700px){.nav-links{display:none}.card .thumb{height:290px}.footer-grid{grid-template-columns:1fr}.nav-inner{padding:10px 15px}}
+    .wa-button{display:none;text-align:center;text-decoration:none;background:#20a95a;color:#fff;padding:13px;border-radius:11px;font-weight:800}.wa-button.show{display:block}.toast{position:fixed;top:92px;left:50%;transform:translate(-50%,-20px);background:var(--jf-green-dk);color:#fff;padding:12px 20px;border-radius:12px;opacity:0;pointer-events:none;transition:.2s;z-index:60}.toast.show{opacity:1;transform:translate(-50%,0)}.drawer-backdrop{position:fixed;inset:0;background:#10241a66;z-index:70;display:none}.drawer-backdrop.open{display:block}.cart-drawer{position:absolute;right:0;top:0;height:100%;width:min(410px,100%);background:#fff;padding:22px;overflow:auto}.drawer-head{display:flex;justify-content:space-between;align-items:center}.drawer-item{padding:12px 0;border-bottom:1px solid var(--jf-line);display:flex;justify-content:space-between;gap:15px}.drawer-close{border:0;background:none;font-size:1.5rem;cursor:pointer}.drawer-actions{display:grid;gap:10px;margin-top:20px}.drawer-actions a{text-align:center;padding:13px;border-radius:10px;text-decoration:none;font-weight:800}.drawer-actions .checkout-link{background:var(--jf-orange);color:#fff}
+  </style>
+</head>
+<body>
+  <div class="topbar">🚚 Fresh juice delivery across Accra • Secure checkout with Paystack</div>
+  <header class="site-nav"><div class="nav-inner"><a class="brand" href="index.html"><img src="img/logo-color.png" alt="Jay fooDs"></a><nav class="nav-links"><a href="index.html#menu">Menu</a><a href="index.html#how">How it works</a><a href="index.html#bulk">Bulk &amp; Wholesale</a><a href="index.html#about">About</a><a href="index.html#contact">Contact</a></nav><div class="nav-actions"><a class="cart-link" href="cart.html" id="open-cart">Cart <span class="cart-count" id="cart-count">0</span></a></div></div></header>
+
+  <div class="wrap">
+    <h1>Place your order</h1>
+    <p class="lede">Choose single bottles or a discounted bulk order for shops, offices and events.</p>
+
+    <!-- Order flow -->
+    <div id="order-flow">
+      <div class="layout">
+        <section>
+          <div id="products" class="grid">
+            <p class="loading">Loading our juices…</p>
+          </div>
+        </section>
+
+        <aside>
+          <div class="panel">
+            <h2>Choose how to order</h2>
+            <div class="modes" role="tablist"><button id="mode-single" class="active" type="button" data-mode="single">Single order</button><button id="mode-bulk" type="button" data-mode="bulk">Bulk order</button></div>
+            <div id="mode-hint" class="mode-hint hidden"></div>
+            <h2>Your selection</h2>
+            <div id="summary"><p class="summary-empty">No items yet — pick a juice to get started.</p></div>
+            <div class="total"><span>Total</span><span id="grand-total">GH₵0.00</span></div>
+            <p class="form-error hidden" id="cart-error"></p>
+            <div class="buy-actions"><button class="btn-secondary" id="add-cart" type="button">Add selection to cart</button><a class="wa-button" id="bulk-whatsapp" target="_blank" rel="noopener">Send bulk order on WhatsApp</a><a href="cart.html" style="text-align:center;font-weight:700">Go to cart and checkout →</a></div>
+
+            <form class="details" id="order-form" novalidate>
+              <div class="field" id="f-name">
+                <label for="customer_name">Full name *</label>
+                <input id="customer_name" name="customer_name" autocomplete="name" />
+                <p class="err"></p>
+              </div>
+              <div class="field" id="f-phone">
+                <label for="customer_phone">Phone number *</label>
+                <input id="customer_phone" name="customer_phone" inputmode="tel" placeholder="+233 …" autocomplete="tel" />
+                <p class="err"></p>
+              </div>
+              <div class="field" id="f-email">
+                <label for="customer_email">Email *</label>
+                <input id="customer_email" name="customer_email" type="email" autocomplete="email" required />
+                <p class="err"></p>
+              </div>
+              <div class="field" id="f-address">
+                <label for="delivery_address">Delivery address *</label>
+                <textarea id="delivery_address" name="delivery_address" rows="2" autocomplete="street-address"></textarea>
+                <p class="err"></p>
+              </div>
+              <div class="field" id="f-region">
+                <label for="region">Region</label>
+                <select id="region" name="region">
+                  <option>Greater Accra</option>
+                  <option>Ashanti</option>
+                  <option>Central</option>
+                  <option>Eastern</option>
+                  <option>Western</option>
+                  <option>Volta</option>
+                  <option>Northern</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="field" id="f-notes">
+                <label for="notes">Notes (optional)</label>
+                <textarea id="notes" name="notes" rows="2" placeholder="Delivery time, event date, etc."></textarea>
+              </div>
+
+              <p class="form-error hidden" id="form-error"></p>
+              <button class="btn-primary" id="submit-btn" type="submit" disabled>Checkout with Paystack</button>
+            </form>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Confirmation -->
+    <div id="confirmation" class="confirm hidden">
+      <div style="font-size:2.6rem">✅</div>
+      <h2>Thank you! Your order is in.</h2>
+      <p>Save your reference — we'll call you shortly to confirm delivery.</p>
+      <div class="ref" id="confirm-ref"></div>
+      <p id="confirm-summary" style="color:var(--jf-muted)"></p>
+      <a href="#" class="again" id="new-order">Place another order</a>
+    </div>
+  </div>
+  <div class="toast" id="cart-toast">Added to your cart</div><div class="drawer-backdrop" id="cart-drawer"><aside class="cart-drawer"><div class="drawer-head"><h2>Your cart</h2><button class="drawer-close" id="drawer-close">×</button></div><div id="drawer-items"></div><div class="drawer-actions"><a href="index.html#menu">Continue shopping</a><a class="checkout-link" href="cart.html">Proceed to checkout</a></div></aside></div>
+
+  <footer class="site-footer"><div class="footer-grid"><div><img src="img/logo-white.png" alt="Jay fooDs" style="height:52px"><p>Fresh, natural fruit juice squeezed in Accra and delivered to homes, offices, shops and events.</p></div><div><h4>Shop</h4><ul><li><a href="index.html#menu">All products</a></li><li><a href="cart.html">Your cart</a></li><li><a href="index.html#bulk">Bulk orders</a></li><li><a href="index.html#how">How it works</a></li></ul></div><div><h4>Support</h4><ul><li><a href="index.html#contact">Contact</a></li><li><a href="index.html#faq">FAQ</a></li><li><a href="privacy.html">Privacy</a></li><li><a href="cookies.html">Cookies</a></li><li><a href="terms.html">Terms</a></li></ul></div></div><div class="footer-bottom"><span>© 2026 Jay fooDs Ghana. All rights reserved.</span><span><a href="tel:+233246328461">+233 24 632 8461</a></span></div></footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      const state = {
+        mode: new URLSearchParams(location.search).get('mode') === 'bulk' ? 'bulk' : 'single',
+        products: [],          // from API
+        qty: {},               // product_id -> quantity
+        size: {},              // product_id -> selected size id
+      };
+
+      const el = {
+        products: document.getElementById('products'),
+        summary: document.getElementById('summary'),
+        grandTotal: document.getElementById('grand-total'),
+        modeHint: document.getElementById('mode-hint'),
+        submitBtn: document.getElementById('submit-btn'),
+        form: document.getElementById('order-form'),
+        formError: document.getElementById('form-error'),
+        flow: document.getElementById('order-flow'),
+        confirmation: document.getElementById('confirmation'),
+        confirmRef: document.getElementById('confirm-ref'),
+        confirmSummary: document.getElementById('confirm-summary'),
+      };
+
+      const cedis = (pesewas) =>
+        'GH₵' + (pesewas / 100).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      // ---- Pricing (mirrors server logic for live display) ----
+      function unitPriceFor(product, quantity) {
+        const size = selectedSize(product);
+        const eligible =
+          state.mode === 'bulk' &&
+          product.bulk_available &&
+          size && size.bulk_price_pesewas != null &&
+          quantity >= size.bulk_min_quantity;
+        return {
+          price: eligible ? size.bulk_price_pesewas : size.unit_price_pesewas,
+          isBulk: eligible,
+          size,
+        };
+      }
+      function selectedSize(product) { return (product.sizes || []).find(s => s.id === state.size[product.id]) || (product.sizes || [])[0]; }
+
+      // ---- Rendering ----
+      function renderProducts() {
+        if (state.products.length === 0) {
+          el.products.innerHTML = '<p class="summary-empty">No juices are available right now.</p>';
+          return;
+        }
+        el.products.innerHTML = state.products.map((p) => {
+          const q = state.qty[p.id] || 0;
+          const size = selectedSize(p);
+          const bulkNote =
+            state.mode === 'bulk' && p.bulk_available && size && size.bulk_price_pesewas
+              ? `<div class="bulk-note">Bulk: ${cedis(size.bulk_price_pesewas)} each from ${size.bulk_min_quantity}+</div>`
+              : '';
+          const available = size && size.stock_quantity > 0;
+          const stock = available ? '' : ' out-of-stock';
+          const disabled = available ? '' : 'disabled';
+          const thumb = p.image_url
+            ? `<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name)}" />`
+            : '🧃';
+          return `
+            <div class="card${stock}" data-id="${p.id}">
+              <div class="thumb">${thumb}</div>
+              <div class="flavour">${escapeHtml(p.flavour)}</div>
+              <h3>${escapeHtml(p.name)}</h3>
+              <p class="desc">${escapeHtml(p.description)}</p>
+              <label class="flavour">Bottle size</label><select data-size-select="${p.id}">${(p.sizes || []).map(s=>`<option value="${s.id}" ${size&&s.id===size.id?'selected':''}>${escapeHtml(s.label)} — ${cedis(s.unit_price_pesewas)} (${s.stock_quantity} available)</option>`).join('')}</select>
+              <div class="price">${size ? cedis(size.unit_price_pesewas) : 'Unavailable'} <small>/ ${size ? escapeHtml(size.label) : ''}</small></div>
+              ${bulkNote}
+              <div class="qty">
+                <button type="button" data-act="dec" data-id="${p.id}" ${disabled}>−</button>
+                <input type="number" min="0" step="1" value="${q}" data-id="${p.id}" ${disabled} />
+                <button type="button" data-act="inc" data-id="${p.id}" ${disabled}>+</button>
+              </div>
+            </div>`;
+        }).join('');
+      }
+
+      function renderSummary() {
+        const lines = [];
+        let total = 0;
+        state.products.forEach((p) => {
+          const q = state.qty[p.id] || 0;
+          if (q <= 0) return;
+          const { price, isBulk, size } = unitPriceFor(p, q);
+          const lineTotal = price * q;
+          total += lineTotal;
+          lines.push(`
+            <div class="summary-line">
+              <span class="q">${q} × ${escapeHtml(p.name)} — ${escapeHtml(size.label)}${isBulk ? ' <em>(bulk)</em>' : ''}</span>
+              <span>${cedis(lineTotal)}</span>
+            </div>`);
+        });
+
+        el.summary.innerHTML = lines.length
+          ? lines.join('')
+          : '<p class="summary-empty">No items yet — pick a juice to get started.</p>';
+        el.grandTotal.textContent = cedis(total);
+        el.submitBtn.disabled = lines.length === 0;
+      }
+
+      function renderMode() {
+        const product = state.products[0];
+        document.getElementById('mode-bulk').style.display = product && product.bulk_available ? '' : 'none';
+        if (state.mode === 'bulk' && (!product || !product.bulk_available)) state.mode = 'single';
+        document.querySelectorAll('.modes button').forEach((b) =>
+          b.classList.toggle('active', b.dataset.mode === state.mode));
+        if (state.mode === 'bulk') {
+          el.modeHint.classList.remove('hidden');
+          el.modeHint.textContent =
+            'Bulk pricing applies automatically once a product reaches its minimum quantity (usually 24+ bottles).';
+        } else {
+          el.modeHint.classList.add('hidden');
+        }
+        renderProducts();
+        renderSummary();
+        const wa=document.getElementById('bulk-whatsapp'),size=product&&selectedSize(product),qty=product?(state.qty[product.id]||0):0;
+        wa.classList.toggle('show',state.mode==='bulk'&&!!product&&!!size);
+        document.getElementById('add-cart').style.display=state.mode==='bulk'?'none':'';
+        if(product&&size)wa.href='https://wa.me/233246328461?text='+encodeURIComponent(`Hello Jay fooDs, I would like a bulk order:\n\nProduct: ${product.name}\nBottle size: ${size.label}\nQuantity: ${qty||size.bulk_min_quantity||1}\nEstimated total: ${cedis(unitPriceFor(product,qty||size.bulk_min_quantity||1).price*(qty||size.bulk_min_quantity||1))}\n\nPlease confirm availability and delivery.`);
+      }
+
+      function escapeHtml(str) {
+        return String(str).replace(/[&<>"']/g, (c) =>
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
+
+      // ---- Events ----
+      document.querySelector('.modes').addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-mode]');
+        if (!btn) return;
+        if (btn.dataset.mode === 'bulk' && (!state.products[0] || !state.products[0].bulk_available)) return;
+        state.mode = btn.dataset.mode;
+        renderMode();
+      });
+
+      el.products.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-act]');
+        if (!btn) return;
+        const id = Number(btn.dataset.id);
+        const cur = state.qty[id] || 0;
+        const next = btn.dataset.act === 'inc' ? cur + 1 : Math.max(0, cur - 1);
+        setQty(id, next);
+      });
+
+      el.products.addEventListener('input', (e) => {
+        const input = e.target.closest('input[type="number"]');
+        if (!input) return;
+        setQty(Number(input.dataset.id), Math.max(0, parseInt(input.value, 10) || 0));
+      });
+      el.products.addEventListener('change', (e) => {
+        const select=e.target.closest('[data-size-select]'); if(!select)return;
+        state.size[Number(select.dataset.sizeSelect)]=Number(select.value); renderMode();
+      });
+
+      function setQty(id, value) {
+        state.qty[id] = value;
+        const input = el.products.querySelector(`input[data-id="${id}"]`);
+        if (input && Number(input.value) !== value) input.value = value;
+        renderSummary();
+        if(state.mode==='bulk')renderMode();
+      }
+
+      // ---- Submit ----
+      el.form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearErrors();
+
+        const items = state.products
+          .filter((p) => (state.qty[p.id] || 0) > 0)
+          .map((p) => ({ product_id: p.id, size_id: selectedSize(p).id, quantity: state.qty[p.id] }));
+
+        if (items.length === 0) {
+          showFormError('Please add at least one product.');
+          return;
+        }
+
+        const payload = {
+          order_type: state.mode,
+          customer_name: value('customer_name'),
+          customer_phone: value('customer_phone'),
+          customer_email: value('customer_email'),
+          delivery_address: value('delivery_address'),
+          region: value('region'),
+          notes: value('notes'),
+          items,
+        };
+
+        el.submitBtn.disabled = true;
+        el.submitBtn.textContent = 'Placing order…';
+
+        try {
+          const res = await api.createOrder(payload);
+          const payment = await api.startPayment(res.data.reference);
+          location.assign(payment.data.authorization_url);
+        } catch (err) {
+          if (err.fields && Object.keys(err.fields).length) {
+            applyFieldErrors(err.fields);
+          }
+          showFormError(err.message || 'Something went wrong. Please try again.');
+          el.submitBtn.disabled = false;
+          el.submitBtn.textContent = 'Place order';
+        }
+      });
+
+      function value(id) { return document.getElementById(id).value.trim(); }
+
+      function clearErrors() {
+        el.formError.classList.add('hidden');
+        el.formError.textContent = '';
+        document.querySelectorAll('.field').forEach((f) => {
+          f.classList.remove('invalid');
+          const err = f.querySelector('.err');
+          if (err) err.textContent = '';
+        });
+      }
+
+      function showFormError(msg) {
+        el.formError.textContent = msg;
+        el.formError.classList.remove('hidden');
+      }
+
+      const fieldMap = {
+        customer_name: 'f-name',
+        customer_phone: 'f-phone',
+        customer_email: 'f-email',
+        delivery_address: 'f-address',
+      };
+      function applyFieldErrors(fields) {
+        Object.entries(fields).forEach(([key, msg]) => {
+          const wrap = document.getElementById(fieldMap[key]);
+          if (!wrap) return;
+          wrap.classList.add('invalid');
+          const err = wrap.querySelector('.err');
+          if (err) err.textContent = msg;
+        });
+      }
+
+      function showConfirmation(data) {
+        el.confirmRef.textContent = data.reference;
+        el.confirmSummary.textContent =
+          `${data.order_type === 'bulk' ? 'Bulk' : 'Single'} order • Total ${cedis(data.subtotal_pesewas)}`;
+        el.flow.classList.add('hidden');
+        el.confirmation.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      document.getElementById('new-order').addEventListener('click', (e) => {
+        e.preventDefault();
+        state.qty = {};
+        el.form.reset();
+        clearErrors();
+        el.confirmation.classList.add('hidden');
+        el.flow.classList.remove('hidden');
+        el.submitBtn.textContent = 'Place order';
+        renderMode();
+      });
+
+      document.getElementById('add-cart').addEventListener('click', () => {
+        const product=state.products[0], quantity=product ? (state.qty[product.id]||0) : 0, size=product ? selectedSize(product) : null;
+        const cartError=document.getElementById('cart-error'); cartError.classList.add('hidden');
+        if(!product || !size || quantity<1){ cartError.textContent='Choose a bottle size and quantity before adding to cart.';cartError.classList.remove('hidden');return; }
+        const cart=JSON.parse(localStorage.getItem('jf_cart')||'[]');
+        const key=`${product.id}:${size.id}:${state.mode}`;
+        const found=cart.find(i=>i.key===key);
+        if(found) found.quantity+=quantity; else cart.push({key,product_id:product.id,size_id:size.id,mode:state.mode,quantity,product_name:product.name,size_label:size.label,image_url:product.image_url,unit_price_pesewas:unitPriceFor(product,quantity).price});
+        localStorage.setItem('jf_cart',JSON.stringify(cart));
+        updateCartChrome();
+        const toast=document.getElementById('cart-toast');toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2200);
+        document.getElementById('cart-drawer').classList.add('open');
+      });
+
+      function updateCartChrome(){const cart=JSON.parse(localStorage.getItem('jf_cart')||'[]');document.getElementById('cart-count').textContent=cart.reduce((n,i)=>n+i.quantity,0);document.getElementById('drawer-items').innerHTML=cart.length?cart.map((i,n)=>`<div class="drawer-item"><span><b>${escapeHtml(i.product_name||'Product')}</b><br><small>${escapeHtml(i.size_label||'Selected size')} · ${i.mode==='bulk'?'Bulk':'Single'}</small></span><span><button class="drawer-close" data-drawer-change="${n}" data-by="-1">−</button><b>${i.quantity}</b><button class="drawer-close" data-drawer-change="${n}" data-by="1">+</button><button class="drawer-close" data-drawer-remove="${n}" title="Remove">×</button></span></div>`).join(''):'<p class="summary-empty">Your cart is empty.</p>'}
+      document.getElementById('open-cart').addEventListener('click',e=>{e.preventDefault();updateCartChrome();document.getElementById('cart-drawer').classList.add('open')});
+      document.getElementById('drawer-close').addEventListener('click',()=>document.getElementById('cart-drawer').classList.remove('open'));
+      document.getElementById('cart-drawer').addEventListener('click',e=>{if(e.target.id==='cart-drawer')e.currentTarget.classList.remove('open')});
+      document.getElementById('drawer-items').addEventListener('click',e=>{const cart=JSON.parse(localStorage.getItem('jf_cart')||'[]'),change=e.target.closest('[data-drawer-change]'),remove=e.target.closest('[data-drawer-remove]');if(change){const i=cart[+change.dataset.drawerChange];i.quantity=Math.max(1,i.quantity+(+change.dataset.by));}if(remove)cart.splice(+remove.dataset.drawerRemove,1);localStorage.setItem('jf_cart',JSON.stringify(cart));updateCartChrome()});
+
+      // ---- Boot ----
+      async function boot() {
+        try {
+          const params = new URLSearchParams(location.search);
+          const paymentRef = params.get('reference') || params.get('trxref');
+          if (params.get('payment') === 'callback' && paymentRef) {
+            const verified = await api.verifyPayment(paymentRef);
+            if (verified.data.paid) {
+              el.flow.classList.add('hidden'); el.confirmation.classList.remove('hidden');
+              el.confirmRef.textContent = paymentRef; el.confirmSummary.textContent = 'Payment received successfully.';
+              return;
+            }
+          }
+          const res = await api.getProducts();
+          const productId = Number(params.get('product'));
+          state.products = productId ? (res.data || []).filter((p) => p.id === productId) : (res.data || []).slice(0, 1);
+          state.products.forEach(p => { if (p.sizes && p.sizes[0]) state.size[p.id]=p.sizes[0].id; });
+          if (state.products[0]) document.querySelector('h1').textContent = state.products[0].name;
+          if (state.mode === 'bulk' && state.products[0] && !state.products[0].bulk_available) state.mode = 'single';
+          renderMode();
+        } catch (err) {
+          el.products.innerHTML =
+            '<p class="summary-empty">Could not load products. Please refresh the page.</p>';
+        }
+      }
+
+      updateCartChrome(); boot();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Jay fooDs — fresh, all-natural fruit juices squeezed daily in Accra, Ghana. Order single bottles or bulk cases for shops, events, offices and schools." />
+  <title>Jay fooDs Ghana | Fresh Fruit Juice, Squeezed in Accra</title>
+  <style>
+    :root {
+      --green:    #1f7a3d;
+      --green-dk: #12351f;
+      --green-lt: #eafaef;
+      --orange:   #f5871f;
+      --orange-dk:#d96f0c;
+      --mango:    #ffc233;
+      --cream:    #fff8ec;
+      --ink:      #16241b;
+      --muted:    #5f7166;
+      --line:     #e6ede8;
+      --card:     #ffffff;
+      --shadow:   0 18px 40px rgba(18, 53, 31, .10);
+      --radius:   18px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: var(--ink); background: var(--cream); line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+    .wrap { width: min(1160px, 92%); margin-inline: auto; }
+    section { padding: 84px 0; }
+    .eyebrow {
+      display: inline-block; font-size: .78rem; font-weight: 700; letter-spacing: 1.4px;
+      text-transform: uppercase; color: var(--orange-dk); background: #fff1df;
+      padding: 6px 14px; border-radius: 999px;
+    }
+    h1, h2, h3 { line-height: 1.15; color: var(--green-dk); }
+    h2.title { font-size: clamp(1.8rem, 4vw, 2.7rem); margin: 14px 0 12px; }
+    .lead { color: var(--muted); font-size: 1.05rem; max-width: 620px; }
+    .center { text-align: center; }
+    .center .lead { margin-inline: auto; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; font-weight: 700;
+      padding: 13px 26px; border-radius: 12px; border: 2px solid transparent;
+      cursor: pointer; font-size: .98rem; transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: var(--green); color: #fff; box-shadow: 0 10px 24px rgba(31,122,61,.28); }
+    .btn-orange  { background: var(--orange); color: #fff; box-shadow: 0 10px 24px rgba(245,135,31,.28); }
+    .btn-ghost   { background: #fff; color: var(--green-dk); border-color: var(--line); }
+    .btn-sm      { padding: 9px 16px; font-size: .85rem; border-radius: 10px; }
+
+    /* ---------- Top announcement ---------- */
+    .topbar {
+      background: var(--green-dk); color: #d9f0e0; text-align: center;
+      font-size: .82rem; padding: 8px 12px; letter-spacing: .3px;
+    }
+    .topbar strong { color: var(--mango); }
+
+    /* ---------- Nav ---------- */
+    header.nav {
+      position: sticky; top: 0; z-index: 50; background: rgba(255,248,236,.9);
+      backdrop-filter: blur(10px); border-bottom: 1px solid var(--line);
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.25rem; color: var(--green-dk); }
+    .brand img.logo { height: 44px; width: auto; display: block; }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a { font-weight: 600; font-size: .95rem; color: var(--ink); }
+    .nav-links a:hover { color: var(--green); }
+    .nav-cta { display: flex; align-items: center; gap: 12px; }
+    .hamburger { display: none; background: none; border: 0; font-size: 1.6rem; cursor: pointer; color: var(--green-dk); }
+
+    @media (max-width: 860px) {
+      .nav-links {
+        position: absolute; top: 68px; left: 0; right: 0; flex-direction: column;
+        background: var(--cream); padding: 18px 6%; gap: 18px; border-bottom: 1px solid var(--line);
+        transform: translateY(-140%); transition: transform .25s ease; box-shadow: var(--shadow);
+      }
+      .nav-links.open { transform: translateY(0); }
+      .hamburger { display: block; }
+      .nav-cta .btn { display: none; }
+    }
+
+    /* ---------- Hero ---------- */
+    .hero { position: relative; overflow: hidden; padding: 70px 0 90px; }
+    .hero::before {
+      content: ""; position: absolute; inset: 0;
+      background:
+        radial-gradient(60% 55% at 85% 15%, rgba(255,194,51,.35), transparent 60%),
+        radial-gradient(50% 50% at 10% 90%, rgba(31,122,61,.16), transparent 60%);
+      z-index: -1;
+    }
+    .hero-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; align-items: center; }
+    .hero h1 { font-size: clamp(2.2rem, 5.4vw, 3.9rem); margin: 18px 0; }
+    .hero h1 .hl { color: var(--orange); }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 26px; }
+    .hero-stats { display: flex; flex-wrap: wrap; gap: 26px; margin-top: 34px; }
+    .hero-stats .stat { display: flex; flex-direction: column; }
+    .hero-stats .stat b { font-size: 1.35rem; color: var(--green-dk); }
+    .hero-stats .stat span { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+
+    .hero-visual { position: relative; display: grid; place-items: center; }
+    .juice-orb {
+      width: min(360px, 78vw); aspect-ratio: 1; border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #fff, var(--mango) 55%, var(--orange) 100%);
+      box-shadow: var(--shadow); display: grid; place-items: center; overflow: hidden;
+      animation: float 6s ease-in-out infinite;
+    }
+    .juice-orb img { width: 100%; height: 100%; object-fit: cover; }
+    .chip {
+      position: absolute; background: #fff; border-radius: 14px; padding: 10px 14px;
+      box-shadow: var(--shadow); font-weight: 700; font-size: .85rem; display: flex; align-items: center; gap: 8px;
+    }
+    .chip.c1 { top: 8%; left: -4%; }
+    .chip.c2 { bottom: 12%; right: -6%; }
+    .chip.c3 { bottom: -2%; left: 12%; }
+    .chip .emo { font-size: 1.2rem; }
+    @keyframes float { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-14px);} }
+    @media (max-width: 860px) { .hero-grid { grid-template-columns: 1fr; } .hero-visual { order: -1; } }
+
+    /* ---------- Rising bubbles (full-page, behind content) ---------- */
+    .bubbles { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+    .bubbles span {
+      position: absolute; bottom: -8vh; border-radius: 50%;
+      box-shadow: inset 0 0 6px rgba(255,255,255,.5);
+      animation-name: rise; animation-timing-function: linear; animation-iteration-count: infinite;
+    }
+    @keyframes rise {
+      0%   { transform: translateY(0) scale(.55); opacity: 0; }
+      12%  { opacity: .8; }
+      88%  { opacity: .7; }
+      100% { transform: translateY(-112vh) scale(1); opacity: 0; }
+    }
+    /* Lift real content above the bubble layer (nav keeps its own sticky z-index) */
+    .topbar, .hero, .marquee, section, footer.site { position: relative; z-index: 1; }
+
+    /* ---------- Scroll reveal ---------- */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.in { opacity: 1; transform: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .bubbles { display: none; }
+      .juice-orb, .marquee-track { animation: none !important; }
+      .reveal { opacity: 1 !important; transform: none !important; transition: none; }
+    }
+
+    /* ---------- Marquee ---------- */
+    .marquee { background: var(--green); color: #eafaef; padding: 16px 0; overflow: hidden; }
+    .marquee-track { display: flex; gap: 44px; white-space: nowrap; animation: scroll 22s linear infinite; font-weight: 700; letter-spacing: .5px; }
+    .marquee-track span { display: inline-flex; align-items: center; gap: 10px; }
+    @keyframes scroll { from { transform: translateX(0);} to { transform: translateX(-50%);} }
+
+    /* ---------- Features ---------- */
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 22px; margin-top: 44px; }
+    .feature {
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 28px 24px; box-shadow: var(--shadow); transition: transform .18s ease;
+    }
+    .feature:hover { transform: translateY(-4px); }
+    .feature .ico {
+      width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center;
+      font-size: 1.5rem; background: var(--green-lt); margin-bottom: 16px;
+    }
+    .feature small { color: var(--orange-dk); font-weight: 700; letter-spacing: .5px; font-size: .72rem; text-transform: uppercase; }
+    .feature h3 { font-size: 1.15rem; margin: 6px 0 8px; }
+    .feature p { color: var(--muted); font-size: .93rem; }
+
+    /* ---------- Menu ---------- */
+    #menu { background: linear-gradient(180deg, #fff 0%, var(--cream) 100%); }
+    .filters { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 26px 0 40px; }
+    .filters button {
+      border: 1px solid var(--line); background: #fff; padding: 9px 18px; border-radius: 999px;
+      font-weight: 600; font-size: .88rem; cursor: pointer; color: var(--green-dk); transition: all .15s ease;
+    }
+    .filters button.active { background: var(--green); color: #fff; border-color: var(--green); }
+    .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; }
+    .product {
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+      overflow: hidden; box-shadow: var(--shadow); display: flex; flex-direction: column;
+      transition: transform .18s ease;
+    }
+    .product:hover { transform: translateY(-5px); }
+    .product .art {
+      height: 190px; display: grid; place-items: center; font-size: 3.6rem; position: relative;
+      background: linear-gradient(135deg, var(--green-lt), #fff2df); overflow: hidden;
+    }
+    .product .art img { width: 100%; height: 100%; object-fit: cover; }
+    .product .tag {
+      position: absolute; top: 12px; left: 12px; background: var(--green-dk); color: #fff;
+      font-size: .68rem; font-weight: 700; letter-spacing: .5px; padding: 5px 10px; border-radius: 999px;
+      text-transform: uppercase;
+    }
+    .product .oos {
+      position: absolute; inset: 0; background: rgba(255,255,255,.7); display: grid; place-items: center;
+      font-weight: 700; color: var(--muted);
+    }
+    .product .body { padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .product .flavour { color: var(--orange-dk); font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .6px; }
+    .product h3 { font-size: 1.15rem; }
+    .product .desc { color: var(--muted); font-size: .88rem; flex: 1; }
+    .product .price-row { display: flex; align-items: baseline; justify-content: space-between; margin-top: 8px; }
+    .product .price { font-size: 1.3rem; font-weight: 800; color: var(--green-dk); }
+    .product .price small { font-size: .78rem; font-weight: 500; color: var(--muted); }
+    .product .bulk { font-size: .78rem; color: var(--green); font-weight: 600; }
+    .product .actions { display: flex; gap: 10px; margin-top: 14px; }
+    .product .actions .btn { flex: 1; justify-content: center; }
+    .menu-loading, .menu-error { text-align: center; color: var(--muted); grid-column: 1 / -1; padding: 40px 0; }
+
+    /* ---------- Steps ---------- */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-top: 44px; }
+    .step { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 34px 24px 24px; box-shadow: var(--shadow); }
+    .step .num {
+      position: absolute; top: -22px; left: 24px; width: 46px; height: 46px; border-radius: 13px;
+      background: var(--orange); color: #fff; font-weight: 800; font-size: 1.2rem; display: grid; place-items: center;
+      box-shadow: 0 8px 18px rgba(245,135,31,.32);
+    }
+    .step h3 { font-size: 1.12rem; margin: 8px 0; }
+    .step p { color: var(--muted); font-size: .92rem; }
+
+    /* ---------- Bulk / B2B ---------- */
+    #bulk { background: var(--green-dk); color: #dff0e5; }
+    #bulk h2.title, #bulk .eyebrow { color: #fff; }
+    #bulk .eyebrow { background: rgba(255,255,255,.12); color: var(--mango); }
+    #bulk .lead { color: #b7d3bf; }
+    .bulk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 22px; margin-top: 44px; }
+    .bulk-card { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: var(--radius); padding: 26px 22px; }
+    .bulk-card small { color: var(--mango); font-weight: 700; font-size: .72rem; letter-spacing: .6px; text-transform: uppercase; }
+    .bulk-card h3 { color: #fff; font-size: 1.12rem; margin: 8px 0; }
+    .bulk-card p { color: #b7d3bf; font-size: .9rem; }
+    .guarantees { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 30px; margin-top: 40px; list-style: none; }
+    .guarantees li { display: flex; align-items: center; gap: 10px; color: #dff0e5; font-weight: 600; }
+    .guarantees li::before { content: "✓"; width: 24px; height: 24px; border-radius: 50%; background: var(--green); color: #fff; display: grid; place-items: center; font-size: .8rem; flex: none; }
+    .bulk-cta { margin-top: 40px; display: flex; flex-wrap: wrap; gap: 14px; }
+
+    /* ---------- About ---------- */
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; }
+    .about-points { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 26px; }
+    .about-points .pt h4 { color: var(--green-dk); font-size: 1rem; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .about-points .pt p { color: var(--muted); font-size: .88rem; }
+    .about-visual { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .about-visual .vcard { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; text-align: center; box-shadow: var(--shadow); }
+    .about-visual .vcard .big { font-size: 2.6rem; }
+    .about-visual .vcard b { display: block; color: var(--green-dk); font-size: 1.4rem; margin-top: 8px; }
+    .about-visual .vcard span { color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .5px; }
+    @media (max-width: 860px) { .about-grid { grid-template-columns: 1fr; } }
+
+    /* ---------- Testimonials ---------- */
+    .tst-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px; margin-top: 44px; }
+    .tst { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow); }
+    .tst .stars { color: var(--mango); letter-spacing: 2px; }
+    .tst p { margin: 12px 0 16px; font-style: italic; color: var(--ink); }
+    .tst .who b { color: var(--green-dk); }
+    .tst .who span { display: block; color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* ---------- FAQ ---------- */
+    .faq { max-width: 760px; margin: 40px auto 0; }
+    .faq details { background: var(--card); border: 1px solid var(--line); border-radius: 14px; margin-bottom: 12px; padding: 0 20px; box-shadow: var(--shadow); }
+    .faq summary { cursor: pointer; font-weight: 700; color: var(--green-dk); padding: 18px 0; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after { content: "+"; font-size: 1.4rem; color: var(--orange); }
+    .faq details[open] summary::after { content: "–"; }
+    .faq details p { color: var(--muted); padding-bottom: 18px; font-size: .93rem; }
+
+    /* ---------- Contact ---------- */
+    .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-top: 44px; }
+    .contact-info { display: grid; gap: 18px; }
+    .info-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+    .info-card small { color: var(--orange-dk); font-weight: 700; letter-spacing: .6px; font-size: .72rem; text-transform: uppercase; }
+    .info-card h4 { color: var(--green-dk); margin: 6px 0 2px; }
+    .info-card p { color: var(--muted); font-size: .92rem; }
+    form.contact { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; box-shadow: var(--shadow); display: grid; gap: 14px; }
+    form.contact label { font-weight: 600; font-size: .8rem; color: var(--green-dk); display: block; margin-bottom: 5px; }
+    form.contact input, form.contact textarea {
+      width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; font-size: .95rem;
+    }
+    form.contact .ok { background: var(--green-lt); color: var(--green-dk); padding: 12px; border-radius: 10px; font-size: .9rem; font-weight: 600; }
+    @media (max-width: 860px) { .contact-grid { grid-template-columns: 1fr; } }
+
+    /* ---------- Footer ---------- */
+    footer.site { background: var(--green-dk); color: #b7d3bf; padding: 44px 0 24px; }
+    .foot-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.35fr; gap: 28px; }
+    footer.site .brand { color: #fff; margin-bottom: 14px; }
+    footer.site p { font-size: .9rem; max-width: 300px; }
+    footer.site h5 { color: #fff; font-size: .82rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+    footer.site ul { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+    footer.site ul a { font-size: .86rem; color: #b7d3bf; }
+    footer.site ul a:hover { color: var(--mango); }
+    .socials { display: flex; gap: 10px; margin-top: 16px; }
+    .socials a { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; background: rgba(255,255,255,.08); font-size: 1.1rem; }
+    .socials a:hover { background: var(--orange); }
+    .foot-bottom { border-top: 1px solid rgba(255,255,255,.12); margin-top: 30px; padding-top: 18px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; font-size: .84rem; }
+    .foot-bottom a { color: var(--mango); }
+    @media (max-width: 860px) { .foot-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 520px) { .foot-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="bubbles" id="bubbles" aria-hidden="true"></div>
+
+  <div class="topbar">🚚 Same-day delivery across Accra for orders before <strong>10:00 AM</strong> &nbsp;•&nbsp; Pay with Mobile Money or cash on delivery</div>
+
+  <!-- ===== NAV ===== -->
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="#top"><img class="logo" src="img/logo-color.png" alt="Jay fooDs" /></a>
+      <nav class="nav-links" id="nav-links">
+        <a href="#menu">Menu</a>
+        <a href="#how">How it works</a>
+        <a href="#bulk">Bulk &amp; Wholesale</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="btn btn-primary btn-sm" href="cart.html">Cart</a>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <span id="top"></span>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">🇬🇭 Pure Refreshment, squeezed to perfection</span>
+        <h1>Fresh, wholesome juice <span class="hl">squeezed daily in Accra</span></h1>
+        <p class="lead">Jay fooDs presses premium, 100% natural juices from local sweet oranges, watermelon, pineapple and wholesome blends — no added sugar, no preservatives. Order a single bottle or a bulk case for your shop, office or event.</p>
+        <div class="hero-actions">
+          <a class="btn btn-orange" href="order.html">Order now →</a>
+          <a class="btn btn-ghost" href="#menu">Explore the menu</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><b>5.0 ★</b><span>Customer rating</span></div>
+          <div class="stat"><b>8+</b><span>Fresh flavours</span></div>
+          <div class="stat"><b>Accra</b><span>Same-day delivery</span></div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="juice-orb"><img src="img/orange-juice.jpg" alt="Jay fooDs freshly squeezed orange juice" /></div>
+        <div class="chip c1"><span class="emo">🍊</span> Preservative-free</div>
+        <div class="chip c2"><span class="emo">🍍</span> 100% natural</div>
+        <div class="chip c3"><span class="emo">🚚</span> Delivered fresh</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MARQUEE ===== -->
+  <div class="marquee">
+    <div class="marquee-track">
+      <span>🍊 Orange Juice</span><span>🍉 Watermelon Juice</span><span>🍍 Orapine Blend</span>
+      <span>🥥 Detox Delight</span><span>🌿 100% Natural</span><span>🚚 Fresh Daily</span>
+      <span>🍊 Orange Juice</span><span>🍉 Watermelon Juice</span><span>🍍 Orapine Blend</span>
+      <span>🥥 Detox Delight</span><span>🌿 100% Natural</span><span>🚚 Fresh Daily</span>
+    </div>
+  </div>
+
+  <!-- ===== FEATURES ===== -->
+  <section id="why">
+    <div class="wrap center">
+      <span class="eyebrow">Why Accra loves Jay fooDs</span>
+      <h2 class="title">Uncompromising freshness in every bottle</h2>
+      <p class="lead">Built on simple, healthy, high-quality refreshment. Here's what makes ordering from us effortless.</p>
+      <div class="feature-grid" style="text-align:left">
+        <div class="feature">
+          <div class="ico">🍃</div><small>Jay fooDs quality</small>
+          <h3>Fresh taste</h3>
+          <p>Pressed daily from high-quality Ghanaian farms to lock in flavour and nutrients — never from concentrate.</p>
+        </div>
+        <div class="feature">
+          <div class="ico">⚡</div><small>Jay fooDs quality</small>
+          <h3>Simple ordering</h3>
+          <p>Pick your juices, add your details, and place the order in under a minute. No accounts, no friction.</p>
+        </div>
+        <div class="feature">
+          <div class="ico">💳</div><small>Jay fooDs quality</small>
+          <h3>Easy payment</h3>
+          <p>Mobile Money, bank transfer, or cash on delivery. Bulk buyers get instant online invoicing.</p>
+        </div>
+        <div class="feature">
+          <div class="ico">🚚</div><small>Jay fooDs quality</small>
+          <h3>Reliable delivery</h3>
+          <p>Prompt distribution to homes, offices, shops, supermarkets and events across Greater Accra.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== MENU (hydrated from API) ===== -->
+  <section id="menu">
+    <div class="wrap center">
+      <span class="eyebrow">Explore our selections</span>
+      <h2 class="title">Freshness squeezed to perfection</h2>
+      <p class="lead">No preservatives, artificial sweeteners or colourings — just pure, wholesome fruit juice bottled and sealed in Accra.</p>
+      <div class="filters" id="filters">
+        <button class="active" data-filter="all">All selections</button>
+        <button data-filter="500ml">500ml bottles</button>
+        <button data-filter="330ml">330ml bottles</button>
+        <button data-filter="bulk">Bulk deals</button>
+      </div>
+      <div class="menu-grid" id="menu-grid">
+        <p class="menu-loading">Preparing fresh selections…</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section id="how">
+    <div class="wrap center">
+      <span class="eyebrow">Community simplicity</span>
+      <h2 class="title">How simple ordering is</h2>
+      <p class="lead">We value your time — quick, direct and built around your day.</p>
+      <div class="steps" style="text-align:left">
+        <div class="step"><div class="num">1</div><h3>Choose your juice</h3><p>Browse our premium catalogue of orange, mango, pineapple, sobolo and blended juices, and pick what you love.</p></div>
+        <div class="step"><div class="num">2</div><h3>Place your order</h3><p>Select single bottles or bulk cases, enter your delivery details, and submit — you'll get a tracking reference instantly.</p></div>
+        <div class="step"><div class="num">3</div><h3>Pay &amp; receive</h3><p>Pay by Mobile Money, transfer or cash on delivery, then relax while we deliver fresh to your door across Accra.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== BULK / B2B ===== -->
+  <section id="bulk">
+    <div class="wrap">
+      <div class="center">
+        <span class="eyebrow">Distribution &amp; B2B partnerships</span>
+        <h2 class="title">Need Jay fooDs juice in bulk?</h2>
+        <p class="lead">We supply premium fresh juice for retail shops, event planners, offices, schools, churches and hotels looking for a reliable beverage partner in Accra.</p>
+      </div>
+      <div class="bulk-grid">
+        <div class="bulk-card"><small>Festive</small><h3>Catering &amp; private events</h3><p>Weddings, funerals, birthdays and anniversaries. Bulk cases and dispensers keep your guests fully refreshed.</p></div>
+        <div class="bulk-card"><small>Wholesale distribution</small><h3>Retailers &amp; supermarkets</h3><p>Convenience stores, minimarts and supermarkets across Accra. Durable cases with clear expiry stamps.</p></div>
+        <div class="bulk-card"><small>Weekly retainers</small><h3>Churches, schools &amp; offices</h3><p>Wholesome morning refreshments delivered on an accurate weekly schedule so your team stays healthy.</p></div>
+      </div>
+      <ul class="guarantees">
+        <li>Cold-storage transport ready</li>
+        <li>Direct bank or MoMo invoicing</li>
+        <li>Verified health compliance</li>
+        <li>Accurate delivery schedules</li>
+        <li>Tiered wholesale discounts</li>
+        <li>Custom catering dispensers</li>
+      </ul>
+      <div class="bulk-cta">
+        <a class="btn btn-orange" href="order.html">Start a bulk order →</a>
+        <a class="btn btn-ghost" href="#contact">Talk to our sales team</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ABOUT ===== -->
+  <section id="about">
+    <div class="wrap about-grid">
+      <div>
+        <span class="eyebrow">About Jay fooDs</span>
+        <h2 class="title">Sustaining Accra with fresh, wholesome fruit drinks</h2>
+        <p class="lead">Jay fooDs is a fruit-juice company based in Accra, Ghana, focused on refreshing products you can enjoy at home, work, school, events and business locations. Our goal is simple: easy ordering, convenient payment, and reliable delivery for every customer.</p>
+        <div class="about-points">
+          <div class="pt"><h4>🧼 Hygienic production</h4><p>Bottled and sealed under strict hygiene protocols in Accra.</p></div>
+          <div class="pt"><h4>🌱 100% Ghana farms</h4><p>Supporting local growers with fresh, seasonal fruit.</p></div>
+          <div class="pt"><h4>🕗 Prompt deliveries</h4><p>Connecting families, caterers, schools and offices daily.</p></div>
+          <div class="pt"><h4>❤️ Community pride</h4><p>A local team delivering genuine goodness and convenience.</p></div>
+        </div>
+      </div>
+      <div class="about-visual">
+        <div class="vcard"><div class="big">🍊</div><b>100%</b><span>Local sourced</span></div>
+        <div class="vcard"><div class="big">🏭</div><b>Daily</b><span>Fresh pressed</span></div>
+        <div class="vcard"><div class="big">🚚</div><b>Swift</b><span>Accra logistics</span></div>
+        <div class="vcard"><div class="big">🥛</div><b>Sealed</b><span>Genuinely pure</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TESTIMONIALS ===== -->
+  <section id="reviews" style="background:linear-gradient(180deg,#fff,var(--cream))">
+    <div class="wrap center">
+      <span class="eyebrow">Real testimonials</span>
+      <h2 class="title">Loved by our customers</h2>
+      <p class="lead">From local business owners to event organisers and daily juice lovers across Accra.</p>
+      <div class="tst-grid" style="text-align:left">
+        <div class="tst"><div class="stars">★★★★★</div><p>“Your delivery process is simple and I really love the payment method. Thanks!”</p><div class="who"><b>Nathan Fritz</b><span>Verified customer • Accra</span></div></div>
+        <div class="tst"><div class="stars">★★★★★</div><p>“Great job guys, keep it up. The mango is my favourite.”</p><div class="who"><b>Duku Prince</b><span>Verified local guide • Accra</span></div></div>
+        <div class="tst"><div class="stars">★★★★★</div><p>“Nice juice and always delivered fresh to the shop on time.”</p><div class="who"><b>Tetteh</b><span>Verified wholesaler • Accra</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section id="faq">
+    <div class="wrap center">
+      <span class="eyebrow">Have questions? We have answers</span>
+      <h2 class="title">Frequently asked questions</h2>
+      <div class="faq" style="text-align:left">
+        <details open><summary>How long does delivery take inside Accra?</summary><p>For standard orders placed before 10:00 AM, we offer same-day delivery to your home, office or shop. Orders after 10:00 AM are scheduled for the next morning. Custom event bundles need 48 hours' notice for cold-chain planning.</p></details>
+        <details><summary>How can I track my order?</summary><p>Every order gets a reference code like <b>JF-20260711-XXXXXX</b> when you check out. Keep it handy — our team will confirm your delivery window by phone.</p></details>
+        <details><summary>What payment methods do you accept?</summary><p>Mobile Money, direct bank transfer, and cash on delivery. Bulk and wholesale buyers receive a formatted invoice.</p></details>
+        <details><summary>Are the juices natural, and how long do they keep?</summary><p>Yes — 100% natural with no added sweeteners, colourings or chemical preservatives. Keep refrigerated and consume within the printed shelf life for best taste.</p></details>
+        <details><summary>Do you offer special rates for shops, gyms and schools?</summary><p>Absolutely. Bulk orders unlock tiered per-bottle pricing automatically once you reach a product's minimum quantity. Reach out for recurring weekly retainer rates.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CONTACT ===== -->
+  <section id="contact" style="background:var(--green-lt)">
+    <div class="wrap">
+      <div class="center">
+        <span class="eyebrow">Find our office</span>
+        <h2 class="title">Get in touch with Jay fooDs</h2>
+        <p class="lead">Interested in wholesale supply, event dispensers, or a retail order? Reach out and we'll respond quickly.</p>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-info">
+          <div class="info-card"><small>Headquarters</small><h4>Jay fooDs Ghana</h4><p>Accra, Ghana — delivery across the Greater Accra region.</p></div>
+          <div class="info-card"><small>Direct hotline</small><h4><a href="tel:+233246328461" style="color:inherit">0246 328 461</a></h4><p><a href="https://wa.me/233246328461" target="_blank" rel="noopener" style="color:var(--green);font-weight:600">Chat on WhatsApp →</a></p></div>
+          <div class="info-card"><small>Opening hours</small><h4>Monday to Sunday</h4><p>8:30am – 6:00pm, including weekends.</p></div>
+        </div>
+        <form class="contact" id="contact-form">
+          <div>
+            <label for="c-name">Your name *</label>
+            <input id="c-name" name="name" required />
+          </div>
+          <div>
+            <label for="c-phone">Phone number *</label>
+            <input id="c-phone" name="phone" inputmode="tel" required />
+          </div>
+          <div>
+            <label for="c-email">Email (optional)</label>
+            <input id="c-email" name="email" type="email" />
+          </div>
+          <div>
+            <label for="c-msg">Message / catering requirements *</label>
+            <textarea id="c-msg" name="message" rows="4" required></textarea>
+          </div>
+          <button class="btn btn-primary" type="submit" style="justify-content:center">Send message</button>
+          <div class="ok" id="contact-ok" style="display:none">✅ Thanks! We've noted your request and will call you back shortly.</div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="site">
+    <div class="wrap">
+      <div class="foot-grid">
+        <div>
+          <img src="img/logo-white.png" alt="Jay fooDs" style="height:52px;width:auto;margin-bottom:6px" />
+          <p style="font-style:italic;color:var(--mango);margin-bottom:12px">Pure Refreshment, squeezed to perfection.</p>
+          <p>Fresh, 100% natural fruit juice squeezed daily in Accra, Ghana. Delivered to homes, offices, shops and events across the Greater Accra region.</p>
+          <div class="socials">
+            <a href="#" aria-label="Facebook">📘</a>
+            <a href="#" aria-label="Instagram">📸</a>
+            <a href="https://wa.me/233246328461" target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>
+            <a href="tel:+233246328461" aria-label="Call">📞</a>
+          </div>
+        </div>
+        <div>
+          <h5>Menu</h5>
+          <ul>
+            <li><a href="#menu">All selections</a></li>
+            <li><a href="#menu">500ml bottles</a></li>
+            <li><a href="#menu">330ml bottles</a></li>
+            <li><a href="#bulk">Bulk deals</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Company</h5>
+          <ul>
+            <li><a href="#about">About us</a></li>
+            <li><a href="#how">How it works</a></li>
+            <li><a href="#reviews">Testimonials</a></li>
+            <li><a href="#bulk">Wholesale &amp; B2B</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Support</h5>
+          <ul>
+            <li><a href="#faq">FAQ</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="order.html">Place an order</a></li>
+            <li><a href="#contact">Track delivery</a></li>
+            <li><a href="admin/login.html">Staff login</a></li>
+            <li><a href="privacy.html">Privacy policy</a></li>
+            <li><a href="cookies.html">Cookie policy</a></li>
+            <li><a href="terms.html">Terms of use</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <span>© <span id="year"></span> Jay fooDs Ghana. All rights reserved. Made with 🧡 in Accra.</span>
+        <span>Site reference: <a href="https://www.princecaleb.dev" target="_blank" rel="noopener">princecaleb.dev</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      // ---- Rising bubbles ----
+      function initBubbles() {
+        const layer = document.getElementById('bubbles');
+        if (!layer || reduceMotion) return;
+        const tints = [
+          'rgba(245,135,31,.32)',  // orange
+          'rgba(255,194,51,.34)',  // mango
+          'rgba(31,122,61,.22)',   // green
+          'rgba(255,255,255,.55)', // white
+        ];
+        const count = window.innerWidth < 640 ? 14 : 24;
+        for (let i = 0; i < count; i++) {
+          const b = document.createElement('span');
+          const size = Math.round(8 + Math.random() * 34);
+          const dur = 9 + Math.random() * 13;
+          const tint = tints[Math.floor(Math.random() * tints.length)];
+          b.style.width = b.style.height = size + 'px';
+          b.style.left = (Math.random() * 100).toFixed(2) + '%';
+          b.style.animationDuration = dur.toFixed(2) + 's';
+          b.style.animationDelay = (-Math.random() * dur).toFixed(2) + 's';
+          b.style.background = 'radial-gradient(circle at 32% 30%, rgba(255,255,255,.9), ' + tint + ')';
+          layer.appendChild(b);
+        }
+      }
+      initBubbles();
+
+      // ---- Reveal on scroll ----
+      function initReveal() {
+        const els = document.querySelectorAll(
+          '.feature, .step, .bulk-card, .tst, .about-points .pt, .about-visual .vcard, .info-card'
+        );
+        if (reduceMotion || !('IntersectionObserver' in window)) {
+          els.forEach((el) => el.classList.add('in'));
+          return;
+        }
+        els.forEach((el) => el.classList.add('reveal'));
+        const show = (el) => el.classList.add('in');
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) { show(entry.target); io.unobserve(entry.target); }
+          });
+        }, { threshold: 0.12 });
+        els.forEach((el) => {
+          // Reveal anything already on-screen immediately; observe the rest.
+          if (el.getBoundingClientRect().top < window.innerHeight * 0.92) show(el);
+          else io.observe(el);
+        });
+        // Safety net: never leave content hidden if the observer misbehaves.
+        setTimeout(() => els.forEach(show), 2500);
+      }
+      initReveal();
+
+      // ---- Mobile nav ----
+      const hamburger = document.getElementById('hamburger');
+      const navLinks = document.getElementById('nav-links');
+      hamburger.addEventListener('click', () => navLinks.classList.toggle('open'));
+      navLinks.addEventListener('click', (e) => {
+        if (e.target.tagName === 'A') navLinks.classList.remove('open');
+      });
+
+      // ---- Footer year ----
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      // ---- Contact form (client-side acknowledgement) ----
+      const cForm = document.getElementById('contact-form');
+      const cOk = document.getElementById('contact-ok');
+      cForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!cForm.checkValidity()) { cForm.reportValidity(); return; }
+        const btn = cForm.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        try {
+          await api.sendMessage({
+            name: document.getElementById('c-name').value.trim(),
+            phone: document.getElementById('c-phone').value.trim(),
+            email: document.getElementById('c-email').value.trim(),
+            message: document.getElementById('c-msg').value.trim(),
+          });
+          cOk.textContent = "✅ Thanks! We've received your message and will call you back shortly.";
+          cOk.style.display = 'block';
+          cForm.reset();
+        } catch (err) {
+          cOk.style.display = 'block';
+          cOk.style.background = '#fdecea';
+          cOk.style.color = '#c0392b';
+          cOk.textContent = '⚠️ ' + (err.message || 'Could not send. Please call us instead.');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      // ---- Menu hydration ----
+      const grid = document.getElementById('filters');
+      const menuGrid = document.getElementById('menu-grid');
+      let products = [];
+      let activeFilter = 'all';
+
+      const cedis = (p) => 'GH₵' + (p / 100).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
+      function sizeOf(p) {
+        if (/330ml/i.test(p.unit_label)) return '330ml';
+        if (/500ml/i.test(p.unit_label)) return '500ml';
+        return 'other';
+      }
+
+      function matches(p) {
+        if (activeFilter === 'all') return true;
+        if (activeFilter === 'bulk') return p.bulk_available;
+        return sizeOf(p) === activeFilter;
+      }
+
+      function render() {
+        const list = products.filter(matches);
+        if (list.length === 0) {
+          menuGrid.innerHTML = '<p class="menu-error">No products in this category yet.</p>';
+          return;
+        }
+        menuGrid.innerHTML = list.map((p) => {
+          const showBulk = (activeFilter === 'bulk') && p.bulk_available;
+          const tag = showBulk ? 'Bulk deal' : esc(p.flavour);
+          const priceMain = showBulk && p.bulk_price_pesewas != null ? p.bulk_price_pesewas : p.unit_price_pesewas;
+          const bulkNote = p.bulk_available && p.bulk_price_pesewas != null
+            ? `<div class="bulk">Bulk: ${cedis(p.bulk_price_pesewas)} each from ${p.bulk_min_quantity}+</div>` : '';
+          const oos = p.in_stock ? '' : '<div class="oos">Out of stock</div>';
+          const art = p.image_url
+            ? `<img src="${esc(p.image_url)}" alt="${esc(p.name)}" />`
+            : '🧃';
+          return `
+            <article class="product">
+              <div class="art">${art}<span class="tag">${tag}</span>${oos}</div>
+              <div class="body">
+                <span class="flavour">${esc(p.flavour)}</span>
+                <h3>${esc(p.name)}</h3>
+                <p class="desc">${esc(p.description)}</p>
+                <div class="price-row">
+                  <span class="price">${cedis(priceMain)} <small>/ ${esc(p.unit_label)}</small></span>
+                </div>
+                ${bulkNote}
+                <div class="actions">
+                  <a class="btn btn-primary btn-sm" href="order.html?product=${p.id}">Order</a>
+                  ${p.bulk_available ? `<a class="btn btn-ghost btn-sm" href="order.html?product=${p.id}&amp;mode=bulk">Bulk order</a>` : ''}
+                </div>
+              </div>
+            </article>`;
+        }).join('');
+      }
+
+      grid.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-filter]');
+        if (!btn) return;
+        activeFilter = btn.dataset.filter;
+        grid.querySelectorAll('button').forEach((b) => b.classList.toggle('active', b === btn));
+        render();
+      });
+
+      async function boot() {
+        try {
+          const res = await api.getProducts();
+          products = res.data || [];
+          render();
+        } catch (err) {
+          menuGrid.innerHTML = '<p class="menu-error">Could not load the menu right now. Please refresh, or <a href="order.html">visit the order page</a>.</p>';
+        }
+      }
+      boot();
+    })();
+  </script>
+</body>
+</html>
