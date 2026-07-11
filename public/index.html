@@ -604,6 +604,8 @@
       async function hydrateSiteContent() {
         try {
           const { data:c } = await api.getSiteContent();
+          const announcement=document.querySelector('.topbar');
+          if(announcement){announcement.hidden=String(c.announcement_active)!=='1';announcement.innerHTML='';announcement.append(document.createTextNode((c.announcement_before||'')+' '));const time=document.createElement('strong');time.textContent=c.announcement_time||'';announcement.append(time,document.createTextNode('  '+(c.announcement_after||'')));}
           const bindings = {
             '.hero .eyebrow':'hero_eyebrow','.hero h1':'hero_heading','.hero .lead':'hero_body',
             '#why .eyebrow':'why_eyebrow','#why .title':'why_heading','#why > .wrap > .lead':'why_body',

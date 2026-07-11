@@ -445,12 +445,12 @@
   // ---------------------------------------------------------------------------
   async function renderContent() {
     const { data } = await api.content();
-    const labels = { hero:'Hero', features:'Why choose us', menu:'Product menu', ordering:'How it works', bulk:'Bulk orders', about:'About', reviews:'Reviews', faq:'FAQ', contact:'Contact details', footer:'Footer & social links' };
+    const labels = { announcement:'Header announcement', hero:'Hero', features:'Why choose us', menu:'Product menu', ordering:'How it works', bulk:'Bulk orders', about:'About', reviews:'Reviews', faq:'FAQ', contact:'Contact details', footer:'Footer & social links' };
     const groups = Object.entries(data.groups).map(([group, fields]) => `
       <div class="panel content-group">
         <div class="panel-head"><h2>${esc(labels[group] || group)}</h2></div>
         <div class="panel-body" style="padding:20px">
-          ${Object.entries(fields).map(([key, meta]) => `<div class="field"><label>${esc(meta[0])}</label>${meta[2] === 'textarea' ? `<textarea name="${esc(key)}" rows="3">${esc(data.values[key] || '')}</textarea>` : `<input name="${esc(key)}" type="${meta[2] === 'url' ? 'url' : 'text'}" value="${esc(data.values[key] || '')}" />`}</div>`).join('')}
+          ${Object.entries(fields).map(([key, meta]) => `<div class="field">${meta[2] === 'checkbox' ? `<input type="hidden" name="${esc(key)}" value="0"><label class="checkline"><input name="${esc(key)}" type="checkbox" value="1" ${String(data.values[key])==='1'?'checked':''}> ${esc(meta[0])}</label>` : `<label>${esc(meta[0])}</label>${meta[2] === 'textarea' ? `<textarea name="${esc(key)}" rows="3">${esc(data.values[key] || '')}</textarea>` : `<input name="${esc(key)}" type="${meta[2] === 'url' ? 'url' : 'text'}" value="${esc(data.values[key] || '')}" />`}`}</div>`).join('')}
         </div>
       </div>`).join('');
     view.innerHTML = `<div class="form-error" id="content-error" style="display:none"></div><div class="form-ok" id="content-ok" style="display:none">Website content updated.</div><form id="content-form"><div class="content-grid">${groups}</div><div class="content-save"><button class="btn btn-primary" type="submit">Save all website content</button></div></form>`;

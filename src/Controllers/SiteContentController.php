@@ -9,6 +9,12 @@ final class SiteContentController
     public static function definitions(): array
     {
         return [
+            'announcement' => [
+                'announcement_active'=>['Show announcement bar','1','checkbox'],
+                'announcement_before'=>['Text before highlighted time','🚚 Same-day delivery across Accra for orders before','text'],
+                'announcement_time'=>['Highlighted time','10:00 AM','text'],
+                'announcement_after'=>['Text after highlighted time','• Pay with Mobile Money or cash on delivery','text'],
+            ],
             'hero' => [
                 'hero_eyebrow'=>['Hero eyebrow','Pure Refreshment, squeezed to perfection','text'],
                 'hero_heading'=>['Hero heading','Fresh, wholesome juice squeezed daily in Accra','text'],
