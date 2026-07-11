@@ -191,7 +191,7 @@
     const { data } = await api.products();
     productCache = data;
     const rows = data.length ? data.map((p) => `
-      <tr>
+      <tr data-product-row data-active="${p.is_active ? 1 : 0}" data-stock="${Math.min(...(p.sizes || []).map(s=>s.stock_quantity))}">
         <td>
           <div class="prod-cell">
             ${p.image_url ? `<img class="pthumb" src="${esc(p.image_url)}" alt="" />` : '<span class="pthumb ph">🧃</span>'}
@@ -220,6 +220,7 @@
           <h2>${data.length} product${data.length === 1 ? '' : 's'}</h2>
           <button class="btn btn-primary btn-sm" id="add-product">+ Add product</button>
         </div>
+        <div class="product-tools"><input id="product-search" type="search" placeholder="Search product, flavour or SKU"><select id="product-filter"><option value="all">All products</option><option value="low">Low stock (10 or fewer)</option><option value="out">Out of stock</option><option value="active">Active products</option><option value="hidden">Hidden products</option></select></div>
         <div class="panel-body table-scroll">
           <table class="data">
             <thead><tr><th>Product</th><th>Unit</th><th>Price</th><th>Bulk</th><th>Stock</th><th>Status</th><th></th></tr></thead>
@@ -229,6 +230,8 @@
       </div>`;
 
     $('#add-product').addEventListener('click', () => openProductModal(null));
+    const filterProducts=()=>{const q=$('#product-search').value.trim().toLowerCase(),filter=$('#product-filter').value;view.querySelectorAll('[data-product-row]').forEach((row,i)=>{const p=data[i],stock=+row.dataset.stock,matchText=!q||[p.name,p.flavour,p.sku].some(v=>String(v||'').toLowerCase().includes(q)),matchFilter=filter==='all'||filter==='low'&&stock<=10||filter==='out'&&stock===0||filter==='active'&&row.dataset.active==='1'||filter==='hidden'&&row.dataset.active==='0';row.hidden=!(matchText&&matchFilter)})};
+    $('#product-search').addEventListener('input',filterProducts);$('#product-filter').addEventListener('change',filterProducts);
     view.querySelectorAll('[data-edit]').forEach((b) =>
       b.addEventListener('click', () => openProductModal(productCache.find((p) => p.id === +b.dataset.edit))));
     view.querySelectorAll('[data-del]').forEach((b) =>
