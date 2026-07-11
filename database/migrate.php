@@ -85,6 +85,7 @@ if (!in_array('size_id', $itemCols, true)) {
     echo "[migrate] Added order_items.size_id\n";
 }
 $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_payment_reference ON orders(payment_reference) WHERE payment_reference != ''");
+$pdo->exec("INSERT INTO order_status_history(order_id,status,note,created_at) SELECT o.id,o.status,'Existing order',o.created_at FROM orders o WHERE NOT EXISTS(SELECT 1 FROM order_status_history h WHERE h.order_id=o.id)");
 
 $pdo->exec(
     "INSERT INTO product_sizes(product_id,label,unit_price_pesewas,stock_quantity,bulk_min_quantity,bulk_price_pesewas)

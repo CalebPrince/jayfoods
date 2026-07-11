@@ -399,6 +399,7 @@
       <div class="detail-row" style="font-weight:800;border-bottom:0"><span>Grand total</span><span>${cedis(o.total_pesewas)}</span></div>
       <div class="field" style="margin-top:16px"><label>Update status</label><select id="om-status">${options}</select></div>
       <div class="field"><label>Private staff notes</label><textarea id="om-admin-notes" rows="4" maxlength="5000" placeholder="Delivery follow-up, payment checks or internal instructions">${esc(o.admin_notes||'')}</textarea><div class="hint">Only administrators can see these notes.</div></div>
+      <div style="margin:16px 0 6px;font-weight:700;color:var(--green-dk)">Status history</div>${(o.history||[]).map(h=>`<div class="detail-row"><span>${statusPill(h.status)} ${esc(h.note||'')}</span><span class="sub">${fmtDate(h.created_at)}</span></div>`).join('')}
     `, [
       button('Close', 'btn-ghost', closeModal),
       button('Print invoice', 'btn-ghost', () => printInvoice(o)),

@@ -232,6 +232,7 @@ final class OrderController
             ]);
 
             $orderId = (int) $this->db->lastInsertId();
+            $history=$this->db->prepare('INSERT INTO order_status_history(order_id,status,note) VALUES(:id,:status,:note)');$history->execute([':id'=>$orderId,':status'=>'pending',':note'=>'Order placed']);
 
             $itemStmt = $this->db->prepare(
                 'INSERT INTO order_items
@@ -331,6 +332,7 @@ final class OrderController
               WHERE order_id = :order_id'
         );
         $itemStmt->execute([':order_id' => (int) $order['id']]);
+        $historyStmt=$this->db->prepare('SELECT status,note,created_at FROM order_status_history WHERE order_id=:id ORDER BY created_at,id');$historyStmt->execute([':id'=>(int)$order['id']]);
 
         Response::json([
             'data' => [
@@ -356,6 +358,7 @@ final class OrderController
                         'line_total_pesewas' => (int) $i['line_total_pesewas'],
                     ];
                 }, $itemStmt->fetchAll()),
+                'history'          => $historyStmt->fetchAll(),
             ],
         ]);
     }

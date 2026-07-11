@@ -81,6 +81,7 @@ final class AdminOrderController
                FROM order_items WHERE order_id = :id'
         );
         $items->execute([':id' => $id]);
+        $history=$this->db->prepare('SELECT status,note,created_at FROM order_status_history WHERE order_id=:id ORDER BY created_at,id');$history->execute([':id'=>$id]);
 
         Response::json([
             'data' => [
@@ -114,6 +115,7 @@ final class AdminOrderController
                         'line_total_pesewas' => (int) $i['line_total_pesewas'],
                     ];
                 }, $items->fetchAll()),
+                'history'          => $history->fetchAll(),
             ],
         ]);
     }
@@ -138,6 +140,8 @@ final class AdminOrderController
 
         $update = $this->db->prepare('UPDATE orders SET status = :status WHERE id = :id');
         $update->execute([':status' => $status, ':id' => $id]);
+
+        if($order['status']!==$status){$history=$this->db->prepare('INSERT INTO order_status_history(order_id,status,note) VALUES(:id,:status,:note)');$history->execute([':id'=>$id,':status'=>$status,':note'=>'Status updated by staff']);}
 
         if($status==='cancelled')Inventory::releaseOrder($id);
 

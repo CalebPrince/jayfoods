@@ -114,6 +114,9 @@ CREATE TABLE IF NOT EXISTS order_items (
 
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items (order_id);
 
+CREATE TABLE IF NOT EXISTS order_status_history (id INTEGER PRIMARY KEY AUTOINCREMENT,order_id INTEGER NOT NULL,status TEXT NOT NULL,note TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT (datetime('now')),FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE);
+CREATE INDEX IF NOT EXISTS idx_order_status_history_order ON order_status_history(order_id,created_at);
+
 -- ---------------------------------------------------------------------------
 -- Admin users for the control center. Passwords are bcrypt hashes; the first
 -- account is seeded by database/migrate.php (which needs PHP's password_hash).
