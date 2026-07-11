@@ -140,6 +140,12 @@
       { ic: '⚠', num: data.low_stock_sizes, lbl: 'Low-stock sizes' },
       { ic: '⌛', num: data.reserved_orders, lbl: 'Stock reservations' },
     ];
+    cards.push(
+      { ic: '☀', num: cedis(data.sales_today_pesewas), lbl: "Today's paid sales" },
+      { ic: '7', num: cedis(data.sales_7_days_pesewas), lbl: 'Paid sales · 7 days' },
+      { ic: '30', num: cedis(data.sales_30_days_pesewas), lbl: 'Paid sales · 30 days' },
+      { ic: 'Ø', num: cedis(data.average_order_pesewas), lbl: 'Average paid order' },
+    );
     const recent = data.recent_orders.length
       ? data.recent_orders.map((o) => `
           <tr>
@@ -153,9 +159,14 @@
           </tr>`).join('')
       : '<tr><td colspan="7" class="empty">No orders yet.</td></tr>';
 
+    const topProducts = data.top_products.length ? data.top_products.map((p,i)=>`<tr><td>${i+1}</td><td class="prod-name">${esc(p.name)}</td><td>${p.units}</td><td>${cedis(p.sales_pesewas)}</td></tr>`).join('') : '<tr><td colspan="4" class="empty">Paid sales will appear here.</td></tr>';
     view.innerHTML = `
       <div class="stat-grid">
         ${cards.map((c) => `<div class="stat"><div class="ic">${c.ic}</div><div class="num">${esc(String(c.num))}</div><div class="lbl">${c.lbl}</div></div>`).join('')}
+      </div>
+      <div class="panel analytics-panel">
+        <div class="panel-head"><h2>Best-selling products</h2><span class="sub">Paid, non-cancelled orders</span></div>
+        <div class="panel-body table-scroll"><table class="data"><thead><tr><th>#</th><th>Product</th><th>Units sold</th><th>Sales</th></tr></thead><tbody>${topProducts}</tbody></table></div>
       </div>
       <div class="panel">
         <div class="panel-head"><h2>Recent orders</h2><a class="btn btn-ghost btn-sm" href="#/orders">View all</a></div>

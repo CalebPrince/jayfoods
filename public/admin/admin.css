@@ -91,6 +91,7 @@ button { font: inherit; cursor: pointer; }
 
 /* ---------- Cards & stats ---------- */
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; margin-bottom: 26px; }
+.analytics-panel{margin-bottom:26px}
 .stat { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 20px; box-shadow: var(--shadow); }
 .stat .ic { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
