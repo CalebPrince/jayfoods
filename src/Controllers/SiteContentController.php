@@ -48,8 +48,9 @@ final class SiteContentController
             ],
             'contact' => [
                 'contact_eyebrow'=>['Eyebrow','Find our office','text'],'contact_heading'=>['Heading','Get in touch with Jay fooDs','text'],'contact_body'=>['Body',"Interested in wholesale supply, event dispensers, or a retail order? Reach out and we'll respond quickly.",'textarea'],
-                'contact_address'=>['Address','Accra, Ghana — delivery across the Greater Accra region.','textarea'],'opening_hours'=>['Opening hours','8:30am – 6:00pm, including weekends.','text'],
-                'telephone_number'=>['Telephone number','+233246328461','tel'],'telephone_display'=>['Displayed telephone','0246 328 461','text'],'whatsapp_number'=>['WhatsApp number','233246328461','tel'],
+                'headquarters_label'=>['Headquarters label','Headquarters','text'],'headquarters_name'=>['Headquarters name','Jay fooDs Ghana','text'],'contact_address'=>['Headquarters address','Accra, Ghana — delivery across the Greater Accra region.','textarea'],
+                'hotline_label'=>['Hotline label','Direct hotline','text'],'telephone_number'=>['Telephone link number','+233246328461','tel'],'telephone_display'=>['Displayed telephone','0246 328 461','text'],'whatsapp_number'=>['WhatsApp number','233246328461','tel'],'whatsapp_link_text'=>['WhatsApp link text','Chat on WhatsApp →','text'],
+                'opening_label'=>['Opening-hours label','Opening hours','text'],'opening_days'=>['Opening days','Monday to Sunday','text'],'opening_hours'=>['Opening-hours text','8:30am – 6:00pm, including weekends.','text'],
             ],
             'footer' => [
                 'footer_tagline'=>['Tagline','Pure Refreshment, squeezed to perfection.','text'],'footer_body'=>['Body','Fresh, 100% natural fruit juice squeezed daily in Accra, Ghana. Delivered to homes, offices, shops and events across the Greater Accra region.','textarea'],
