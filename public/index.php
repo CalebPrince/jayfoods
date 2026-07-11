@@ -104,6 +104,7 @@ $router->patch('/api/v1/admin/products/{id}/bulk', static fn(array $p) => $admin
 $router->get('/api/v1/admin/orders', static fn(array $p) => $adminOrders->index());
 $router->get('/api/v1/admin/orders/{id}', static fn(array $p) => $adminOrders->show((int) $p['id']));
 $router->patch('/api/v1/admin/orders/{id}', static fn(array $p) => $adminOrders->updateStatus((int) $p['id']));
+$router->patch('/api/v1/admin/orders/{id}/notes', static fn(array $p) => $adminOrders->updateNotes((int)$p['id']));
 $router->get('/api/v1/admin/customers', static fn(array $p) => $customers->index());
 $router->get('/api/v1/admin/backups/database', static fn(array $p) => $backups->download());
 

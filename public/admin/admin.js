@@ -37,6 +37,7 @@
     orders:        () => apiFetch('/admin/orders'),
     order:         (id) => apiFetch('/admin/orders/' + id),
     setOrderStatus:(id, status) => apiFetch('/admin/orders/' + id, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    setOrderNotes: (id, admin_notes) => apiFetch('/admin/orders/' + id + '/notes', {method:'PATCH',body:JSON.stringify({admin_notes})}),
     customers:     () => apiFetch('/admin/customers'),
     messages:      () => apiFetch('/admin/messages'),
     setMessageRead:(id, is_read) => apiFetch('/admin/messages/' + id, { method: 'PATCH', body: JSON.stringify({ is_read }) }),
@@ -397,9 +398,11 @@
       <div class="detail-row"><span>Delivery fee</span><span>${cedis(o.delivery_fee_pesewas)}</span></div>
       <div class="detail-row" style="font-weight:800;border-bottom:0"><span>Grand total</span><span>${cedis(o.total_pesewas)}</span></div>
       <div class="field" style="margin-top:16px"><label>Update status</label><select id="om-status">${options}</select></div>
+      <div class="field"><label>Private staff notes</label><textarea id="om-admin-notes" rows="4" maxlength="5000" placeholder="Delivery follow-up, payment checks or internal instructions">${esc(o.admin_notes||'')}</textarea><div class="hint">Only administrators can see these notes.</div></div>
     `, [
       button('Close', 'btn-ghost', closeModal),
       button('Print invoice', 'btn-ghost', () => printInvoice(o)),
+      button('Save staff notes', 'btn-ghost', async()=>{await api.setOrderNotes(o.id,$('#om-admin-notes').value);const ok=$('#om-ok');ok.textContent='Staff notes saved.';ok.style.display='block'}),
       button('Save status', 'btn-primary', async () => {
         await api.setOrderStatus(o.id, $('#om-status').value);
         $('#om-ok').style.display = 'block';

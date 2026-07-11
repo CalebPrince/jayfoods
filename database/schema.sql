@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS orders (
     region              TEXT    NOT NULL DEFAULT 'Greater Accra',
     delivery_zone_id    INTEGER,
     notes               TEXT    NOT NULL DEFAULT '',
+    admin_notes         TEXT    NOT NULL DEFAULT '',
 
     subtotal_pesewas    INTEGER NOT NULL DEFAULT 0,
     promo_code          TEXT NOT NULL DEFAULT '',

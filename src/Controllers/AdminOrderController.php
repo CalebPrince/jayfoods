@@ -63,7 +63,7 @@ final class AdminOrderController
     {
         $stmt = $this->db->prepare(
             'SELECT id, reference, order_type, customer_name, customer_phone, customer_email,
-                    delivery_address, region, notes, subtotal_pesewas, promo_code, discount_pesewas,
+                    delivery_address, region, notes, admin_notes, subtotal_pesewas, promo_code, discount_pesewas,
                     delivery_fee_pesewas, total_pesewas, status,
                     payment_status, payment_reference, stock_state, reservation_expires_at, created_at
                FROM orders WHERE id = :id'
@@ -93,6 +93,7 @@ final class AdminOrderController
                 'delivery_address' => $order['delivery_address'],
                 'region'           => $order['region'],
                 'notes'            => $order['notes'],
+                'admin_notes'      => $order['admin_notes'],
                 'subtotal_pesewas' => (int) $order['subtotal_pesewas'],
                 'promo_code'       => $order['promo_code'],
                 'discount_pesewas' => (int)$order['discount_pesewas'],
@@ -143,5 +144,14 @@ final class AdminOrderController
         if ($order['status'] !== $status) EmailNotifications::statusChanged($order, $status);
 
         Response::json(['data' => ['ok' => true, 'status' => $status]]);
+    }
+
+    public function updateNotes(int $id): void
+    {
+        $input=json_decode((string)file_get_contents('php://input'),true);$notes=trim((string)($input['admin_notes']??''));
+        if(strlen($notes)>5000){Response::json(['error'=>'Staff notes must be 5,000 characters or fewer.'],422);return;}
+        $stmt=$this->db->prepare('UPDATE orders SET admin_notes=:notes WHERE id=:id');$stmt->execute([':notes'=>$notes,':id'=>$id]);
+        if($stmt->rowCount()===0){$check=$this->db->prepare('SELECT 1 FROM orders WHERE id=:id');$check->execute([':id'=>$id]);if(!$check->fetchColumn()){Response::json(['error'=>'Order not found.'],404);return;}}
+        Response::json(['data'=>['ok'=>true,'admin_notes'=>$notes]]);
     }
 }
