@@ -136,6 +136,7 @@ CREATE TABLE IF NOT EXISTS admin_activity (
     FOREIGN KEY(admin_id) REFERENCES admins(id) ON DELETE SET NULL
 );
 CREATE INDEX IF NOT EXISTS idx_admin_activity_created ON admin_activity(created_at);
+CREATE TABLE IF NOT EXISTS low_stock_alerts (size_id INTEGER PRIMARY KEY,alerted_at TEXT NOT NULL DEFAULT (datetime('now')),FOREIGN KEY(size_id) REFERENCES product_sizes(id) ON DELETE CASCADE);
 
 -- Outgoing Gmail SMTP configuration. The app password is encrypted by PHP
 -- before it is stored; the API never returns it to the browser.

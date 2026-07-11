@@ -462,7 +462,7 @@
   // ---------------------------------------------------------------------------
   async function renderContent() {
     const { data } = await api.content();
-    const labels = { announcement:'Header announcement', store:'Store availability', hero:'Hero', features:'Why choose us', menu:'Product menu', ordering:'How it works', bulk:'Bulk orders', about:'About', reviews:'Reviews', faq:'FAQ', contact:'Contact details', footer:'Footer & social links' };
+    const labels = { announcement:'Header announcement', store:'Store availability', inventory:'Inventory alerts', hero:'Hero', features:'Why choose us', menu:'Product menu', ordering:'How it works', bulk:'Bulk orders', about:'About', reviews:'Reviews', faq:'FAQ', contact:'Contact details', footer:'Footer & social links' };
     const groups = Object.entries(data.groups).map(([group, fields]) => `
       <div class="panel content-group">
         <div class="panel-head"><h2>${esc(labels[group] || group)}</h2></div>

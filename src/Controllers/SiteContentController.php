@@ -19,6 +19,10 @@ final class SiteContentController
                 'store_accepting_orders'=>['Accept new checkout orders','1','checkbox'],
                 'store_closed_message'=>['Closed message','Online ordering is temporarily paused. Please contact us on WhatsApp or try again later.','textarea'],
             ],
+            'inventory' => [
+                'low_stock_alerts_enabled'=>['Email low-stock alerts','1','checkbox'],
+                'low_stock_threshold'=>['Low-stock threshold','10','text'],
+            ],
             'hero' => [
                 'hero_eyebrow'=>['Hero eyebrow','Pure Refreshment, squeezed to perfection','text'],
                 'hero_heading'=>['Hero heading','Fresh, wholesome juice squeezed daily in Accra','text'],
