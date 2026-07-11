@@ -63,7 +63,7 @@ final class AdminOrderController
     {
         $stmt = $this->db->prepare(
             'SELECT id, reference, order_type, customer_name, customer_phone, customer_email,
-                    delivery_address, region, notes, subtotal_pesewas,
+                    delivery_address, region, notes, subtotal_pesewas, promo_code, discount_pesewas,
                     delivery_fee_pesewas, total_pesewas, status,
                     payment_status, payment_reference, stock_state, reservation_expires_at, created_at
                FROM orders WHERE id = :id'
@@ -94,6 +94,8 @@ final class AdminOrderController
                 'region'           => $order['region'],
                 'notes'            => $order['notes'],
                 'subtotal_pesewas' => (int) $order['subtotal_pesewas'],
+                'promo_code'       => $order['promo_code'],
+                'discount_pesewas' => (int)$order['discount_pesewas'],
                 'delivery_fee_pesewas'=>(int)$order['delivery_fee_pesewas'],
                 'total_pesewas'    => (int)$order['total_pesewas'],
                 'status'           => $order['status'],
