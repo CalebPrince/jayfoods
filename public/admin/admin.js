@@ -298,7 +298,12 @@
   const STATUSES = ['pending', 'confirmed', 'processing', 'delivered', 'cancelled'];
   async function renderOrders() {
     const { data } = await api.orders();
-    const rows = data.length ? data.map((o) => `
+    const draw = () => {
+      const query = ($('#order-search')?.value || '').trim().toLowerCase();
+      const status = $('#order-status')?.value || '';
+      const payment = $('#order-payment')?.value || '';
+      const filtered = data.filter(o => (!query || [o.reference,o.customer_name,o.customer_phone,o.region].some(v => String(v || '').toLowerCase().includes(query))) && (!status || o.status === status) && (!payment || o.payment_status === payment));
+      const rows = filtered.length ? filtered.map((o) => `
       <tr class="clickable" data-order="${o.id}">
         <td class="prod-name">${esc(o.reference)}</td>
         <td>${esc(o.customer_name)}<div class="sub">${esc(o.customer_phone)}</div></td>
@@ -308,21 +313,41 @@
         <td>${paymentPill(o.payment_status)}</td>
         <td>${statusPill(o.status)}</td>
         <td class="sub">${fmtDate(o.created_at)}</td>
-      </tr>`).join('') : '<tr><td colspan="8" class="empty">No orders yet.</td></tr>';
+      </tr>`).join('') : '<tr><td colspan="8" class="empty">No orders match these filters.</td></tr>';
+
+      $('#orders-body').innerHTML = rows;
+      $('#orders-count').textContent = `${filtered.length} of ${data.length} orders`;
+      view.querySelectorAll('[data-order]').forEach((tr) => tr.addEventListener('click', () => openOrder(+tr.dataset.order)));
+      $('#export-orders').onclick = () => exportOrdersCsv(filtered);
+    };
 
     view.innerHTML = `
       <div class="panel">
-        <div class="panel-head"><h2>${data.length} order${data.length === 1 ? '' : 's'}</h2></div>
+        <div class="panel-head"><h2 id="orders-count">${data.length} orders</h2><button class="btn btn-ghost btn-sm" id="export-orders">Export CSV</button></div>
+        <div class="order-tools">
+          <input id="order-search" type="search" placeholder="Search reference, customer, phone or area">
+          <select id="order-status"><option value="">All order statuses</option>${STATUSES.map(s=>`<option value="${s}">${s}</option>`).join('')}</select>
+          <select id="order-payment"><option value="">All payments</option><option value="paid">Paid</option><option value="unpaid">Unpaid</option></select>
+        </div>
         <div class="panel-body table-scroll">
           <table class="data">
             <thead><tr><th>Reference</th><th>Customer</th><th>Type</th><th>Qty</th><th>Total</th><th>Payment</th><th>Status</th><th>Date</th></tr></thead>
-            <tbody>${rows}</tbody>
+            <tbody id="orders-body"></tbody>
           </table>
         </div>
       </div>`;
 
-    view.querySelectorAll('[data-order]').forEach((tr) =>
-      tr.addEventListener('click', () => openOrder(+tr.dataset.order)));
+    ['order-search','order-status','order-payment'].forEach(id => $('#'+id).addEventListener(id==='order-search'?'input':'change', draw));
+    draw();
+  }
+
+  function exportOrdersCsv(orders) {
+    if (!orders.length) return alert('There are no matching orders to export.');
+    const safe = value => { let s=String(value??''); if(/^[=+\-@]/.test(s))s="'"+s; return '"'+s.replace(/"/g,'""')+'"'; };
+    const headers=['Reference','Customer','Phone','Region','Type','Units','Subtotal (GHS)','Delivery (GHS)','Total (GHS)','Payment','Status','Paystack reference','Date'];
+    const rows=orders.map(o=>[o.reference,o.customer_name,o.customer_phone,o.region,o.order_type,o.unit_count,(o.subtotal_pesewas/100).toFixed(2),(o.delivery_fee_pesewas/100).toFixed(2),(o.total_pesewas/100).toFixed(2),o.payment_status,o.status,o.payment_reference,o.created_at]);
+    const blob=new Blob(['\uFEFF'+[headers,...rows].map(row=>row.map(safe).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
+    const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='jayfoods-orders-'+new Date().toISOString().slice(0,10)+'.csv';link.click();URL.revokeObjectURL(link.href);
   }
 
   async function openOrder(id) {
