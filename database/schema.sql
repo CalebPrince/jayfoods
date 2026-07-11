@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS delivery_zones (
 INSERT OR IGNORE INTO delivery_zones(name,fee_pesewas,sort_order) VALUES
 ('Greater Accra',2000,1),('Tema',2500,2),('Other',4000,99);
 
+CREATE TABLE IF NOT EXISTS promo_codes (id INTEGER PRIMARY KEY AUTOINCREMENT,code TEXT NOT NULL UNIQUE,discount_type TEXT NOT NULL CHECK(discount_type IN ('percent','fixed')),discount_value INTEGER NOT NULL,minimum_pesewas INTEGER NOT NULL DEFAULT 0,usage_limit INTEGER NOT NULL DEFAULT 0,used_count INTEGER NOT NULL DEFAULT 0,starts_at TEXT NOT NULL DEFAULT '',ends_at TEXT NOT NULL DEFAULT '',is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),created_at TEXT NOT NULL DEFAULT (datetime('now')));
+
 -- ---------------------------------------------------------------------------
 -- Customer orders. `reference` is the human-facing tracking code.
 -- ---------------------------------------------------------------------------
@@ -74,6 +76,8 @@ CREATE TABLE IF NOT EXISTS orders (
     notes               TEXT    NOT NULL DEFAULT '',
 
     subtotal_pesewas    INTEGER NOT NULL DEFAULT 0,
+    promo_code          TEXT NOT NULL DEFAULT '',
+    discount_pesewas    INTEGER NOT NULL DEFAULT 0,
     delivery_fee_pesewas INTEGER NOT NULL DEFAULT 0,
     total_pesewas       INTEGER NOT NULL DEFAULT 0,
     status              TEXT    NOT NULL DEFAULT 'pending'

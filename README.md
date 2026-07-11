@@ -15,6 +15,7 @@ Jay fooDs is a lightweight juice catalogue, ordering, payment, and administratio
 - Admin dashboard for products, orders, messages, payments, and account settings
 - Admin order search, status/payment filters, and CSV export
 - Sales analytics for daily, 7-day and 30-day revenue, average orders, and best sellers
+- Server-validated percentage and fixed-amount promotional codes with usage limits
 - Product image uploads and bulk-availability controls
 - Privacy, cookie, and terms-of-use pages
 

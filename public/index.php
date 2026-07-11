@@ -49,6 +49,7 @@ require $src . '/Controllers/PaystackSettingsController.php';
 require $src . '/Controllers/PaymentController.php';
 require $src . '/Controllers/SiteContentController.php';
 require $src . '/Controllers/DeliveryZoneController.php';
+require $src . '/Controllers/PromoCodeController.php';
 
 // Guard: every /api/v1/admin/* route requires a valid admin session.
 if (str_starts_with($requestPath, '/api/v1/admin')) {
@@ -67,6 +68,7 @@ $paystack      = new PaystackSettingsController();
 $payments      = new PaymentController();
 $content       = new SiteContentController();
 $deliveryZones = new DeliveryZoneController();
+$promos        = new PromoCodeController();
 
 // ---- Public API -----------------------------------------------------------
 $router->get('/api/v1/products', static fn(array $p) => $orders->listProducts());
@@ -78,6 +80,7 @@ $router->post('/api/v1/payments/webhook', static fn(array $p) => $payments->webh
 $router->post('/api/v1/messages', static fn(array $p) => $messages->create());
 $router->get('/api/v1/site-content', static fn(array $p) => $content->publicContent());
 $router->get('/api/v1/delivery-zones', static fn(array $p) => $deliveryZones->publicIndex());
+$router->post('/api/v1/promo-codes/validate', static fn(array $p) => $promos->validate());
 
 // ---- Auth -----------------------------------------------------------------
 $router->post('/api/v1/auth/login', static fn(array $p) => $auth->login());
@@ -113,5 +116,8 @@ $router->get('/api/v1/admin/content', static fn(array $p) => $content->adminCont
 $router->put('/api/v1/admin/content', static fn(array $p) => $content->update());
 $router->get('/api/v1/admin/delivery-zones', static fn(array $p) => $deliveryZones->adminIndex());
 $router->put('/api/v1/admin/delivery-zones', static fn(array $p) => $deliveryZones->save());
+$router->get('/api/v1/admin/promo-codes', static fn(array $p) => $promos->adminIndex());
+$router->post('/api/v1/admin/promo-codes', static fn(array $p) => $promos->save());
+$router->delete('/api/v1/admin/promo-codes/{id}', static fn(array $p) => $promos->destroy((int)$p['id']));
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

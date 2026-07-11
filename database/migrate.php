@@ -68,6 +68,8 @@ if (!in_array('total_pesewas', $orderCols, true)) {
     $pdo->exec("UPDATE orders SET total_pesewas = subtotal_pesewas WHERE total_pesewas = 0");
     echo "[migrate] Added orders.total_pesewas\n";
 }
+if (!in_array('promo_code', $orderCols, true)) {$pdo->exec("ALTER TABLE orders ADD COLUMN promo_code TEXT NOT NULL DEFAULT ''");echo "[migrate] Added orders.promo_code\n";}
+if (!in_array('discount_pesewas', $orderCols, true)) {$pdo->exec("ALTER TABLE orders ADD COLUMN discount_pesewas INTEGER NOT NULL DEFAULT 0");echo "[migrate] Added orders.discount_pesewas\n";}
 if (!in_array('stock_state', $orderCols, true)) {
     $pdo->exec("ALTER TABLE orders ADD COLUMN stock_state TEXT NOT NULL DEFAULT 'none'");
     echo "[migrate] Added orders.stock_state\n";

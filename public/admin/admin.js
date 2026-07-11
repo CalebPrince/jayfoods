@@ -51,6 +51,9 @@
     updateContent: (body) => apiFetch('/admin/content', { method: 'PUT', body: JSON.stringify(body) }),
     deliveryZones: () => apiFetch('/admin/delivery-zones'),
     updateDeliveryZones: (zones) => apiFetch('/admin/delivery-zones', { method:'PUT', body:JSON.stringify({zones}) }),
+    promoCodes: () => apiFetch('/admin/promo-codes'),
+    savePromo: body => apiFetch('/admin/promo-codes', {method:'POST',body:JSON.stringify(body)}),
+    deletePromo: id => apiFetch('/admin/promo-codes/'+id, {method:'DELETE'}),
   };
 
   // ---------------------------------------------------------------------------
@@ -99,6 +102,7 @@
     messages:  { title: 'Messages',  render: renderMessages },
     content:   { title: 'Site content', render: renderContent },
     delivery:  { title: 'Delivery zones', render: renderDeliveryZones },
+    promos:    { title: 'Promo codes', render: renderPromos },
     settings:  { title: 'Settings',  render: renderSettings },
   };
 
@@ -456,6 +460,8 @@
   }
 
   // ---------------------------------------------------------------------------
+  async function renderPromos(){const {data}=await api.promoCodes();const rows=data.length?data.map(p=>`<tr><td class="prod-name">${esc(p.code)}</td><td>${p.discount_type==='percent'?p.discount_value+'%':cedis(p.discount_value)}</td><td>${cedis(p.minimum_pesewas)}</td><td>${p.used_count}${p.usage_limit>0?' / '+p.usage_limit:' / unlimited'}</td><td>${p.is_active==1?'Active':'Off'}</td><td><button class="btn btn-danger btn-sm" data-delete-promo="${p.id}">Delete</button></td></tr>`).join(''):'<tr><td colspan="6" class="empty">No promotional codes yet.</td></tr>';view.innerHTML=`<div class="panel"><div class="panel-head"><h2>Promotional codes</h2></div><div class="panel-body" style="padding:20px"><div class="form-error" id="promo-error" style="display:none"></div><form id="promo-form" class="form-2col"><div class="field"><label>Code</label><input name="code" required placeholder="WELCOME10"></div><div class="field"><label>Type</label><select name="type"><option value="percent">Percentage</option><option value="fixed">Fixed amount</option></select></div><div class="field"><label>Value</label><input name="value" type="number" min="1" required></div><div class="field"><label>Minimum order (GH₵)</label><input name="minimum" type="number" min="0" step="0.01" value="0"></div><div class="field"><label>Usage limit (0 = unlimited)</label><input name="limit" type="number" min="0" value="0"></div><div class="field"><label class="checkline"><input name="active" type="checkbox" checked> Active</label></div><button class="btn btn-primary">Create code</button></form></div><div class="panel-body table-scroll"><table class="data"><thead><tr><th>Code</th><th>Discount</th><th>Minimum</th><th>Used</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;$('#promo-form').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target),type=f.get('type'),value=+f.get('value');try{await api.savePromo({code:f.get('code'),discount_type:type,discount_value:type==='fixed'?toPesewas(value):value,minimum_pesewas:toPesewas(f.get('minimum')),usage_limit:+f.get('limit'),is_active:f.get('active')==='on'});renderPromos()}catch(err){const b=$('#promo-error');b.textContent=err.message;b.style.display='block'}});view.querySelectorAll('[data-delete-promo]').forEach(b=>b.addEventListener('click',async()=>{if(confirm('Delete this code?')){await api.deletePromo(+b.dataset.deletePromo);renderPromos()}}));}
+
   // Settings
   // ---------------------------------------------------------------------------
   async function renderSettings() {

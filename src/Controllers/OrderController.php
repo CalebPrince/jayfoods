@@ -93,6 +93,7 @@ final class OrderController
         $deliveryFee = 0;
         $notes     = trim((string) ($input['notes'] ?? ''));
         $rawItems  = $input['items'] ?? [];
+        $promoCode = strtoupper(trim((string)($input['promo_code'] ?? '')));
 
         // ---- Field validation -------------------------------------------------
         $errors = [];
@@ -194,7 +195,9 @@ final class OrderController
 
         // ---- Persist inside a transaction ------------------------------------
         $reference = $this->generateReference();
-        $total = $subtotal + $deliveryFee;
+        $discount = 0;$promo = null;
+        if($promoCode!==''){$promoService=new PromoCodeController();$promo=$promoService->findValid($promoCode,$subtotal);if(!$promo){Response::json(['error'=>'This promotional code is invalid, expired, or unavailable.'],422);return;}$discount=$promoService->discount($promo,$subtotal);}
+        $total = $subtotal - $discount + $deliveryFee;
 
         try {
             $this->db->beginTransaction();
@@ -203,11 +206,11 @@ final class OrderController
                 "INSERT INTO orders
                     (reference, order_type, customer_name, customer_phone, customer_email,
                      delivery_address, region, delivery_zone_id, notes, subtotal_pesewas,
-                     delivery_fee_pesewas, total_pesewas, status, stock_state, reservation_expires_at)
+                     promo_code, discount_pesewas, delivery_fee_pesewas, total_pesewas, status, stock_state, reservation_expires_at)
                  VALUES
                     (:reference, :order_type, :customer_name, :customer_phone, :customer_email,
                      :delivery_address, :region, :zone_id, :notes, :subtotal,
-                     :delivery_fee, :total, :status, :stock_state, datetime('now','+30 minutes'))"
+                     :promo_code, :discount, :delivery_fee, :total, :status, :stock_state, datetime('now','+30 minutes'))"
             );
             $orderStmt->execute([
                 ':reference'        => $reference,
@@ -221,6 +224,8 @@ final class OrderController
                 ':notes'            => $notes,
                 ':subtotal'         => $subtotal,
                 ':delivery_fee'     => $deliveryFee,
+                ':promo_code'       => $promoCode,
+                ':discount'         => $discount,
                 ':total'            => $total,
                 ':status'           => 'pending',
                 ':stock_state'      => 'reserved',
@@ -252,6 +257,7 @@ final class OrderController
                     ':line_total'   => $line['line_total_pesewas'],
                 ]);
             }
+            if($promo){$used=$this->db->prepare('UPDATE promo_codes SET used_count=used_count+1 WHERE id=:id AND (usage_limit=0 OR used_count<usage_limit)');$used->execute([':id'=>$promo['id']]);if($used->rowCount()!==1)throw new RuntimeException('This promotional code has reached its usage limit.');}
 
             $this->db->commit();
         } catch (Throwable $e) {
@@ -270,6 +276,7 @@ final class OrderController
             'customer_email' => $email,
             'subtotal_pesewas' => $subtotal,
             'delivery_fee_pesewas' => $deliveryFee,
+            'discount_pesewas' => $discount,
             'total_pesewas' => $total,
         ], $lines);
 
@@ -280,6 +287,7 @@ final class OrderController
                 'status'           => 'pending',
                 'subtotal_pesewas' => $subtotal,
                 'delivery_fee_pesewas' => $deliveryFee,
+                'discount_pesewas' => $discount,
                 'total_pesewas'    => $total,
                 'items'            => $lines,
             ],

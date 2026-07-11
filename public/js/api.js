@@ -35,6 +35,7 @@ const api = {
   getProducts: () => apiFetch('/products'),
   getSiteContent: () => apiFetch('/site-content'),
   getDeliveryZones: () => apiFetch('/delivery-zones'),
+  validatePromo: (code, subtotal_pesewas) => apiFetch('/promo-codes/validate', { method:'POST', body:JSON.stringify({code,subtotal_pesewas}) }),
   createOrder: (order) => apiFetch('/orders', { method: 'POST', body: JSON.stringify(order) }),
   trackOrder: (reference, phone) => apiFetch('/orders/track', { method: 'POST', body: JSON.stringify({ reference, phone }) }),
   startPayment: (reference) => apiFetch('/orders/' + encodeURIComponent(reference) + '/pay', { method: 'POST' }),
