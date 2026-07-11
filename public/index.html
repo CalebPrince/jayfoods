@@ -60,6 +60,7 @@
       font-size: .82rem; padding: 8px 12px; letter-spacing: .3px;
     }
     .topbar strong { color: var(--mango); }
+    .store-closed{background:#8f2d25;color:#fff;text-align:center;padding:11px 18px;font-weight:700;position:relative;z-index:2}
 
     /* ---------- Nav ---------- */
     header.nav {
@@ -303,6 +304,7 @@
   <div class="bubbles" id="bubbles" aria-hidden="true"></div>
 
   <div class="topbar">🚚 Same-day delivery across Accra for orders before <strong>10:00 AM</strong> &nbsp;•&nbsp; Pay with Mobile Money or cash on delivery</div>
+  <div class="store-closed" id="store-closed" hidden></div>
 
   <!-- ===== NAV ===== -->
   <header class="nav">
@@ -606,6 +608,7 @@
           const { data:c } = await api.getSiteContent();
           const announcement=document.querySelector('.topbar');
           if(announcement){announcement.hidden=String(c.announcement_active)!=='1';announcement.innerHTML='';announcement.append(document.createTextNode((c.announcement_before||'')+' '));const time=document.createElement('strong');time.textContent=c.announcement_time||'';announcement.append(time,document.createTextNode('  '+(c.announcement_after||'')));}
+          const closed=document.getElementById('store-closed');if(closed){closed.hidden=String(c.store_accepting_orders)==='1';closed.textContent=c.store_closed_message||'Online ordering is temporarily paused.';}
           const bindings = {
             '.hero .eyebrow':'hero_eyebrow','.hero h1':'hero_heading','.hero .lead':'hero_body',
             '#why .eyebrow':'why_eyebrow','#why .title':'why_heading','#why > .wrap > .lead':'why_body',

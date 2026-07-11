@@ -15,6 +15,10 @@ final class SiteContentController
                 'announcement_time'=>['Highlighted time','10:00 AM','text'],
                 'announcement_after'=>['Text after highlighted time','• Pay with Mobile Money or cash on delivery','text'],
             ],
+            'store' => [
+                'store_accepting_orders'=>['Accept new checkout orders','1','checkbox'],
+                'store_closed_message'=>['Closed message','Online ordering is temporarily paused. Please contact us on WhatsApp or try again later.','textarea'],
+            ],
             'hero' => [
                 'hero_eyebrow'=>['Hero eyebrow','Pure Refreshment, squeezed to perfection','text'],
                 'hero_heading'=>['Hero heading','Fresh, wholesome juice squeezed daily in Accra','text'],

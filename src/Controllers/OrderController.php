@@ -76,6 +76,8 @@ final class OrderController
     public function create(): void
     {
         Inventory::releaseExpired();
+        $store=$this->db->prepare("SELECT value FROM site_content WHERE content_key='store_accepting_orders'");$store->execute();$accepting=$store->fetchColumn();
+        if($accepting!==false&&$accepting!=='1'){$message=$this->db->prepare("SELECT value FROM site_content WHERE content_key='store_closed_message'");$message->execute();Response::json(['error'=>(string)($message->fetchColumn()?:'Online ordering is temporarily paused. Please try again later.')],503);return;}
         $input = json_decode((string) file_get_contents('php://input'), true);
 
         if (!is_array($input)) {
