@@ -53,6 +53,7 @@ require $src . '/Controllers/PromoCodeController.php';
 require $src . '/Controllers/CustomerController.php';
 require $src . '/Controllers/BackupController.php';
 require $src . '/Controllers/AdminUserController.php';
+require $src . '/Controllers/AdminActivityController.php';
 
 // Guard: every /api/v1/admin/* route requires a valid admin session.
 if (str_starts_with($requestPath, '/api/v1/admin')) {
@@ -75,6 +76,7 @@ $promos        = new PromoCodeController();
 $customers     = new CustomerController();
 $backups       = new BackupController();
 $adminUsers    = new AdminUserController();
+$activity      = new AdminActivityController();
 
 // ---- Public API -----------------------------------------------------------
 $router->get('/api/v1/products', static fn(array $p) => $orders->listProducts());
@@ -112,6 +114,7 @@ $router->get('/api/v1/admin/backups/database', static fn(array $p) => $backups->
 $router->get('/api/v1/admin/users', static fn(array $p) => $adminUsers->index());
 $router->post('/api/v1/admin/users', static fn(array $p) => $adminUsers->save());
 $router->delete('/api/v1/admin/users/{id}', static fn(array $p) => $adminUsers->destroy((int)$p['id']));
+$router->get('/api/v1/admin/activity', static fn(array $p) => $activity->index());
 
 $router->get('/api/v1/admin/messages', static fn(array $p) => $messages->index());
 $router->patch('/api/v1/admin/messages/{id}', static fn(array $p) => $messages->markRead((int) $p['id']));
@@ -133,3 +136,4 @@ $router->post('/api/v1/admin/promo-codes', static fn(array $p) => $promos->save(
 $router->delete('/api/v1/admin/promo-codes/{id}', static fn(array $p) => $promos->destroy((int)$p['id']));
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
+if(str_starts_with($requestPath,'/api/v1/admin')&&!in_array($_SERVER['REQUEST_METHOD'],['GET','HEAD','OPTIONS'],true)&&http_response_code()<400)AdminActivityController::record($_SERVER['REQUEST_METHOD'],$requestPath);

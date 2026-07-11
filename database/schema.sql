@@ -130,6 +130,13 @@ CREATE TABLE IF NOT EXISTS admins (
     created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS admin_activity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, admin_id INTEGER, admin_name TEXT NOT NULL DEFAULT '',
+    method TEXT NOT NULL, path TEXT NOT NULL, ip_address TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY(admin_id) REFERENCES admins(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_admin_activity_created ON admin_activity(created_at);
+
 -- Outgoing Gmail SMTP configuration. The app password is encrypted by PHP
 -- before it is stored; the API never returns it to the browser.
 CREATE TABLE IF NOT EXISTS smtp_settings (
