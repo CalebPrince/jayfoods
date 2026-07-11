@@ -33,6 +33,7 @@ async function apiFetch(path, options = {}) {
 // eslint-disable-next-line no-unused-vars
 const api = {
   getProducts: () => apiFetch('/products'),
+  getSiteContent: () => apiFetch('/site-content'),
   createOrder: (order) => apiFetch('/orders', { method: 'POST', body: JSON.stringify(order) }),
   getOrder: (reference) => apiFetch('/orders/' + encodeURIComponent(reference)),
   startPayment: (reference) => apiFetch('/orders/' + encodeURIComponent(reference) + '/pay', { method: 'POST' }),

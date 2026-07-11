@@ -206,6 +206,8 @@
         qty: {},               // product_id -> quantity
         size: {},              // product_id -> selected size id
       };
+      let siteWhatsapp = '233246328461';
+      api.getSiteContent().then(({data})=>{siteWhatsapp=String(data.whatsapp_number||siteWhatsapp).replace(/\D/g,'');if(state.products[0])renderMode();}).catch(()=>{});
 
       const el = {
         products: document.getElementById('products'),
@@ -318,7 +320,7 @@
         const wa=document.getElementById('bulk-whatsapp'),size=product&&selectedSize(product),qty=product?(state.qty[product.id]||0):0;
         wa.classList.toggle('show',state.mode==='bulk'&&!!product&&!!size);
         document.getElementById('add-cart').style.display=state.mode==='bulk'?'none':'';
-        if(product&&size)wa.href='https://wa.me/233246328461?text='+encodeURIComponent(`Hello Jay fooDs, I would like a bulk order:\n\nProduct: ${product.name}\nBottle size: ${size.label}\nQuantity: ${qty||size.bulk_min_quantity||1}\nEstimated total: ${cedis(unitPriceFor(product,qty||size.bulk_min_quantity||1).price*(qty||size.bulk_min_quantity||1))}\n\nPlease confirm availability and delivery.`);
+        if(product&&size)wa.href='https://wa.me/'+siteWhatsapp+'?text='+encodeURIComponent(`Hello Jay fooDs, I would like a bulk order:\n\nProduct: ${product.name}\nBottle size: ${size.label}\nQuantity: ${qty||size.bulk_min_quantity||1}\nEstimated total: ${cedis(unitPriceFor(product,qty||size.bulk_min_quantity||1).price*(qty||size.bulk_min_quantity||1))}\n\nPlease confirm availability and delivery.`);
       }
 
       function escapeHtml(str) {

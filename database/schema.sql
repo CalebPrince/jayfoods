@@ -127,6 +127,12 @@ CREATE TABLE IF NOT EXISTS paystack_settings (
 );
 INSERT OR IGNORE INTO paystack_settings (id) VALUES (1);
 
+CREATE TABLE IF NOT EXISTS site_content (
+    content_key TEXT PRIMARY KEY,
+    value       TEXT NOT NULL,
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ---------------------------------------------------------------------------
 -- Contact / catering enquiries captured from the public contact form.
 -- ---------------------------------------------------------------------------

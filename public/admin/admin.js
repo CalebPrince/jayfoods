@@ -47,6 +47,8 @@
     testSmtp:      () => apiFetch('/admin/settings/smtp/test', { method: 'POST' }),
     paystackSettings: () => apiFetch('/admin/settings/paystack'),
     updatePaystack: (body) => apiFetch('/admin/settings/paystack', { method: 'PUT', body: JSON.stringify(body) }),
+    content:       () => apiFetch('/admin/content'),
+    updateContent: (body) => apiFetch('/admin/content', { method: 'PUT', body: JSON.stringify(body) }),
   };
 
   // ---------------------------------------------------------------------------
@@ -93,6 +95,7 @@
     products:  { title: 'Products',  render: renderProducts },
     orders:    { title: 'Orders',    render: renderOrders },
     messages:  { title: 'Messages',  render: renderMessages },
+    content:   { title: 'Site content', render: renderContent },
     settings:  { title: 'Settings',  render: renderSettings },
   };
 
@@ -376,6 +379,27 @@
       b.addEventListener('click', async () => { await api.setMessageRead(+b.dataset.read, +b.dataset.val === 1); router(); }));
     view.querySelectorAll('[data-delmsg]').forEach((b) =>
       b.addEventListener('click', async () => { await api.deleteMessage(+b.dataset.delmsg); router(); }));
+  }
+
+  // ---------------------------------------------------------------------------
+  // Frontend content
+  // ---------------------------------------------------------------------------
+  async function renderContent() {
+    const { data } = await api.content();
+    const labels = { hero:'Hero', features:'Why choose us', menu:'Product menu', ordering:'How it works', bulk:'Bulk orders', about:'About', reviews:'Reviews', faq:'FAQ', contact:'Contact details', footer:'Footer & social links' };
+    const groups = Object.entries(data.groups).map(([group, fields]) => `
+      <div class="panel content-group">
+        <div class="panel-head"><h2>${esc(labels[group] || group)}</h2></div>
+        <div class="panel-body" style="padding:20px">
+          ${Object.entries(fields).map(([key, meta]) => `<div class="field"><label>${esc(meta[0])}</label>${meta[2] === 'textarea' ? `<textarea name="${esc(key)}" rows="3">${esc(data.values[key] || '')}</textarea>` : `<input name="${esc(key)}" type="${meta[2] === 'url' ? 'url' : 'text'}" value="${esc(data.values[key] || '')}" />`}</div>`).join('')}
+        </div>
+      </div>`).join('');
+    view.innerHTML = `<div class="form-error" id="content-error" style="display:none"></div><div class="form-ok" id="content-ok" style="display:none">Website content updated.</div><form id="content-form"><div class="content-grid">${groups}</div><div class="content-save"><button class="btn btn-primary" type="submit">Save all website content</button></div></form>`;
+    $('#content-form').addEventListener('submit', async e => {
+      e.preventDefault(); const f=new FormData(e.target), payload={}; for(const [key,value] of f.entries())payload[key]=value;
+      const error=$('#content-error'),ok=$('#content-ok');error.style.display='none';ok.style.display='none';
+      try{await api.updateContent(payload);ok.style.display='block';window.scrollTo({top:0,behavior:'smooth'});}catch(err){error.textContent=err.message;error.style.display='block';}
+    });
   }
 
   // ---------------------------------------------------------------------------

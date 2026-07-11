@@ -600,6 +600,33 @@
     (function () {
       'use strict';
 
+      async function hydrateSiteContent() {
+        try {
+          const { data:c } = await api.getSiteContent();
+          const bindings = {
+            '.hero .eyebrow':'hero_eyebrow','.hero h1':'hero_heading','.hero .lead':'hero_body',
+            '#why .eyebrow':'why_eyebrow','#why .title':'why_heading','#why > .wrap > .lead':'why_body',
+            '#why .feature:nth-child(1) h3':'feature_1_heading','#why .feature:nth-child(1) p':'feature_1_body','#why .feature:nth-child(2) h3':'feature_2_heading','#why .feature:nth-child(2) p':'feature_2_body','#why .feature:nth-child(3) h3':'feature_3_heading','#why .feature:nth-child(3) p':'feature_3_body','#why .feature:nth-child(4) h3':'feature_4_heading','#why .feature:nth-child(4) p':'feature_4_body',
+            '#menu .eyebrow':'menu_eyebrow','#menu .title':'menu_heading','#menu .lead':'menu_body',
+            '#how .eyebrow':'how_eyebrow','#how .title':'how_heading','#how > .wrap > .lead':'how_body','#how .step:nth-child(1) h3':'step_1_heading','#how .step:nth-child(1) p':'step_1_body','#how .step:nth-child(2) h3':'step_2_heading','#how .step:nth-child(2) p':'step_2_body','#how .step:nth-child(3) h3':'step_3_heading','#how .step:nth-child(3) p':'step_3_body',
+            '#bulk .eyebrow':'bulk_eyebrow','#bulk .title':'bulk_heading','#bulk .lead':'bulk_body','#bulk .bulk-card:nth-child(1) h3':'bulk_1_heading','#bulk .bulk-card:nth-child(1) p':'bulk_1_body','#bulk .bulk-card:nth-child(2) h3':'bulk_2_heading','#bulk .bulk-card:nth-child(2) p':'bulk_2_body','#bulk .bulk-card:nth-child(3) h3':'bulk_3_heading','#bulk .bulk-card:nth-child(3) p':'bulk_3_body',
+            '#about .eyebrow':'about_eyebrow','#about .title':'about_heading','#about .lead':'about_body',
+            '#about .pt:nth-child(1) h4':'about_1_heading','#about .pt:nth-child(1) p':'about_1_body','#about .pt:nth-child(2) h4':'about_2_heading','#about .pt:nth-child(2) p':'about_2_body','#about .pt:nth-child(3) h4':'about_3_heading','#about .pt:nth-child(3) p':'about_3_body','#about .pt:nth-child(4) h4':'about_4_heading','#about .pt:nth-child(4) p':'about_4_body',
+            '#reviews .eyebrow':'reviews_eyebrow','#reviews .title':'reviews_heading','#reviews > .wrap > .lead':'reviews_body','#reviews .tst:nth-child(1) > p':'review_1_quote','#reviews .tst:nth-child(1) .who b':'review_1_name','#reviews .tst:nth-child(2) > p':'review_2_quote','#reviews .tst:nth-child(2) .who b':'review_2_name','#reviews .tst:nth-child(3) > p':'review_3_quote','#reviews .tst:nth-child(3) .who b':'review_3_name',
+            '#faq .eyebrow':'faq_eyebrow','#faq .title':'faq_heading','#faq details:nth-child(1) summary':'faq_1_question','#faq details:nth-child(1) p':'faq_1_answer','#faq details:nth-child(2) summary':'faq_2_question','#faq details:nth-child(2) p':'faq_2_answer','#faq details:nth-child(3) summary':'faq_3_question','#faq details:nth-child(3) p':'faq_3_answer','#faq details:nth-child(4) summary':'faq_4_question','#faq details:nth-child(4) p':'faq_4_answer','#faq details:nth-child(5) summary':'faq_5_question','#faq details:nth-child(5) p':'faq_5_answer',
+            '#contact .eyebrow':'contact_eyebrow','#contact .title':'contact_heading','#contact .lead':'contact_body','#contact .info-card:nth-child(1) p':'contact_address','#contact .info-card:nth-child(3) p':'opening_hours',
+            'footer.site .foot-grid > div:first-child p:nth-of-type(1)':'footer_tagline','footer.site .foot-grid > div:first-child p:nth-of-type(2)':'footer_body'
+          };
+          Object.entries(bindings).forEach(([selector,key])=>{const el=document.querySelector(selector);if(el&&c[key]!==undefined)el.textContent=c[key];});
+          document.querySelectorAll('a[href^="tel:"]').forEach(a=>a.href='tel:'+c.telephone_number);
+          const hotline=document.querySelector('#contact .info-card:nth-child(2) h4 a');if(hotline)hotline.textContent=c.telephone_display;
+          document.querySelectorAll('a[href*="wa.me/"]').forEach(a=>a.href='https://wa.me/'+String(c.whatsapp_number).replace(/\D/g,''));
+          const facebook=document.querySelector('footer a[aria-label="Facebook"]'),instagram=document.querySelector('footer a[aria-label="Instagram"]');if(facebook)facebook.href=c.facebook_url;if(instagram)instagram.href=c.instagram_url;
+          const copyright=document.querySelector('.foot-bottom span:first-child');if(copyright)copyright.innerHTML='© <span id="year">'+new Date().getFullYear()+'</span> '+String(c.footer_copyright).replace(/[&<>]/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[x]));
+        } catch (_) {}
+      }
+      hydrateSiteContent();
+
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       // ---- Rising bubbles ----
