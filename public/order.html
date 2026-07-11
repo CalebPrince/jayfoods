@@ -442,7 +442,7 @@
       function showConfirmation(data) {
         el.confirmRef.textContent = data.reference;
         el.confirmSummary.textContent =
-          `${data.order_type === 'bulk' ? 'Bulk' : 'Single'} order • Total ${cedis(data.subtotal_pesewas)}`;
+          `${data.order_type === 'bulk' ? 'Bulk' : 'Single'} order • Total ${cedis(data.total_pesewas || data.subtotal_pesewas)}`;
         el.flow.classList.add('hidden');
         el.confirmation.classList.remove('hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });

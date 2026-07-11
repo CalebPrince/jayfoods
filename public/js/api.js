@@ -34,6 +34,7 @@ async function apiFetch(path, options = {}) {
 const api = {
   getProducts: () => apiFetch('/products'),
   getSiteContent: () => apiFetch('/site-content'),
+  getDeliveryZones: () => apiFetch('/delivery-zones'),
   createOrder: (order) => apiFetch('/orders', { method: 'POST', body: JSON.stringify(order) }),
   getOrder: (reference) => apiFetch('/orders/' + encodeURIComponent(reference)),
   startPayment: (reference) => apiFetch('/orders/' + encodeURIComponent(reference) + '/pay', { method: 'POST' }),

@@ -47,6 +47,7 @@ require $src . '/Controllers/SmtpSettingsController.php';
 require $src . '/Controllers/PaystackSettingsController.php';
 require $src . '/Controllers/PaymentController.php';
 require $src . '/Controllers/SiteContentController.php';
+require $src . '/Controllers/DeliveryZoneController.php';
 
 // Guard: every /api/v1/admin/* route requires a valid admin session.
 if (str_starts_with($requestPath, '/api/v1/admin')) {
@@ -64,6 +65,7 @@ $smtp          = new SmtpSettingsController();
 $paystack      = new PaystackSettingsController();
 $payments      = new PaymentController();
 $content       = new SiteContentController();
+$deliveryZones = new DeliveryZoneController();
 
 // ---- Public API -----------------------------------------------------------
 $router->get('/api/v1/products', static fn(array $p) => $orders->listProducts());
@@ -74,6 +76,7 @@ $router->get('/api/v1/payments/verify/{reference}', static fn(array $p) => $paym
 $router->post('/api/v1/payments/webhook', static fn(array $p) => $payments->webhook());
 $router->post('/api/v1/messages', static fn(array $p) => $messages->create());
 $router->get('/api/v1/site-content', static fn(array $p) => $content->publicContent());
+$router->get('/api/v1/delivery-zones', static fn(array $p) => $deliveryZones->publicIndex());
 
 // ---- Auth -----------------------------------------------------------------
 $router->post('/api/v1/auth/login', static fn(array $p) => $auth->login());
@@ -107,5 +110,7 @@ $router->get('/api/v1/admin/settings/paystack', static fn(array $p) => $paystack
 $router->put('/api/v1/admin/settings/paystack', static fn(array $p) => $paystack->update());
 $router->get('/api/v1/admin/content', static fn(array $p) => $content->adminContent());
 $router->put('/api/v1/admin/content', static fn(array $p) => $content->update());
+$router->get('/api/v1/admin/delivery-zones', static fn(array $p) => $deliveryZones->adminIndex());
+$router->put('/api/v1/admin/delivery-zones', static fn(array $p) => $deliveryZones->save());
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);

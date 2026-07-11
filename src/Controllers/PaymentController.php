@@ -15,7 +15,7 @@ final class PaymentController
             $scheme = $this->isHttps() ? 'https' : 'http';
             $callback = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '/order.html?payment=callback';
             $result = $this->request('POST', '/transaction/initialize', [
-                'email'=>$o['customer_email'], 'amount'=>(string) $o['subtotal_pesewas'], 'currency'=>'GHS',
+                'email'=>$o['customer_email'], 'amount'=>(string) $o['total_pesewas'], 'currency'=>'GHS',
                 'reference'=>$paymentRef, 'callback_url'=>$callback,
                 'metadata'=>json_encode(['order_reference'=>$reference], JSON_UNESCAPED_SLASHES),
             ]);
@@ -46,8 +46,8 @@ final class PaymentController
 
     private function markPaidIfValid(string $ref, array $data): bool
     {
-        $s=$this->db->prepare('SELECT id,reference,customer_name,customer_email,subtotal_pesewas,payment_status FROM orders WHERE payment_reference=:r'); $s->execute([':r'=>$ref]); $o=$s->fetch();
-        if (!$o || ($data['status'] ?? '') !== 'success' || (int)($data['amount'] ?? -1) !== (int)$o['subtotal_pesewas'] || ($data['currency'] ?? '') !== 'GHS') return false;
+        $s=$this->db->prepare('SELECT id,reference,customer_name,customer_email,subtotal_pesewas,delivery_fee_pesewas,total_pesewas,payment_status FROM orders WHERE payment_reference=:r'); $s->execute([':r'=>$ref]); $o=$s->fetch();
+        if (!$o || ($data['status'] ?? '') !== 'success' || (int)($data['amount'] ?? -1) !== (int)$o['total_pesewas'] || ($data['currency'] ?? '') !== 'GHS') return false;
         if ($o['payment_status'] !== 'paid') {
             $u=$this->db->prepare("UPDATE orders SET payment_status='paid' WHERE id=:id AND payment_status!='paid'"); $u->execute([':id'=>$o['id']]);
             if ($u->rowCount() > 0) {
@@ -57,7 +57,7 @@ final class PaymentController
         }
         return true;
     }
-    private function order(string $ref): ?array { $s=$this->db->prepare('SELECT id,customer_email,subtotal_pesewas FROM orders WHERE reference=:r');$s->execute([':r'=>$ref]);$r=$s->fetch();return $r?:null; }
+    private function order(string $ref): ?array { $s=$this->db->prepare('SELECT id,customer_email,subtotal_pesewas,total_pesewas FROM orders WHERE reference=:r');$s->execute([':r'=>$ref]);$r=$s->fetch();return $r?:null; }
     private function secret(): string { $r=$this->db->query('SELECT secret_key_encrypted FROM paystack_settings WHERE id=1')->fetch(); if(empty($r['secret_key_encrypted'])) throw new RuntimeException('Paystack is not configured.'); return SecretBox::decrypt($r['secret_key_encrypted']); }
     private function request(string $method,string $path,?array $body=null): array
     {

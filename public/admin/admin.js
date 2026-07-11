@@ -49,6 +49,8 @@
     updatePaystack: (body) => apiFetch('/admin/settings/paystack', { method: 'PUT', body: JSON.stringify(body) }),
     content:       () => apiFetch('/admin/content'),
     updateContent: (body) => apiFetch('/admin/content', { method: 'PUT', body: JSON.stringify(body) }),
+    deliveryZones: () => apiFetch('/admin/delivery-zones'),
+    updateDeliveryZones: (zones) => apiFetch('/admin/delivery-zones', { method:'PUT', body:JSON.stringify({zones}) }),
   };
 
   // ---------------------------------------------------------------------------
@@ -96,6 +98,7 @@
     orders:    { title: 'Orders',    render: renderOrders },
     messages:  { title: 'Messages',  render: renderMessages },
     content:   { title: 'Site content', render: renderContent },
+    delivery:  { title: 'Delivery zones', render: renderDeliveryZones },
     settings:  { title: 'Settings',  render: renderSettings },
   };
 
@@ -141,7 +144,7 @@
             <td class="prod-name">${esc(o.reference)}</td>
             <td>${esc(o.customer_name)}</td>
             <td>${typePill(o.order_type)}</td>
-            <td>${cedis(o.subtotal_pesewas)}</td>
+            <td>${cedis(o.total_pesewas)}</td>
             <td>${paymentPill(o.payment_status)}</td>
             <td>${statusPill(o.status)}</td>
             <td class="sub">${fmtDate(o.created_at)}</td>
@@ -299,7 +302,7 @@
         <td>${esc(o.customer_name)}<div class="sub">${esc(o.customer_phone)}</div></td>
         <td>${typePill(o.order_type)}</td>
         <td>${o.unit_count} <span class="sub">unit(s)</span></td>
-        <td>${cedis(o.subtotal_pesewas)}</td>
+        <td>${cedis(o.total_pesewas)}</td>
         <td>${paymentPill(o.payment_status)}</td>
         <td>${statusPill(o.status)}</td>
         <td class="sub">${fmtDate(o.created_at)}</td>
@@ -340,7 +343,9 @@
       ${o.payment_reference ? `<div class="detail-row"><span>Paystack reference</span><span style="text-align:right;font-family:monospace">${esc(o.payment_reference)}</span></div>` : ''}
       <div style="margin:16px 0 6px;font-weight:700;color:var(--green-dk)">Items</div>
       ${items}
-      <div class="detail-row" style="font-weight:800;border-bottom:0"><span>Total</span><span>${cedis(o.subtotal_pesewas)}</span></div>
+      <div class="detail-row"><span>Products subtotal</span><span>${cedis(o.subtotal_pesewas)}</span></div>
+      <div class="detail-row"><span>Delivery fee</span><span>${cedis(o.delivery_fee_pesewas)}</span></div>
+      <div class="detail-row" style="font-weight:800;border-bottom:0"><span>Grand total</span><span>${cedis(o.total_pesewas)}</span></div>
       <div class="field" style="margin-top:16px"><label>Update status</label><select id="om-status">${options}</select></div>
     `, [
       button('Close', 'btn-ghost', closeModal),
@@ -400,6 +405,15 @@
       const error=$('#content-error'),ok=$('#content-ok');error.style.display='none';ok.style.display='none';
       try{await api.updateContent(payload);ok.style.display='block';window.scrollTo({top:0,behavior:'smooth'});}catch(err){error.textContent=err.message;error.style.display='block';}
     });
+  }
+
+  async function renderDeliveryZones() {
+    const {data}=await api.deliveryZones();
+    const row=z=>`<div class="delivery-row" data-zone-id="${z.id||0}"><input data-zone="name" placeholder="Zone name" value="${esc(z.name||'')}"><input data-zone="fee" type="number" min="0" step="0.01" placeholder="Fee GH₵" value="${z.fee_pesewas!=null?(z.fee_pesewas/100).toFixed(2):''}"><label class="checkline"><input data-zone="active" type="checkbox" ${z.is_active!==false?'checked':''}> Active</label><button type="button" class="btn btn-danger btn-sm" data-remove-zone>×</button></div>`;
+    view.innerHTML=`<div class="panel"><div class="panel-head"><h2>Delivery zones and fees</h2><button class="btn btn-ghost btn-sm" id="add-zone">+ Add zone</button></div><div class="panel-body" style="padding:20px"><div class="form-error" id="zone-error" style="display:none"></div><div class="form-ok" id="zone-ok" style="display:none">Delivery zones updated.</div><p class="sub" style="margin-bottom:16px">Customers only see active zones. Fees are added to the Paystack amount and saved with each order.</p><form id="zones-form"><div class="delivery-rows" id="delivery-rows">${data.map(row).join('')}</div><button class="btn btn-primary" type="submit">Save delivery zones</button></form></div></div>`;
+    $('#add-zone').addEventListener('click',()=>$('#delivery-rows').insertAdjacentHTML('beforeend',row({is_active:true})));
+    $('#delivery-rows').addEventListener('click',e=>{const b=e.target.closest('[data-remove-zone]');if(b)b.closest('.delivery-row').remove()});
+    $('#zones-form').addEventListener('submit',async e=>{e.preventDefault();const zones=[...document.querySelectorAll('.delivery-row')].map(r=>({id:+r.dataset.zoneId,name:r.querySelector('[data-zone="name"]').value.trim(),fee_pesewas:toPesewas(r.querySelector('[data-zone="fee"]').value),is_active:r.querySelector('[data-zone="active"]').checked}));const error=$('#zone-error'),ok=$('#zone-ok');error.style.display='none';ok.style.display='none';try{await api.updateDeliveryZones(zones);await renderDeliveryZones();$('#zone-ok').style.display='block'}catch(err){error.textContent=err.message;error.style.display='block'}});
   }
 
   // ---------------------------------------------------------------------------

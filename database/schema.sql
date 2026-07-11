@@ -44,6 +44,18 @@ CREATE TABLE IF NOT EXISTS product_sizes (
 );
 CREATE INDEX IF NOT EXISTS idx_product_sizes_product ON product_sizes(product_id);
 
+CREATE TABLE IF NOT EXISTS delivery_zones (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    name         TEXT NOT NULL UNIQUE,
+    fee_pesewas  INTEGER NOT NULL DEFAULT 0 CHECK(fee_pesewas >= 0),
+    is_active    INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
+    sort_order   INTEGER NOT NULL DEFAULT 0,
+    created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+INSERT OR IGNORE INTO delivery_zones(name,fee_pesewas,sort_order) VALUES
+('Greater Accra',2000,1),('Tema',2500,2),('Other',4000,99);
+
 -- ---------------------------------------------------------------------------
 -- Customer orders. `reference` is the human-facing tracking code.
 -- ---------------------------------------------------------------------------
@@ -57,9 +69,12 @@ CREATE TABLE IF NOT EXISTS orders (
     customer_email      TEXT    NOT NULL DEFAULT '',
     delivery_address    TEXT    NOT NULL,
     region              TEXT    NOT NULL DEFAULT 'Greater Accra',
+    delivery_zone_id    INTEGER,
     notes               TEXT    NOT NULL DEFAULT '',
 
     subtotal_pesewas    INTEGER NOT NULL DEFAULT 0,
+    delivery_fee_pesewas INTEGER NOT NULL DEFAULT 0,
+    total_pesewas       INTEGER NOT NULL DEFAULT 0,
     status              TEXT    NOT NULL DEFAULT 'pending'
                                 CHECK (status IN ('pending', 'confirmed', 'processing', 'delivered', 'cancelled')),
     payment_status      TEXT    NOT NULL DEFAULT 'unpaid',

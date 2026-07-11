@@ -11,11 +11,13 @@ final class EmailNotifications
             if (!$mailer->isConfigured()) return;
             $rows = self::itemRows($items);
             $total = self::money((int) $order['subtotal_pesewas']);
+            $delivery = self::money((int) ($order['delivery_fee_pesewas'] ?? 0));
+            $grand = self::money((int) ($order['total_pesewas'] ?? $order['subtotal_pesewas']));
             $ref = self::e($order['reference']);
-            $html = self::layout("Order started: $ref", "<p>Hello " . self::e($order['customer_name']) . ",</p><p>We have received your order details and are awaiting verified payment.</p>$rows<p><b>Amount due: $total</b></p><p>Reference: <b>$ref</b></p>");
+            $html = self::layout("Order started: $ref", "<p>Hello " . self::e($order['customer_name']) . ",</p><p>We have received your order details and are awaiting verified payment.</p>$rows<p>Products: $total<br>Delivery: $delivery<br><b>Amount due: $grand</b></p><p>Reference: <b>$ref</b></p>");
             if (!empty($order['customer_email'])) $mailer->send($order['customer_email'], "Jay fooDs order awaiting payment — $ref", $html);
             if ($mailer->notificationEmail()) {
-                $admin = self::layout("New unpaid order: $ref", '<p>An order was started by <b>' . self::e($order['customer_name']) . '</b> (' . self::e($order['customer_phone']) . ").</p>$rows<p><b>Awaiting payment: $total</b></p>");
+                $admin = self::layout("New unpaid order: $ref", '<p>An order was started by <b>' . self::e($order['customer_name']) . '</b> (' . self::e($order['customer_phone']) . ").</p>$rows<p>Products: $total<br>Delivery: $delivery<br><b>Awaiting payment: $grand</b></p>");
                 $mailer->send($mailer->notificationEmail(), "New unpaid Jay fooDs order — $ref", $admin);
             }
         });
@@ -42,10 +44,12 @@ final class EmailNotifications
             $ref = self::e($order['reference']);
             $rows = self::itemRows($items);
             $total = self::money((int) $order['subtotal_pesewas']);
-            $html = self::layout("Payment confirmed: $ref", '<p>Hello ' . self::e($order['customer_name']) . ",</p><p>Your Paystack payment has been verified successfully.</p>$rows<p><b>Amount paid: $total</b></p><p>We will contact you with delivery updates.</p>");
+            $delivery = self::money((int) ($order['delivery_fee_pesewas'] ?? 0));
+            $grand = self::money((int) ($order['total_pesewas'] ?? $order['subtotal_pesewas']));
+            $html = self::layout("Payment confirmed: $ref", '<p>Hello ' . self::e($order['customer_name']) . ",</p><p>Your Paystack payment has been verified successfully.</p>$rows<p>Products: $total<br>Delivery: $delivery<br><b>Amount paid: $grand</b></p><p>We will contact you with delivery updates.</p>");
             if (!empty($order['customer_email'])) $mailer->send($order['customer_email'], "Payment confirmed — $ref", $html);
             if ($mailer->notificationEmail()) {
-                $admin = self::layout("Paid order: $ref", '<p>Payment has been verified for <b>' . self::e($order['customer_name']) . ".</b></p>$rows<p><b>Amount received: $total</b></p>");
+                $admin = self::layout("Paid order: $ref", '<p>Payment has been verified for <b>' . self::e($order['customer_name']) . ".</b></p>$rows<p>Products: $total<br>Delivery: $delivery<br><b>Amount received: $grand</b></p>");
                 $mailer->send($mailer->notificationEmail(), "Paid Jay fooDs order — $ref", $admin);
             }
         });

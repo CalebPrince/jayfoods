@@ -86,7 +86,9 @@ final class OrderController
         $phone     = trim((string) ($input['customer_phone'] ?? ''));
         $email     = trim((string) ($input['customer_email'] ?? ''));
         $address   = trim((string) ($input['delivery_address'] ?? ''));
-        $region    = trim((string) ($input['region'] ?? 'Greater Accra')) ?: 'Greater Accra';
+        $zoneId    = (int) ($input['delivery_zone_id'] ?? 0);
+        $region    = '';
+        $deliveryFee = 0;
         $notes     = trim((string) ($input['notes'] ?? ''));
         $rawItems  = $input['items'] ?? [];
 
@@ -95,6 +97,8 @@ final class OrderController
         if ($name === '')    { $errors['customer_name']    = 'Full name is required.'; }
         if ($phone === '')   { $errors['customer_phone']   = 'Phone number is required.'; }
         if ($address === '') { $errors['delivery_address'] = 'Delivery address is required.'; }
+        $zoneStmt=$this->db->prepare('SELECT id,name,fee_pesewas FROM delivery_zones WHERE id=:id AND is_active=1');$zoneStmt->execute([':id'=>$zoneId]);$zone=$zoneStmt->fetch();
+        if(!$zone){$errors['delivery_zone_id']='Choose an available delivery zone.';}else{$region=$zone['name'];$deliveryFee=(int)$zone['fee_pesewas'];}
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) { $errors['customer_email'] = 'A valid email address is required for payment.'; }
         if (!is_array($rawItems) || count($rawItems) === 0) {
             $errors['items'] = 'Add at least one product to your order.';
@@ -188,6 +192,7 @@ final class OrderController
 
         // ---- Persist inside a transaction ------------------------------------
         $reference = $this->generateReference();
+        $total = $subtotal + $deliveryFee;
 
         try {
             $this->db->beginTransaction();
@@ -195,10 +200,12 @@ final class OrderController
             $orderStmt = $this->db->prepare(
                 'INSERT INTO orders
                     (reference, order_type, customer_name, customer_phone, customer_email,
-                     delivery_address, region, notes, subtotal_pesewas, status)
+                     delivery_address, region, delivery_zone_id, notes, subtotal_pesewas,
+                     delivery_fee_pesewas, total_pesewas, status)
                  VALUES
                     (:reference, :order_type, :customer_name, :customer_phone, :customer_email,
-                     :delivery_address, :region, :notes, :subtotal, :status)'
+                     :delivery_address, :region, :zone_id, :notes, :subtotal,
+                     :delivery_fee, :total, :status)'
             );
             $orderStmt->execute([
                 ':reference'        => $reference,
@@ -208,8 +215,11 @@ final class OrderController
                 ':customer_email'   => $email,
                 ':delivery_address' => $address,
                 ':region'           => $region,
+                ':zone_id'          => $zoneId,
                 ':notes'            => $notes,
                 ':subtotal'         => $subtotal,
+                ':delivery_fee'     => $deliveryFee,
+                ':total'            => $total,
                 ':status'           => 'pending',
             ]);
 
@@ -251,6 +261,8 @@ final class OrderController
             'customer_phone' => $phone,
             'customer_email' => $email,
             'subtotal_pesewas' => $subtotal,
+            'delivery_fee_pesewas' => $deliveryFee,
+            'total_pesewas' => $total,
         ], $lines);
 
         Response::json([
@@ -259,6 +271,8 @@ final class OrderController
                 'order_type'       => $orderType,
                 'status'           => 'pending',
                 'subtotal_pesewas' => $subtotal,
+                'delivery_fee_pesewas' => $deliveryFee,
+                'total_pesewas'    => $total,
                 'items'            => $lines,
             ],
         ], 201);
@@ -272,7 +286,7 @@ final class OrderController
         $stmt = $this->db->prepare(
             'SELECT id, reference, order_type, customer_name, customer_phone,
                     customer_email, delivery_address, region, notes,
-                    subtotal_pesewas, status, created_at
+                    subtotal_pesewas, delivery_fee_pesewas, total_pesewas, status, created_at
                FROM orders
               WHERE reference = :reference'
         );
@@ -300,6 +314,8 @@ final class OrderController
                 'delivery_address' => $order['delivery_address'],
                 'region'           => $order['region'],
                 'subtotal_pesewas' => (int) $order['subtotal_pesewas'],
+                'delivery_fee_pesewas' => (int) $order['delivery_fee_pesewas'],
+                'total_pesewas'    => (int) $order['total_pesewas'],
                 'created_at'       => $order['created_at'],
                 'items'            => array_map(static function (array $i): array {
                     return [

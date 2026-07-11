@@ -50,6 +50,19 @@ if (!in_array('payment_reference', $orderCols, true)) {
     $pdo->exec("ALTER TABLE orders ADD COLUMN payment_reference TEXT NOT NULL DEFAULT ''");
     echo "[migrate] Added orders.payment_reference\n";
 }
+if (!in_array('delivery_zone_id', $orderCols, true)) {
+    $pdo->exec("ALTER TABLE orders ADD COLUMN delivery_zone_id INTEGER");
+    echo "[migrate] Added orders.delivery_zone_id\n";
+}
+if (!in_array('delivery_fee_pesewas', $orderCols, true)) {
+    $pdo->exec("ALTER TABLE orders ADD COLUMN delivery_fee_pesewas INTEGER NOT NULL DEFAULT 0");
+    echo "[migrate] Added orders.delivery_fee_pesewas\n";
+}
+if (!in_array('total_pesewas', $orderCols, true)) {
+    $pdo->exec("ALTER TABLE orders ADD COLUMN total_pesewas INTEGER NOT NULL DEFAULT 0");
+    $pdo->exec("UPDATE orders SET total_pesewas = subtotal_pesewas WHERE total_pesewas = 0");
+    echo "[migrate] Added orders.total_pesewas\n";
+}
 $pdo->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_payment_reference ON orders(payment_reference) WHERE payment_reference != ''");
 
 $pdo->exec(

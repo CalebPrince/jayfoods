@@ -23,7 +23,8 @@ final class AdminOrderController
     {
         $rows = $this->db->query(
             'SELECT o.id, o.reference, o.order_type, o.customer_name, o.customer_phone,
-                    o.region, o.subtotal_pesewas, o.status, o.payment_status, o.payment_reference, o.created_at,
+                    o.region, o.subtotal_pesewas, o.delivery_fee_pesewas, o.total_pesewas,
+                    o.status, o.payment_status, o.payment_reference, o.created_at,
                     COUNT(oi.id) AS item_count,
                     COALESCE(SUM(oi.quantity), 0) AS unit_count
                FROM orders o
@@ -41,6 +42,8 @@ final class AdminOrderController
                 'customer_phone'   => $r['customer_phone'],
                 'region'           => $r['region'],
                 'subtotal_pesewas' => (int) $r['subtotal_pesewas'],
+                'delivery_fee_pesewas'=>(int)$r['delivery_fee_pesewas'],
+                'total_pesewas'    => (int)$r['total_pesewas'],
                 'status'           => $r['status'],
                 'payment_status'   => $r['payment_status'],
                 'payment_reference'=> $r['payment_reference'],
@@ -57,7 +60,8 @@ final class AdminOrderController
     {
         $stmt = $this->db->prepare(
             'SELECT id, reference, order_type, customer_name, customer_phone, customer_email,
-                    delivery_address, region, notes, subtotal_pesewas, status,
+                    delivery_address, region, notes, subtotal_pesewas,
+                    delivery_fee_pesewas, total_pesewas, status,
                     payment_status, payment_reference, created_at
                FROM orders WHERE id = :id'
         );
@@ -87,6 +91,8 @@ final class AdminOrderController
                 'region'           => $order['region'],
                 'notes'            => $order['notes'],
                 'subtotal_pesewas' => (int) $order['subtotal_pesewas'],
+                'delivery_fee_pesewas'=>(int)$order['delivery_fee_pesewas'],
+                'total_pesewas'    => (int)$order['total_pesewas'],
                 'status'           => $order['status'],
                 'payment_status'   => $order['payment_status'],
                 'payment_reference'=> $order['payment_reference'],
