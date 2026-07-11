@@ -52,6 +52,7 @@ require $src . '/Controllers/DeliveryZoneController.php';
 require $src . '/Controllers/PromoCodeController.php';
 require $src . '/Controllers/CustomerController.php';
 require $src . '/Controllers/BackupController.php';
+require $src . '/Controllers/AdminUserController.php';
 
 // Guard: every /api/v1/admin/* route requires a valid admin session.
 if (str_starts_with($requestPath, '/api/v1/admin')) {
@@ -73,6 +74,7 @@ $deliveryZones = new DeliveryZoneController();
 $promos        = new PromoCodeController();
 $customers     = new CustomerController();
 $backups       = new BackupController();
+$adminUsers    = new AdminUserController();
 
 // ---- Public API -----------------------------------------------------------
 $router->get('/api/v1/products', static fn(array $p) => $orders->listProducts());
@@ -107,6 +109,9 @@ $router->patch('/api/v1/admin/orders/{id}', static fn(array $p) => $adminOrders-
 $router->patch('/api/v1/admin/orders/{id}/notes', static fn(array $p) => $adminOrders->updateNotes((int)$p['id']));
 $router->get('/api/v1/admin/customers', static fn(array $p) => $customers->index());
 $router->get('/api/v1/admin/backups/database', static fn(array $p) => $backups->download());
+$router->get('/api/v1/admin/users', static fn(array $p) => $adminUsers->index());
+$router->post('/api/v1/admin/users', static fn(array $p) => $adminUsers->save());
+$router->delete('/api/v1/admin/users/{id}', static fn(array $p) => $adminUsers->destroy((int)$p['id']));
 
 $router->get('/api/v1/admin/messages', static fn(array $p) => $messages->index());
 $router->patch('/api/v1/admin/messages/{id}', static fn(array $p) => $messages->markRead((int) $p['id']));

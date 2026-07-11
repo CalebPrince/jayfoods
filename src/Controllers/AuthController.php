@@ -26,7 +26,7 @@ final class AuthController
             return;
         }
 
-        $stmt = $this->db->prepare('SELECT id, email, name, password_hash FROM admins WHERE email = :email');
+        $stmt = $this->db->prepare('SELECT id, email, name, password_hash FROM admins WHERE email = :email AND is_active=1');
         $stmt->execute([':email' => $email]);
         $admin = $stmt->fetch();
 

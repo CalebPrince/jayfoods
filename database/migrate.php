@@ -92,6 +92,7 @@ $pdo->exec(
      SELECT p.id,p.unit_label,p.unit_price_pesewas,p.stock_quantity,p.bulk_min_quantity,p.bulk_price_pesewas
        FROM products p WHERE NOT EXISTS(SELECT 1 FROM product_sizes s WHERE s.product_id=p.id)"
 );
+$adminCols=array_column($pdo->query('PRAGMA table_info(admins)')->fetchAll(PDO::FETCH_ASSOC),'name');if(!in_array('is_active',$adminCols,true)){$pdo->exec('ALTER TABLE admins ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1');echo "[migrate] Added admins.is_active\n";}
 
 // ---------------------------------------------------------------------------
 // Ensure a signing key exists for JWT (HS256). Generated once, kept out of VCS.

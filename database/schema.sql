@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS admins (
     email         TEXT    NOT NULL UNIQUE,
     name          TEXT    NOT NULL DEFAULT 'Administrator',
     password_hash TEXT    NOT NULL,
+    is_active     INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
     created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 

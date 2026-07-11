@@ -33,7 +33,7 @@ final class Auth
         }
 
         $stmt = Database::connection()->prepare(
-            'SELECT id, email, name FROM admins WHERE id = :id'
+            'SELECT id, email, name FROM admins WHERE id = :id AND is_active=1'
         );
         $stmt->execute([':id' => (int) $claims['sub']]);
         $admin = $stmt->fetch();
