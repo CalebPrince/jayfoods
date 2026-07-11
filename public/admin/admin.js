@@ -37,6 +37,7 @@
     orders:        () => apiFetch('/admin/orders'),
     order:         (id) => apiFetch('/admin/orders/' + id),
     setOrderStatus:(id, status) => apiFetch('/admin/orders/' + id, { method: 'PATCH', body: JSON.stringify({ status }) }),
+    customers:     () => apiFetch('/admin/customers'),
     messages:      () => apiFetch('/admin/messages'),
     setMessageRead:(id, is_read) => apiFetch('/admin/messages/' + id, { method: 'PATCH', body: JSON.stringify({ is_read }) }),
     deleteMessage: (id) => apiFetch('/admin/messages/' + id, { method: 'DELETE' }),
@@ -99,6 +100,7 @@
     dashboard: { title: 'Dashboard', render: renderDashboard },
     products:  { title: 'Products',  render: renderProducts },
     orders:    { title: 'Orders',    render: renderOrders },
+    customers: { title: 'Customers', render: renderCustomers },
     messages:  { title: 'Messages',  render: renderMessages },
     content:   { title: 'Site content', render: renderContent },
     delivery:  { title: 'Delivery zones', render: renderDeliveryZones },
@@ -403,6 +405,8 @@
   }
 
   // ---------------------------------------------------------------------------
+  async function renderCustomers(){const {data}=await api.customers();const draw=()=>{const q=$('#customer-search').value.trim().toLowerCase(),filtered=data.filter(c=>!q||[c.customer_name,c.customer_phone,c.customer_email,c.region].some(v=>String(v||'').toLowerCase().includes(q)));$('#customer-count').textContent=`${filtered.length} customer${filtered.length===1?'':'s'}`;$('#customer-body').innerHTML=filtered.length?filtered.map(c=>{const digits=String(c.customer_phone).replace(/\D/g,'').replace(/^0/,'233');return `<tr><td><div class="prod-name">${esc(c.customer_name)}</div><div class="sub">${esc(c.customer_email||'No email')}</div></td><td>${esc(c.customer_phone)}</td><td>${esc(c.region)}</td><td>${c.order_count}</td><td>${cedis(c.lifetime_value_pesewas)}</td><td class="sub">${fmtDate(c.last_order_at)}</td><td><div class="row-actions"><a class="btn btn-ghost btn-sm" href="tel:${esc(c.customer_phone)}">Call</a><a class="btn btn-primary btn-sm" target="_blank" rel="noopener" href="https://wa.me/${digits}">WhatsApp</a></div></td></tr>`}).join(''):'<tr><td colspan="7" class="empty">No customers match your search.</td></tr>'};view.innerHTML=`<div class="panel"><div class="panel-head"><h2 id="customer-count">${data.length} customers</h2></div><div class="product-tools"><input id="customer-search" type="search" placeholder="Search name, phone, email or area"></div><div class="panel-body table-scroll"><table class="data"><thead><tr><th>Customer</th><th>Phone</th><th>Area</th><th>Orders</th><th>Paid value</th><th>Last order</th><th></th></tr></thead><tbody id="customer-body"></tbody></table></div></div>`;$('#customer-search').addEventListener('input',draw);draw()}
+
   // Messages
   // ---------------------------------------------------------------------------
   async function renderMessages() {
