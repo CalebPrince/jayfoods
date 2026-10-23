@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-/** Staff and owner emails for Kafui, sent through the site's existing Gmail SMTP. */
+/** Staff and owner emails for Kafui, sent through the site's SMTP settings (cPanel mailbox or Gmail). */
 final class KafuiNotify
 {
     public static function order(array $order, array $lines, string $channel): void

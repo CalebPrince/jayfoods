@@ -33,16 +33,19 @@ final class SmtpSettingsController
         $senderName = trim((string) ($input['sender_name'] ?? ''));
         $username   = strtolower(trim((string) ($input['username'] ?? '')));
         $notify     = strtolower(trim((string) ($input['notification_email'] ?? '')));
-        $password   = preg_replace('/\s+/', '', (string) ($input['password'] ?? ''));
+        $password   = (string) ($input['password'] ?? '');
+        // Google shows App Passwords in groups of four; other mail servers' passwords are kept exactly as typed.
+        if (str_ends_with(strtolower($host), 'gmail.com')) $password = preg_replace('/\s+/', '', $password);
         $errors     = [];
 
         if ($host === '') $errors['host'] = 'SMTP host is required.';
         if ($port < 1 || $port > 65535) $errors['port'] = 'Enter a valid port.';
         if (!in_array($encryption, ['tls', 'ssl'], true)) $errors['encryption'] = 'Choose TLS or SSL.';
         if ($senderName === '') $errors['sender_name'] = 'Sender name is required.';
-        if (!filter_var($username, FILTER_VALIDATE_EMAIL)) $errors['username'] = 'Enter a valid Gmail address.';
+        if (!filter_var($username, FILTER_VALIDATE_EMAIL)) $errors['username'] = 'Enter the full email address you log in with.';
         if (!filter_var($notify, FILTER_VALIDATE_EMAIL)) $errors['notification_email'] = 'Enter a valid notification email.';
-        if ($password !== '' && strlen($password) !== 16) $errors['password'] = 'Google App Passwords contain 16 characters.';
+        if (strlen($password) > 256) $errors['password'] = 'That password is too long.';
+        if ($password !== '' && str_ends_with(strtolower($host), 'gmail.com') && strlen($password) !== 16) $errors['password'] = 'Google App Passwords contain 16 characters.';
 
         if ($errors) {
             Response::json(['error' => 'Please correct the highlighted fields.', 'fields' => $errors], 422);
@@ -88,7 +91,7 @@ final class SmtpSettingsController
         $mailer = new SmtpMailer();
         $recipient = $mailer->notificationEmail();
         if (!$mailer->isConfigured() || !filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
-            Response::json(['error' => 'Save a Gmail address, App Password and notification email first.'], 422);
+            Response::json(['error' => 'Save the email address, password and notification email first.'], 422);
             return;
         }
 
