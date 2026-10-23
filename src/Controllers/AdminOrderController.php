@@ -25,7 +25,7 @@ final class AdminOrderController
             'SELECT o.id, o.reference, o.order_type, o.customer_name, o.customer_phone,
                     o.region, o.subtotal_pesewas, o.delivery_fee_pesewas, o.total_pesewas,
                     o.status, o.payment_status, o.payment_reference, o.stock_state,
-                    o.reservation_expires_at, o.created_at,
+                    o.reservation_expires_at, o.created_at, o.source,
                     COUNT(oi.id) AS item_count,
                     COALESCE(SUM(oi.quantity), 0) AS unit_count
                FROM orders o
@@ -50,6 +50,7 @@ final class AdminOrderController
                 'payment_reference'=> $r['payment_reference'],
                 'stock_state'      => $r['stock_state'],
                 'reservation_expires_at'=>$r['reservation_expires_at'],
+                'source'           => $r['source'],
                 'item_count'       => (int) $r['item_count'],
                 'unit_count'       => (int) $r['unit_count'],
                 'created_at'       => $r['created_at'],
@@ -65,7 +66,8 @@ final class AdminOrderController
             'SELECT id, reference, order_type, customer_name, customer_phone, customer_email,
                     delivery_address, region, notes, admin_notes, subtotal_pesewas, promo_code, discount_pesewas,
                     delivery_fee_pesewas, total_pesewas, status,
-                    payment_status, payment_reference, stock_state, reservation_expires_at, created_at
+                    payment_status, payment_reference, stock_state, reservation_expires_at, created_at,
+                    source, fulfilment, requested_date
                FROM orders WHERE id = :id'
         );
         $stmt->execute([':id' => $id]);
@@ -106,6 +108,9 @@ final class AdminOrderController
                 'stock_state'      => $order['stock_state'],
                 'reservation_expires_at'=>$order['reservation_expires_at'],
                 'created_at'       => $order['created_at'],
+                'source'           => $order['source'],
+                'fulfilment'       => $order['fulfilment'],
+                'requested_date'   => $order['requested_date'],
                 'items'            => array_map(static function (array $i): array {
                     return [
                         'product_name'       => $i['product_name'],

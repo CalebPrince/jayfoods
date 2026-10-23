@@ -1,0 +1,151 @@
+crosswalk_version: 1
+verified_on: "2026-10-02"
+# How an item is scored (see scripts/standards_coverage.py):
+#   COVERED  = the skill REQUIRES the topic to be addressed through a required control domain,
+#              a schema field, or a gate, and says how (see `mechanism`). Score 1.0.
+#   PARTIAL  = the skill prompts for it (threat-model guidance, checklist question) but has no
+#              required field/domain/gate that would show it was skipped. Score 0.5.
+#   GAP      = not addressed. Score 0.
+#   NOT_APPLICABLE items are excluded from the score and must say why.
+# `basis` says where the item IDs and titles came from (standard level; an item may override it):
+#   PRIMARY       = read from the standard publisher's own page or document on `verified_on`.
+#   CROSS_CHECKED = the publisher's page could not be read, but two or more independent
+#                   secondary sources agree. Good enough to cite; confirm against the publisher
+#                   when you can.
+#   RECALLED      = recalled or from a single secondary source. Do not cite without checking.
+# `verified: true` is allowed only when basis is PRIMARY. The verified-only percentage counts
+# PRIMARY items only.
+# IMPORTANT: a score here measures whether the SKILL REQUIRES the topic to be addressed (through a
+# field, domain or gate that fails when skipped). It is not a measure of how well a project meets the
+# standard, and ASVS is mapped by chapter, not by its individual requirements. The validator checks
+# that a practice is stated, not that it is good; evidence records and review do that.
+# Re-verify this file when it is older than six months or when a standard publishes a new version.
+standards:
+  OWASP-T10-2025:
+    name: "OWASP Top 10:2025"
+    source: "https://owasp.org/Top10/2025/"
+    verified: true
+    basis: PRIMARY
+    items:
+      - {id: A01, title: "Broken Access Control", status: COVERED, domains: [AUTHZ, API], mechanism: "AUTHZ domain required at MEDIUM+; identity/permission matrix; 'authentication never implies authorization'; SSRF/redirect/path checks listed in control-domains.md"}
+      - {id: A02, title: "Security Misconfiguration", status: COVERED, domains: [CONFIG, DEPLOY], mechanism: "CONFIG and DEPLOY domains required at every tier; secure-defaults question set"}
+      - {id: A03, title: "Software Supply Chain Failures", status: COVERED, domains: [SUPPLY_CHAIN], mechanism: "SUPPLY_CHAIN domain required at every tier; supply_chain block (SBOM, provenance, dependency policy, vulnerability management); risk.assurance.slsa_build_level"}
+      - {id: A04, title: "Cryptographic Failures", status: COVERED, domains: [CRYPTO, DATA], mechanism: "CRYPTO and DATA domains required at MEDIUM+; data classification and retention on every asset and flow"}
+      - {id: A05, title: "Injection", status: COVERED, domains: [INPUT], mechanism: "INPUT domain required at every tier (validation, encoding, injection classes including LLM prompt injection)"}
+      - {id: A06, title: "Insecure Design", status: COVERED, domains: [GOVERNANCE], mechanism: "Whole skill: pre-build threat model, trust boundaries, explicit owner approval gate before implementation"}
+      - {id: A07, title: "Authentication Failures", status: COVERED, domains: [AUTH, SESSION], mechanism: "AUTH and SESSION domains required at MEDIUM+"}
+      - {id: A08, title: "Software or Data Integrity Failures", status: COVERED, domains: [SUPPLY_CHAIN, DEPLOY, INPUT], mechanism: "engineering.data_integrity practice required at MEDIUM+ (signatures, safe deserialization, tamper evidence); provenance and signing fields cover build and update integrity; DEPLOY integrity questions"}
+      - {id: A09, title: "Security Logging and Alerting Failures", status: COVERED, domains: [LOGGING], mechanism: "LOGGING domain required at every tier; monitoring.signals with owner and route; Chloe/observability handoff contract"}
+      - {id: A10, title: "Mishandling of Exceptional Conditions", status: COVERED, domains: [ERROR_HANDLING], mechanism: "ERROR_HANDLING domain required at MEDIUM+ (fail-closed paths, safe errors, timeouts, resource exhaustion)"}
+  OWASP-LLM-2025:
+    name: "OWASP Top 10 for LLM Applications 2025"
+    source: "https://genai.owasp.org/llm-top-10/"
+    verified: true
+    basis: PRIMARY
+    items:
+      - {id: LLM01, title: "Prompt Injection", status: COVERED, domains: [AI_AGENT, INPUT], mechanism: "AI_AGENT domain required at HIGH+ and whenever a component has ai_capability or an AGENT identity exists; ai-agent-controls.md question AG-01"}
+      - {id: LLM02, title: "Sensitive Information Disclosure", status: COVERED, domains: [AI_AGENT, DATA], mechanism: "ai-agent-controls.md AG-02 (data reachable by the model, output filtering, no secrets in prompts) plus DATA classification"}
+      - {id: LLM03, title: "Supply Chain", status: COVERED, domains: [SUPPLY_CHAIN, AI_AGENT], mechanism: "ai_profile.model_and_tool_provenance required whenever AI or an AGENT identity exists (models, datasets, MCP servers, plugins, skills: source, pinning, review); supply_chain block covers code dependencies"}
+      - {id: LLM04, title: "Data and Model Poisoning", status: COVERED, domains: [AI_AGENT], mechanism: "ai_profile.data_integrity required whenever AI exists (training, fine-tuning, retrieval and memory data protection); NOT_APPLICABLE with a reason when the project uses a hosted model and trains nothing"}
+      - {id: LLM05, title: "Improper Output Handling", status: COVERED, domains: [AI_AGENT, INPUT], mechanism: "Model output treated as untrusted data (SKILL.md); AG-05 requires validation before output reaches interpreters, tools or users"}
+      - {id: LLM06, title: "Excessive Agency", status: COVERED, domains: [AI_AGENT, AUTHZ], mechanism: "AG-03/AG-04: tool allow-list, least privilege, human authorization for privileged or destructive actions; AGENT identities in the permission matrix"}
+      - {id: LLM07, title: "System Prompt Leakage", status: COVERED, domains: [AI_AGENT, SECRETS], mechanism: "ai_profile.prompt_confidentiality required whenever AI exists, and secrets_in_prompts must be false; AG-02 forbids secrets or authorization logic in prompts"}
+      - {id: LLM08, title: "Vector and Embedding Weaknesses", status: COVERED, domains: [AI_AGENT, AUTHZ], mechanism: "ai_profile.retrieval_store_security required whenever AI exists (access control, tenant isolation, poisoning resistance) or NOT_APPLICABLE with a reason"}
+      - {id: LLM09, title: "Misinformation", status: COVERED, domains: [AI_AGENT], mechanism: "ai_profile.output_assurance required whenever AI exists (how accuracy is checked or reviewed before reliance); AG-09 human review for consequential outputs"}
+      - {id: LLM10, title: "Unbounded Consumption", status: COVERED, domains: [AI_AGENT, API], mechanism: "AG-08 requires rate, cost and context limits; API domain covers abuse limits"}
+  OWASP-ASI-2026:
+    name: "OWASP Top 10 for Agentic Applications 2026"
+    source: "https://genai.owasp.org/initiatives/agentic-security-initiative/"
+    verified: true
+    basis: PRIMARY
+    note: "ASI01-ASI10 names read from the OWASP Top 10 for Agentic Applications 2026 PDF (table of contents, 57 pages) supplied by the owner on 2026-10-02. Published 2025-12-09 per the OWASP resource page."
+    items:
+      - {id: ASI01, title: "Agent Goal Hijack", status: COVERED, domains: [AI_AGENT], mechanism: "AG-01: untrusted content (pages, issues, messages, documents, logs) is data, never authority"}
+      - {id: ASI02, title: "Tool Misuse and Exploitation", status: COVERED, domains: [AI_AGENT, AUTHZ], mechanism: "AG-03: per-tool allow-list, argument validation, scoped credentials"}
+      - {id: ASI03, title: "Identity and Privilege Abuse", status: COVERED, domains: [AI_AGENT, AUTHZ, SECRETS], mechanism: "AGENT identity type, forbidden_actions, 'agents must not hold unrestricted infrastructure credentials'"}
+      - {id: ASI04, title: "Agentic Supply Chain Vulnerabilities", status: COVERED, domains: [AI_AGENT, SUPPLY_CHAIN], mechanism: "AG-10: pin and review MCP servers, plugins and skills; supply_chain block"}
+      - {id: ASI05, title: "Unexpected Code Execution (RCE)", status: COVERED, domains: [AI_AGENT], mechanism: "AG-07: generated code and shell access run only in a sandbox with scoped credentials and egress limits"}
+      - {id: ASI06, title: "Memory & Context Poisoning", status: COVERED, domains: [AI_AGENT], mechanism: "ai_profile.memory_policy required whenever AI or an agent exists (how memory and retrieval stores are written, reviewed and expired) or NOT_APPLICABLE with a reason"}
+      - {id: ASI07, title: "Insecure Inter-Agent Communication", status: COVERED, domains: [AI_AGENT, AUTH], mechanism: "ai_profile.inter_agent_security required whenever AI or an agent exists (authentication and validation of agent-to-agent messages) or NOT_APPLICABLE with a reason"}
+      - {id: ASI08, title: "Cascading Failures", status: COVERED, domains: [AI_AGENT, RECOVERY], mechanism: "ai_profile.cascade_limits required whenever AI or an agent exists (step budgets, circuit breakers, isolation); AG-08 limits and the recovery block address blast radius"}
+      - {id: ASI09, title: "Human-Agent Trust Exploitation", status: COVERED, domains: [AI_AGENT], mechanism: "ai_profile.human_trust required whenever AI or an agent exists (how users are told what the agent did and asked to confirm consequential actions); AG-09 human review points"}
+      - {id: ASI10, title: "Rogue Agents", status: COVERED, domains: [AI_AGENT, LOGGING], mechanism: "ai_profile.rogue_agent_controls required whenever AI or an agent exists (kill switch, behaviour monitoring); AG-12 and monitoring signals"}
+  SSDF-1.1:
+    name: "NIST SP 800-218 SSDF v1.1 (final). v1.2 / SP 800-218r1 was an initial public draft in Dec 2025; this file tracks the final 1.1 practices."
+    source: "https://csrc.nist.gov/projects/ssdf"
+    verified: true
+    basis: PRIMARY
+    note: "Practice IDs and titles read from the NIST SP 800-218 v1.1 PDF on 2026-10-02. PW.3 was removed in 1.1 (its content moved to PO.1.3 and PW.4.4) and is intentionally absent. SP 800-218r1 (SSDF 1.2) was an initial public draft on 2025-12-17; re-check when it is finalized."
+    items:
+      - {id: PO.1, title: "Define Security Requirements for Software Development", status: COVERED, domains: [GOVERNANCE], mechanism: "security-baseline.yaml is the recorded requirements set, approved before implementation"}
+      - {id: PO.2, title: "Implement Roles and Responsibilities", status: COVERED, domains: [GOVERNANCE], mechanism: "owner on every asset, threat, control, decision; named approver; identities and forbidden_actions"}
+      - {id: PO.3, title: "Implement Supporting Toolchains", status: COVERED, domains: [DEPLOY], mechanism: "engineering.toolchain_security required at MEDIUM+ (pinned tooling, least-privilege tokens, isolated runners); gates and CI enforcement doc"}
+      - {id: PO.4, title: "Define and Use Criteria for Software Security Checks", status: COVERED, domains: [GOVERNANCE, DEPLOY], mechanism: "gates with stage, blocking flag, required evidence; control acceptance criteria"}
+      - {id: PO.5, title: "Implement and Maintain Secure Environments for Software Development", status: COVERED, domains: [DEPLOY, SECRETS], mechanism: "engineering.dev_environment required at MEDIUM+ (source-host MFA, secret handling, no production credentials in development); SPIKE sandbox rules and scoped agent credentials"}
+      - {id: PS.1, title: "Protect All Forms of Code from Unauthorized Access and Tampering", status: COVERED, domains: [DEPLOY], mechanism: "MERGE-stage gates, protected branch/environment requirements in ci-enforcement.md"}
+      - {id: PS.2, title: "Provide a Mechanism for Verifying Software Release Integrity", status: COVERED, domains: [SUPPLY_CHAIN], mechanism: "supply_chain.provenance and risk.assurance.slsa_build_level"}
+      - {id: PS.3, title: "Archive and Protect Each Software Release", status: COVERED, domains: [SUPPLY_CHAIN, RECOVERY], mechanism: "engineering.release_archive required at MEDIUM+ (release and provenance archive and retention); provenance and rollback fields"}
+      - {id: PW.1, title: "Design Software to Meet Security Requirements and Mitigate Security Risks", status: COVERED, domains: [GOVERNANCE], mechanism: "Threat model, trust boundaries, traced controls (the core of the skill)"}
+      - {id: PW.2, title: "Review the Software Design to Verify Compliance with Security Requirements and Identify Security Risks", status: COVERED, domains: [GOVERNANCE], mechanism: "REVIEW_REQUIRED stop, explicit owner approval, independent review for CRITICAL"}
+      - {id: PW.4, title: "Reuse Existing, Well-Secured Software When Feasible Instead of Duplicating Functionality", status: COVERED, domains: [SUPPLY_CHAIN], mechanism: "dependency_policy (lockfile, vulnerability gate, update automation)"}
+      - {id: PW.5, title: "Create Source Code by Adhering to Secure Coding Practices", status: COVERED, domains: [INPUT, ERROR_HANDLING], mechanism: "engineering.secure_coding required at MEDIUM+ (the coding standard or review rubric followed); domain question sets state expectations"}
+      - {id: PW.6, title: "Configure the Compilation, Interpreter, and Build Processes to Improve Executable Security", status: COVERED, domains: [SUPPLY_CHAIN, DEPLOY], mechanism: "engineering.build_hardening required at HIGH+ (compiler, interpreter and build hardening); SLSA build level target and supply_chain.build_hardening at build level 3"}
+      - {id: PW.7, title: "Review and/or Analyze Human-Readable Code to Identify Vulnerabilities and Verify Compliance with Security Requirements", status: COVERED, domains: [DEPLOY], mechanism: "engineering.code_review required at MEDIUM+ (peer review and static analysis method); PULL_REQUEST gates can require SCAN_REPORT/MANUAL_REVIEW evidence"}
+      - {id: PW.8, title: "Test Executable Code to Identify Vulnerabilities and Verify Compliance with Security Requirements", status: COVERED, domains: [DEPLOY], mechanism: "engineering.security_testing required at MEDIUM+ (static, dynamic, dependency, fuzz and abuse-case strategy); TEST_RESULT evidence and control acceptance tests"}
+      - {id: PW.9, title: "Configure Software to Have Secure Settings by Default", status: COVERED, domains: [CONFIG], mechanism: "CONFIG domain required at every tier"}
+      - {id: RV.1, title: "Identify and Confirm Vulnerabilities on an Ongoing Basis", status: COVERED, domains: [SUPPLY_CHAIN, LOGGING], mechanism: "supply_chain.vulnerability_management.monitoring_sources required at MEDIUM+ (scanners, advisories, reports) plus disclosure and dependency scanning gates"}
+      - {id: RV.2, title: "Assess, Prioritize, and Remediate Vulnerabilities", status: COVERED, domains: [SUPPLY_CHAIN], mechanism: "vulnerability_management.remediation_sla_days and triage_method required at MEDIUM+"}
+      - {id: RV.3, title: "Analyze Vulnerabilities to Identify Their Root Causes", status: COVERED, domains: [RECOVERY, SUPPLY_CHAIN], mechanism: "vulnerability_management.root_cause_practice required at HIGH+; incident_response entry in the recovery block"}
+  SLSA-1.2:
+    name: "SLSA v1.2 (Build track and Source track)"
+    source: "https://slsa.dev/spec/v1.2/"
+    verified: true
+    basis: PRIMARY
+    note: "Build and Source track level names read from slsa.dev on 2026-10-02. The per-tier level targets in risk.assurance are skill policy, not SLSA text. The Source track is newer than the Build track; this skill records a target but does not require source attestations."
+    items:
+      - {id: BUILD-L1, title: "Build L1: Provenance exists", status: COVERED, domains: [SUPPLY_CHAIN], mechanism: "risk.assurance.slsa_build_level >= 1 required at every tier; provenance control"}
+      - {id: BUILD-L2, title: "Build L2: Hosted build platform (signed provenance)", status: COVERED, domains: [SUPPLY_CHAIN, DEPLOY], mechanism: "Required at HIGH; supply_chain.provenance and CI enforcement doc"}
+      - {id: BUILD-L3, title: "Build L3: Hardened builds", status: COVERED, domains: [SUPPLY_CHAIN, DEPLOY], mechanism: "risk.assurance.slsa_build_level 3 is the CRITICAL minimum and requires supply_chain.build_hardening (isolated_builds, signing_keys_isolated, platform)"}
+      - {id: SOURCE-L1, title: "Source L1: Version controlled", status: COVERED, domains: [DEPLOY], mechanism: "risk.assurance.slsa_source_level >= 1 (LOW minimum) requires source.repository"}
+      - {id: SOURCE-L2, title: "Source L2: History and provenance", status: COVERED, domains: [DEPLOY], mechanism: "slsa_source_level >= 2 (MEDIUM minimum) requires source.protected_branch and source.history_protected true"}
+      - {id: SOURCE-L3, title: "Source L3: Continuous technical controls", status: COVERED, domains: [DEPLOY], mechanism: "slsa_source_level >= 3 (HIGH minimum) requires a non-empty source.required_checks list; the settings are owner-declared and verified by CONFIG_INSPECTION evidence, not by the skill"}
+      - {id: SOURCE-L4, title: "Source L4: Two-party review", status: COVERED, domains: [DEPLOY, GOVERNANCE], mechanism: "slsa_source_level 4 (CRITICAL minimum) requires source.review_policy TWO_PARTY; declared by the owner, verified by evidence"}
+  CISA-SBD:
+    name: "CISA Secure by Design (joint guidance, revised 2023-10-25, and program page)"
+    source: "https://www.cisa.gov/resources-tools/resources/secure-by-design"
+    verified: true
+    basis: PRIMARY
+    note: "Read from cisa.gov (publication page and securebydesign program page) in the owner's browser on 2026-10-02. The page states the revision date 2023-10-25 and names the three principles. It shows no May 2026 update and no list of 'minimum capabilities'; earlier mentions of those came from secondary summaries and have been removed. Items with basis RECALLED are the skill's own reading of CISA practices that these pages do not state (the pledge's seven goals are mentioned but not listed on the pages read); treat them as skill policy loosely mapped to CISA."
+    items:
+      - {id: OWNERSHIP, title: "Take Ownership of Customer Security Outcomes", status: COVERED, domains: [GOVERNANCE], mechanism: "Named owner and approver on the baseline; owner on every control"}
+      - {id: TRANSPARENCY, title: "Embrace Radical Transparency and Accountability", status: COVERED, domains: [GOVERNANCE], mechanism: "Proposed/implemented/verified separation; VERIFIED needs linked PASSED evidence; no certification claims"}
+      - {id: LEADERSHIP, title: "Lead From the Top", status: PARTIAL, domains: [GOVERNANCE], mechanism: "project.executive_sponsor (a named leadership-level person) is required at HIGH+, plus the explicit owner approval boundary; organisational culture and funding commitment cannot be assessed by a project baseline"}
+      - {id: NAMED-ACCOUNTABILITY, title: "Named accountability for product security", basis: RECALLED, status: COVERED, domains: [GOVERNANCE], mechanism: "project.owner, approval.approver, per-record owners"}
+      - {id: VULN-DISCLOSURE, title: "Public vulnerability disclosure process", basis: RECALLED, status: COVERED, domains: [SUPPLY_CHAIN], mechanism: "supply_chain.vulnerability_management.disclosure required at MEDIUM+"}
+      - {id: SUPPORT-POLICY, title: "Support and update policy", basis: RECALLED, status: COVERED, domains: [SUPPLY_CHAIN], mechanism: "supply_chain.vulnerability_management.support_policy and remediation_sla_days"}
+      - {id: SECURE-DEFAULTS, title: "Out-of-the-box, products should be secure (MFA, logging and SSO available at no extra cost)", status: COVERED, domains: [CONFIG], mechanism: "CONFIG domain required at every tier with acceptance evidence"}
+      - {id: REDUCE-VULN-CLASSES, title: "Eliminate classes of vulnerability (XSS, OS command injection, directory traversal, buffer overflow) and memory-safe roadmaps", status: COVERED, domains: [INPUT], mechanism: "engineering.vulnerability_class_reduction required at MEDIUM+ (framework-level fixes, memory-safe language choice or roadmap); INPUT domain questions"}
+  ASVS-5.0:
+    name: "OWASP ASVS 5.0 (chapter-level mapping)"
+    source: "https://owasp.org/www-project-application-security-verification-standard/"
+    verified: true
+    basis: PRIMARY
+    note: "ASVS 5.0.0 (May 2025). The 17 chapters V1-V17 were read from the OWASP/ASVS GitHub v5.0.0 branch, folder 5.0/en, on 2026-10-02 (opened in the owner's browser; automated fetch is blocked by robots.txt). Requirement ids have the form chapter.section.requirement (for example 1.2.5) and should be cited as v5.0.0-1.2.5; this file maps at chapter level only. Assurance level targets (L1-L3 per tier) are skill policy, not ASVS text."
+    items:
+      - {id: V1, title: "Encoding and Sanitization", status: COVERED, domains: [INPUT], mechanism: "INPUT domain required at every tier"}
+      - {id: V2, title: "Validation and Business Logic", status: COVERED, domains: [INPUT, API], mechanism: "INPUT and API domains; business-logic abuse in the threat-model prompt"}
+      - {id: V3, title: "Web Frontend Security", status: COVERED, domains: [FRONTEND], mechanism: "FRONTEND domain required at MEDIUM+"}
+      - {id: V4, title: "API and Web Service", status: COVERED, domains: [API], mechanism: "API domain required at MEDIUM+"}
+      - {id: V5, title: "File Handling", status: COVERED, domains: [FILE], mechanism: "capabilities.handles_files true makes the FILE domain and an engineering.file_handling practice required at every tier; FILE is required at HIGH+ regardless"}
+      - {id: V6, title: "Authentication", status: COVERED, domains: [AUTH], mechanism: "AUTH domain required at MEDIUM+"}
+      - {id: V7, title: "Session Management", status: COVERED, domains: [SESSION], mechanism: "SESSION domain required at MEDIUM+"}
+      - {id: V8, title: "Authorization", status: COVERED, domains: [AUTHZ], mechanism: "AUTHZ domain required at MEDIUM+"}
+      - {id: V9, title: "Self-contained Tokens", status: COVERED, domains: [SESSION], mechanism: "capabilities.uses_self_contained_tokens true requires an engineering.token_validation practice (signature, audience, expiry, revocation); SESSION domain at MEDIUM+"}
+      - {id: V10, title: "OAuth and OIDC", status: COVERED, domains: [AUTH], mechanism: "capabilities.uses_federated_login true requires an engineering.federated_login practice (redirect validation, state/nonce, PKCE, token handling); AUTH domain at MEDIUM+"}
+      - {id: V11, title: "Cryptography", status: COVERED, domains: [CRYPTO], mechanism: "CRYPTO domain required at MEDIUM+"}
+      - {id: V12, title: "Secure Communication", status: COVERED, domains: [CRYPTO, CONFIG], mechanism: "Transport security is a CRYPTO/CONFIG question-set item"}
+      - {id: V13, title: "Configuration", status: COVERED, domains: [CONFIG], mechanism: "CONFIG domain required at every tier"}
+      - {id: V14, title: "Data Protection", status: COVERED, domains: [DATA], mechanism: "DATA domain required at MEDIUM+; classification and retention on assets and flows; project.regulatory_context"}
+      - {id: V15, title: "Secure Coding and Architecture", status: COVERED, domains: [GOVERNANCE], mechanism: "engineering.secure_coding required at MEDIUM+; architecture decisions are recorded and approved before implementation"}
+      - {id: V16, title: "Security Logging and Error Handling", status: COVERED, domains: [LOGGING, ERROR_HANDLING], mechanism: "LOGGING required at every tier, ERROR_HANDLING at MEDIUM+"}
+      - {id: V17, title: "WebRTC", status: NOT_APPLICABLE, domains: [], mechanism: "Niche real-time media; add a project-specific control when WebRTC is used", reason: "Not part of typical project scope"}

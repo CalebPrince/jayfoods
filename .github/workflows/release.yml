@@ -1,0 +1,31 @@
+name: release
+# Tagged release archive with a build provenance attestation (CTL-DEP-001, SLSA build level 2).
+# Make a release: git tag v1.2.0 && git push origin v1.2.0, then deploy that archive to cPanel.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - run: php tests/agent/run.php
+      - name: Build the release archive
+        run: git archive --format=tar.gz --prefix=jayfoods/ -o "jayfoods-${GITHUB_REF_NAME}.tar.gz" HEAD
+      - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-path: jayfoods-${{ github.ref_name }}.tar.gz
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: jayfoods-${{ github.ref_name }}
+          path: jayfoods-${{ github.ref_name }}.tar.gz
+          retention-days: 90

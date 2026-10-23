@@ -95,8 +95,8 @@ final class SmtpSettingsController
         try {
             $mailer->send(
                 $recipient,
-                'Jay fooDs SMTP test',
-                '<!doctype html><html><body style="font-family:Arial,sans-serif"><h2 style="color:#176b3a">SMTP is working</h2><p>Your Jay fooDs website can send email successfully.</p></body></html>'
+                'Jay foods SMTP test',
+                '<!doctype html><html><body style="font-family:Arial,sans-serif"><h2 style="color:#176b3a">SMTP is working</h2><p>Your Jay foods website can send email successfully.</p></body></html>'
             );
         } catch (Throwable $e) {
             Response::json(['error' => 'Test email failed: ' . $e->getMessage()], 502);
@@ -113,7 +113,7 @@ final class SmtpSettingsController
             'host' => $row['host'] ?? 'smtp.gmail.com',
             'port' => (int) ($row['port'] ?? 587),
             'encryption' => $row['encryption'] ?? 'tls',
-            'sender_name' => $row['sender_name'] ?? 'Jay fooDs',
+            'sender_name' => $row['sender_name'] ?? 'Jay foods',
             'username' => $row['username'] ?? '',
             'notification_email' => $row['notification_email'] ?? '',
             'has_password' => !empty($row['password_encrypted']),

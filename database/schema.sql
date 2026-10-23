@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS smtp_settings (
     host               TEXT    NOT NULL DEFAULT 'smtp.gmail.com',
     port               INTEGER NOT NULL DEFAULT 587,
     encryption         TEXT    NOT NULL DEFAULT 'tls',
-    sender_name        TEXT    NOT NULL DEFAULT 'Jay fooDs',
+    sender_name        TEXT    NOT NULL DEFAULT 'Jay foods',
     username           TEXT    NOT NULL DEFAULT '',
     notification_email TEXT    NOT NULL DEFAULT '',
     password_encrypted TEXT    NOT NULL DEFAULT '',
@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS messages (
 CREATE INDEX IF NOT EXISTS idx_messages_read ON messages (is_read);
 
 -- ---------------------------------------------------------------------------
--- Seed the real Jay fooDs catalogue (idempotent via INSERT OR IGNORE on SKU).
+-- Seed the real Jay foods catalogue (idempotent via INSERT OR IGNORE on SKU).
 -- Prices in pesewas: 2000 = GH₵20.00 — adjust to real pricing as needed.
 -- ---------------------------------------------------------------------------
 INSERT OR IGNORE INTO products
@@ -195,3 +195,122 @@ VALUES
     ('JF-WMEL-500', 'Watermelon Juice', 'Watermelon',        'Freshly squeezed watermelon — light, hydrating and 100% natural.',                             '500ml bottle', '/img/watermelon-juice.jpg', 2000, 1, 24, 1700, 320),
     ('JF-ORPN-500', 'Orapine Juice',    'Orange & Pineapple','Our signature orange and pineapple blend — sweet, tangy and refreshing.',                      '500ml bottle', '/img/orapine-juice.jpg',    2200, 1, 24, 1900, 300),
     ('JF-DTOX-350', 'Detox Delight',    'Tigernut Blend',    'A wholesome detox blend of tigernut, dates, coconut and banana. Naturally creamy and filling.', '350ml bottle', '/img/detox-delight.jpg',    2800, 1, 24, 2400, 240);
+
+-- ---------------------------------------------------------------------------
+-- Kafui, the ordering agent on WhatsApp and the website chat.
+-- See ARCHITECTURE.md and security-baseline.yaml. Secrets in agent_settings
+-- are encrypted by PHP (SecretBox) before they are stored.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS agent_settings (
+    setting_key TEXT PRIMARY KEY,
+    value       TEXT NOT NULL DEFAULT '',
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS agent_owner_numbers (
+    number     TEXT PRIMARY KEY,               -- digits only with country code, e.g. 233246328461
+    label      TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- One row per WhatsApp number or website chat session.
+CREATE TABLE IF NOT EXISTS conversations (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    channel         TEXT NOT NULL CHECK (channel IN ('whatsapp', 'web', 'test')),
+    contact_key     TEXT NOT NULL,             -- WhatsApp digits, or the web/test session id
+    contact_name    TEXT NOT NULL DEFAULT '',
+    phone           TEXT NOT NULL DEFAULT '',  -- WhatsApp: the Meta-verified number
+    mode            TEXT NOT NULL DEFAULT 'kafui' CHECK (mode IN ('kafui', 'staff')),
+    needs_attention INTEGER NOT NULL DEFAULT 0 CHECK (needs_attention IN (0, 1)),
+    unread          INTEGER NOT NULL DEFAULT 0,
+    failed_answers  INTEGER NOT NULL DEFAULT 0,
+    test_role       TEXT NOT NULL DEFAULT '',  -- admin test chats only: customer or owner
+    last_inbound_at TEXT NOT NULL DEFAULT '',
+    last_message_at TEXT NOT NULL DEFAULT (datetime('now')),
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (channel, contact_key)
+);
+CREATE INDEX IF NOT EXISTS idx_conversations_last ON conversations (last_message_at);
+
+CREATE TABLE IF NOT EXISTS conversation_messages (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER NOT NULL,
+    sender          TEXT NOT NULL CHECK (sender IN ('customer', 'kafui', 'staff', 'system')),
+    body            TEXT NOT NULL,
+    wa_message_id   TEXT,                       -- Meta message id, unique so retries do nothing
+    staff_name      TEXT NOT NULL DEFAULT '',
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (conversation_id) REFERENCES conversations (id) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_conversation_messages_wa ON conversation_messages (wa_message_id) WHERE wa_message_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_conversation_messages_conv ON conversation_messages (conversation_id, id);
+
+-- Quotes made by the quote_order tool. place_order only accepts a quote shown
+-- in the same conversation within two hours, and re-prices it.
+CREATE TABLE IF NOT EXISTS agent_quotes (
+    id              TEXT PRIMARY KEY,
+    conversation_id INTEGER NOT NULL,
+    payload_json    TEXT NOT NULL,
+    total_pesewas   INTEGER NOT NULL,
+    order_id        INTEGER,
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (conversation_id) REFERENCES conversations (id) ON DELETE CASCADE
+);
+
+-- Event and bulk-supply bookings, and call-back requests (DEC-001).
+CREATE TABLE IF NOT EXISTS bookings (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    reference       TEXT NOT NULL UNIQUE,
+    kind            TEXT NOT NULL CHECK (kind IN ('event', 'callback')),
+    conversation_id INTEGER,
+    customer_name   TEXT NOT NULL,
+    customer_phone  TEXT NOT NULL,
+    event_date      TEXT NOT NULL DEFAULT '',
+    event_time      TEXT NOT NULL DEFAULT '',
+    venue           TEXT NOT NULL DEFAULT '',
+    guests          INTEGER NOT NULL DEFAULT 0,
+    juices          TEXT NOT NULL DEFAULT '',
+    notes           TEXT NOT NULL DEFAULT '',
+    status          TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'declined', 'done')),
+    staff_notes     TEXT NOT NULL DEFAULT '',
+    created_at      TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (conversation_id) REFERENCES conversations (id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS idx_bookings_created ON bookings (created_at);
+
+-- Every tool call Kafui makes, for the admin action log.
+CREATE TABLE IF NOT EXISTS agent_actions (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER,
+    role            TEXT NOT NULL,
+    tool            TEXT NOT NULL,
+    args_json       TEXT NOT NULL DEFAULT '{}',
+    status          TEXT NOT NULL CHECK (status IN ('ok', 'refused', 'error')),
+    detail          TEXT NOT NULL DEFAULT '',
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_agent_actions_created ON agent_actions (created_at);
+
+-- Counted events: signature failures, provider failures, replaced replies, limits.
+CREATE TABLE IF NOT EXISTS agent_events (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    type       TEXT NOT NULL,
+    detail     TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_agent_events_type ON agent_events (type, created_at);
+
+-- Sliding-window rate limits (per WhatsApp number, web session and IP).
+CREATE TABLE IF NOT EXISTS agent_rate_events (
+    rate_key   TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_agent_rate_events ON agent_rate_events (rate_key, created_at);
+
+-- Invoice PDFs, stored in database/invoices/ (outside the web root).
+CREATE TABLE IF NOT EXISTS agent_invoices (
+    id         TEXT PRIMARY KEY,               -- random 32 hex, also the file name
+    order_id   INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
+);

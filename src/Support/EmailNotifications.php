@@ -15,10 +15,10 @@ final class EmailNotifications
             $grand = self::money((int) ($order['total_pesewas'] ?? $order['subtotal_pesewas']));
             $ref = self::e($order['reference']);
             $html = self::layout("Order started: $ref", "<p>Hello " . self::e($order['customer_name']) . ",</p><p>We have received your order details and are awaiting verified payment.</p>$rows<p>Products: $total<br>Delivery: $delivery<br><b>Amount due: $grand</b></p><p>Reference: <b>$ref</b></p>");
-            if (!empty($order['customer_email'])) $mailer->send($order['customer_email'], "Jay fooDs order awaiting payment — $ref", $html);
+            if (!empty($order['customer_email'])) $mailer->send($order['customer_email'], "Jay foods order awaiting payment — $ref", $html);
             if ($mailer->notificationEmail()) {
                 $admin = self::layout("New unpaid order: $ref", '<p>An order was started by <b>' . self::e($order['customer_name']) . '</b> (' . self::e($order['customer_phone']) . ").</p>$rows<p>Products: $total<br>Delivery: $delivery<br><b>Awaiting payment: $grand</b></p>");
-                $mailer->send($mailer->notificationEmail(), "New unpaid Jay fooDs order — $ref", $admin);
+                $mailer->send($mailer->notificationEmail(), "New unpaid Jay foods order — $ref", $admin);
             }
         });
     }
@@ -50,7 +50,7 @@ final class EmailNotifications
             if (!empty($order['customer_email'])) $mailer->send($order['customer_email'], "Payment confirmed — $ref", $html);
             if ($mailer->notificationEmail()) {
                 $admin = self::layout("Paid order: $ref", '<p>Payment has been verified for <b>' . self::e($order['customer_name']) . ".</b></p>$rows<p>Products: $total<br>Delivery: $delivery<br><b>Amount received: $grand</b></p>");
-                $mailer->send($mailer->notificationEmail(), "Paid Jay fooDs order — $ref", $admin);
+                $mailer->send($mailer->notificationEmail(), "Paid Jay foods order — $ref", $admin);
             }
         });
     }
@@ -61,7 +61,7 @@ final class EmailNotifications
             $mailer = new SmtpMailer();
             if (!$mailer->isConfigured() || !$mailer->notificationEmail()) return;
             $html = self::layout('New website message', '<p><b>From:</b> ' . self::e($message['name']) . '</p><p><b>Phone:</b> ' . self::e($message['phone']) . '</p><p><b>Email:</b> ' . self::e($message['email']) . '</p><p><b>Message:</b><br>' . nl2br(self::e($message['message'])) . '</p>');
-            $mailer->send($mailer->notificationEmail(), 'New Jay fooDs website message', $html);
+            $mailer->send($mailer->notificationEmail(), 'New Jay foods website message', $html);
         });
     }
 
@@ -77,7 +77,7 @@ final class EmailNotifications
         return $html . '</table>';
     }
 
-    private static function layout(string $title, string $content): string { return '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#173c25"><div style="max-width:600px;margin:auto"><h2 style="color:#176b3a">' . self::e($title) . '</h2>' . $content . '<p style="color:#68756d;font-size:13px">Jay fooDs</p></div></body></html>'; }
+    private static function layout(string $title, string $content): string { return '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#173c25"><div style="max-width:600px;margin:auto"><h2 style="color:#176b3a">' . self::e($title) . '</h2>' . $content . '<p style="color:#68756d;font-size:13px">Jay foods</p></div></body></html>'; }
     private static function money(int $p): string { return 'GH₵' . number_format($p / 100, 2); }
     private static function e(mixed $v): string { return htmlspecialchars((string) $v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 }

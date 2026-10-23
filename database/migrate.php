@@ -9,7 +9,7 @@ declare(strict_types=1);
  */
 
 $root       = dirname(__DIR__);
-$dbPath     = $root . '/database/jayfoods.sqlite';
+$dbPath     = getenv('JAYFOODS_DB') ?: $root . '/database/jayfoods.sqlite';
 $schemaPath = $root . '/database/schema.sql';
 
 $schema = file_get_contents($schemaPath);
@@ -75,6 +75,27 @@ if (!in_array('stock_state', $orderCols, true)) {
     $pdo->exec("ALTER TABLE orders ADD COLUMN stock_state TEXT NOT NULL DEFAULT 'none'");
     echo "[migrate] Added orders.stock_state\n";
 }
+if (!in_array('source', $orderCols, true)) {
+    $pdo->exec("ALTER TABLE orders ADD COLUMN source TEXT NOT NULL DEFAULT 'website'");
+    echo "[migrate] Added orders.source\n";
+}
+if (!in_array('fulfilment', $orderCols, true)) {
+    $pdo->exec("ALTER TABLE orders ADD COLUMN fulfilment TEXT NOT NULL DEFAULT 'delivery'");
+    echo "[migrate] Added orders.fulfilment\n";
+}
+if (!in_array('requested_date', $orderCols, true)) {
+    $pdo->exec("ALTER TABLE orders ADD COLUMN requested_date TEXT NOT NULL DEFAULT ''");
+    echo "[migrate] Added orders.requested_date\n";
+}
+$convCols = array_column($pdo->query('PRAGMA table_info(conversations)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+if (!in_array('test_role', $convCols, true)) {
+    $pdo->exec("ALTER TABLE conversations ADD COLUMN test_role TEXT NOT NULL DEFAULT ''");
+}
+@mkdir($root . '/database/invoices', 0700, true);
+// Brand spelling is "Jay foods" (Caleb, 23 Oct 2026): update text saved before the change.
+$pdo->exec("UPDATE site_content SET value=replace(value,'fooDs','foods') WHERE value LIKE '%fooDs%'");
+$pdo->exec("UPDATE smtp_settings SET sender_name=replace(sender_name,'fooDs','foods') WHERE sender_name LIKE '%fooDs%'");
+$pdo->exec("UPDATE admins SET name=replace(name,'fooDs','foods') WHERE name LIKE '%fooDs%'");
 if (!in_array('reservation_expires_at', $orderCols, true)) {
     $pdo->exec("ALTER TABLE orders ADD COLUMN reservation_expires_at TEXT NOT NULL DEFAULT ''");
     echo "[migrate] Added orders.reservation_expires_at\n";
@@ -97,7 +118,7 @@ $adminCols=array_column($pdo->query('PRAGMA table_info(admins)')->fetchAll(PDO::
 // ---------------------------------------------------------------------------
 // Ensure a signing key exists for JWT (HS256). Generated once, kept out of VCS.
 // ---------------------------------------------------------------------------
-$keyPath = $root . '/database/app.key';
+$keyPath = getenv('JAYFOODS_KEY') ?: $root . '/database/app.key';
 if (!is_file($keyPath)) {
     file_put_contents($keyPath, bin2hex(random_bytes(32)));
     @chmod($keyPath, 0600);
@@ -110,7 +131,8 @@ if (!is_file($keyPath)) {
 $adminCount = (int) $pdo->query('SELECT COUNT(*) FROM admins')->fetchColumn();
 if ($adminCount === 0) {
     $email    = 'admin@jayfoods.gh';
-    $password = 'changeme123';
+    // Random first-run password, shown once on the server console (never a fixed value in the repo).
+    $password = rtrim(strtr(base64_encode(random_bytes(12)), '+/', 'Kf'), '=');
     $stmt = $pdo->prepare(
         'INSERT INTO admins (email, name, password_hash) VALUES (:email, :name, :hash)'
     );

@@ -1,0 +1,17 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "component": { "type": "application", "name": "jayfoods", "description": "Jay foods website, admin and Kafui ordering agent. Plain PHP with no third-party packages." }
+  },
+  "components": [
+    { "type": "platform", "name": "php", "version": ">=8.1", "description": "PHP runtime provided by the host" },
+    { "type": "library", "name": "php-ext-pdo_sqlite", "description": "Database" },
+    { "type": "library", "name": "php-ext-openssl", "description": "Secret encryption (AES-256-GCM), TLS" },
+    { "type": "library", "name": "php-ext-curl", "description": "Calls to Meta and the AI providers" },
+    { "type": "library", "name": "php-ext-mbstring", "description": "Text handling" },
+    { "type": "library", "name": "php-ext-iconv", "description": "Invoice PDF text encoding" },
+    { "type": "library", "name": "sqlite", "description": "Bundled with PHP" }
+  ]
+}

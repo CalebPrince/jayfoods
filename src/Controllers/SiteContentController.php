@@ -26,10 +26,10 @@ final class SiteContentController
             'hero' => [
                 'hero_eyebrow'=>['Hero eyebrow','Pure Refreshment, squeezed to perfection','text'],
                 'hero_heading'=>['Hero heading','Fresh, wholesome juice squeezed daily in Accra','text'],
-                'hero_body'=>['Hero body','Jay fooDs presses premium, 100% natural juices from local sweet oranges, watermelon, pineapple and wholesome blends — no added sugar, no preservatives. Order a single bottle or a bulk case for your shop, office or event.','textarea'],
+                'hero_body'=>['Hero body','Jay foods presses premium, 100% natural juices from local sweet oranges, watermelon, pineapple and wholesome blends — no added sugar, no preservatives. Order a single bottle or a bulk case for your shop, office or event.','textarea'],
             ],
             'features' => [
-                'why_eyebrow'=>['Section eyebrow','Why Accra loves Jay fooDs','text'], 'why_heading'=>['Heading','Uncompromising freshness in every bottle','text'], 'why_body'=>['Body',"Built on simple, healthy, high-quality refreshment. Here's what makes ordering from us effortless.",'textarea'],
+                'why_eyebrow'=>['Section eyebrow','Why Accra loves Jay foods','text'], 'why_heading'=>['Heading','Uncompromising freshness in every bottle','text'], 'why_body'=>['Body',"Built on simple, healthy, high-quality refreshment. Here's what makes ordering from us effortless.",'textarea'],
                 'feature_1_heading'=>['Feature 1 heading','Fresh taste','text'], 'feature_1_body'=>['Feature 1 body','Pressed daily from high-quality Ghanaian farms to lock in flavour and nutrients — never from concentrate.','textarea'],
                 'feature_2_heading'=>['Feature 2 heading','Simple ordering','text'], 'feature_2_body'=>['Feature 2 body','Pick your juices, add your details, and place the order in under a minute. No accounts, no friction.','textarea'],
                 'feature_3_heading'=>['Feature 3 heading','Easy payment','text'], 'feature_3_body'=>['Feature 3 body','Mobile Money and card payments are processed securely through Paystack.','textarea'],
@@ -43,13 +43,13 @@ final class SiteContentController
                 'step_3_heading'=>['Step 3 heading','Pay & receive','text'],'step_3_body'=>['Step 3 body','Pay securely through Paystack, then relax while we deliver fresh to your door.','textarea'],
             ],
             'bulk' => [
-                'bulk_eyebrow'=>['Eyebrow','Distribution & B2B partnerships','text'],'bulk_heading'=>['Heading','Need Jay fooDs juice in bulk?','text'],'bulk_body'=>['Body','We supply premium fresh juice for retail shops, event planners, offices, schools, churches and hotels looking for a reliable beverage partner in Accra.','textarea'],
+                'bulk_eyebrow'=>['Eyebrow','Distribution & B2B partnerships','text'],'bulk_heading'=>['Heading','Need Jay foods juice in bulk?','text'],'bulk_body'=>['Body','We supply premium fresh juice for retail shops, event planners, offices, schools, churches and hotels looking for a reliable beverage partner in Accra.','textarea'],
                 'bulk_1_heading'=>['Card 1 heading','Catering & private events','text'],'bulk_1_body'=>['Card 1 body','Weddings, funerals, birthdays and anniversaries. Bulk cases and dispensers keep your guests fully refreshed.','textarea'],
                 'bulk_2_heading'=>['Card 2 heading','Retailers & supermarkets','text'],'bulk_2_body'=>['Card 2 body','Convenience stores, minimarts and supermarkets across Accra. Durable cases with clear expiry stamps.','textarea'],
                 'bulk_3_heading'=>['Card 3 heading','Churches, schools & offices','text'],'bulk_3_body'=>['Card 3 body','Wholesome morning refreshments delivered on an accurate weekly schedule.','textarea'],
             ],
             'about' => [
-                'about_eyebrow'=>['Eyebrow','About Jay fooDs','text'],'about_heading'=>['Heading','Sustaining Accra with fresh, wholesome fruit drinks','text'],'about_body'=>['Body','Jay fooDs is a fruit-juice company based in Accra, Ghana, focused on refreshing products you can enjoy at home, work, school, events and business locations.','textarea'],
+                'about_eyebrow'=>['Eyebrow','About Jay foods','text'],'about_heading'=>['Heading','Sustaining Accra with fresh, wholesome fruit drinks','text'],'about_body'=>['Body','Jay foods is a fruit-juice company based in Accra, Ghana, focused on refreshing products you can enjoy at home, work, school, events and business locations.','textarea'],
                 'about_1_heading'=>['Point 1 heading','Hygienic production','text'],'about_1_body'=>['Point 1 body','Bottled and sealed under strict hygiene protocols in Accra.','textarea'],'about_2_heading'=>['Point 2 heading','100% Ghana farms','text'],'about_2_body'=>['Point 2 body','Supporting local growers with fresh, seasonal fruit.','textarea'],'about_3_heading'=>['Point 3 heading','Prompt deliveries','text'],'about_3_body'=>['Point 3 body','Connecting families, caterers, schools and offices daily.','textarea'],'about_4_heading'=>['Point 4 heading','Community pride','text'],'about_4_body'=>['Point 4 body','A local team delivering genuine goodness and convenience.','textarea'],
             ],
             'reviews' => [
@@ -61,14 +61,14 @@ final class SiteContentController
                 'faq_1_question'=>['Question 1','How long does delivery take inside Accra?','text'],'faq_1_answer'=>['Answer 1',"For standard orders placed before 10:00 AM, we offer same-day delivery. Orders after 10:00 AM are scheduled for the next morning.",'textarea'],'faq_2_question'=>['Question 2','How can I track my order?','text'],'faq_2_answer'=>['Answer 2','Every order gets a reference code at checkout. Keep it handy for delivery updates.','textarea'],'faq_3_question'=>['Question 3','What payment methods do you accept?','text'],'faq_3_answer'=>['Answer 3','Secure payments are processed through Paystack.','textarea'],'faq_4_question'=>['Question 4','Are the juices natural, and how long do they keep?','text'],'faq_4_answer'=>['Answer 4','Yes — 100% natural with no added sweeteners, colourings or chemical preservatives. Keep refrigerated and follow the printed shelf life.','textarea'],'faq_5_question'=>['Question 5','Do you offer special rates for shops, gyms and schools?','text'],'faq_5_answer'=>['Answer 5',"Absolutely. Bulk orders unlock tiered per-bottle pricing when you reach a product's minimum quantity.",'textarea'],
             ],
             'contact' => [
-                'contact_eyebrow'=>['Eyebrow','Find our office','text'],'contact_heading'=>['Heading','Get in touch with Jay fooDs','text'],'contact_body'=>['Body',"Interested in wholesale supply, event dispensers, or a retail order? Reach out and we'll respond quickly.",'textarea'],
-                'headquarters_label'=>['Headquarters label','Headquarters','text'],'headquarters_name'=>['Headquarters name','Jay fooDs Ghana','text'],'contact_address'=>['Headquarters address','Accra, Ghana — delivery across the Greater Accra region.','textarea'],
+                'contact_eyebrow'=>['Eyebrow','Find our office','text'],'contact_heading'=>['Heading','Get in touch with Jay foods','text'],'contact_body'=>['Body',"Interested in wholesale supply, event dispensers, or a retail order? Reach out and we'll respond quickly.",'textarea'],
+                'headquarters_label'=>['Headquarters label','Headquarters','text'],'headquarters_name'=>['Headquarters name','Jay foods Ghana','text'],'contact_address'=>['Headquarters address','Accra, Ghana — delivery across the Greater Accra region.','textarea'],
                 'hotline_label'=>['Hotline label','Direct hotline','text'],'telephone_number'=>['Telephone link number','+233246328461','tel'],'telephone_display'=>['Displayed telephone','0246 328 461','text'],'whatsapp_number'=>['WhatsApp number','233246328461','tel'],'whatsapp_link_text'=>['WhatsApp link text','Chat on WhatsApp →','text'],
                 'opening_label'=>['Opening-hours label','Opening hours','text'],'opening_days'=>['Opening days','Monday to Sunday','text'],'opening_hours'=>['Opening-hours text','8:30am – 6:00pm, including weekends.','text'],
             ],
             'footer' => [
                 'footer_tagline'=>['Tagline','Pure Refreshment, squeezed to perfection.','text'],'footer_body'=>['Body','Fresh, 100% natural fruit juice squeezed daily in Accra, Ghana. Delivered to homes, offices, shops and events across the Greater Accra region.','textarea'],
-                'facebook_url'=>['Facebook URL','#','url'],'instagram_url'=>['Instagram URL','#','url'],'footer_copyright'=>['Copyright','Jay fooDs Ghana. All rights reserved. Made with 🧡 in Accra.','text'],
+                'facebook_url'=>['Facebook URL','#','url'],'instagram_url'=>['Instagram URL','#','url'],'footer_copyright'=>['Copyright','Jay foods Ghana. All rights reserved. Made with 🧡 in Accra.','text'],
             ],
         ];
     }

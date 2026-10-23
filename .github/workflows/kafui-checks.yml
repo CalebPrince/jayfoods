@@ -1,0 +1,48 @@
+name: kafui-checks
+# Pull-request gate for Kafui (security-baseline.yaml GATE-002, CTL-SC-001).
+# Make these four jobs required checks on main (Settings, Branches).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  php-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - run: php -v
+      - name: Lint every PHP file
+        run: find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+
+  agent-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Kafui tests (fake model and fake WhatsApp, no network)
+        run: php tests/agent/run.php
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+      - run: bash tests/ci/secret-scan.sh
+
+  baseline-digest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - run: pip install pyyaml==6.0.2
+      - name: Baseline is valid
+        run: python .opskeep/elliot/validate_baseline.py security-baseline.yaml --strict-warnings
+      - name: Baseline is the approved version
+        # APPROVED_BASELINE_DIGEST is a repository variable only Caleb can edit.
+        env:
+          EXPECTED_BASELINE_DIGEST: ${{ vars.APPROVED_BASELINE_DIGEST }}
+        run: python .opskeep/elliot/validate_baseline.py security-baseline.yaml --require-approved --target development --stage PRE_IMPLEMENTATION

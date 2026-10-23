@@ -1,0 +1,5 @@
+# Changes to the security gate need Caleb's review (turn on "Require review from Code Owners").
+/.github/ @CalebPrince
+/.opskeep/ @CalebPrince
+/security-baseline.yaml @CalebPrince
+/src/Agent/KafuiTools.php @CalebPrince
