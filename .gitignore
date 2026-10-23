@@ -2,6 +2,10 @@
 database/*.sqlite
 database/*.sqlite-*
 database/app.key
+database/schema.stamp
+database/schema.failed
+database/migrate.lock
+database/first-run-admin.txt
 
 # User-uploaded product images
 public/uploads/

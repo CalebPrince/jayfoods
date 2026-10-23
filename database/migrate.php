@@ -4,9 +4,16 @@ declare(strict_types=1);
 
 /**
  * Idempotent database migration. Applies database/schema.sql to the SQLite file.
- * Invoked automatically by server.py on every boot, or run directly:
+ * Runs by itself on the live site after a deploy (src/Support/AutoMigrate.php),
+ * on every boot of server.py locally, or directly:
  *   php database/migrate.php
  */
+
+// On the command line a failure stops with exit code 1; inside a web request it throws to AutoMigrate.
+$fail = static function (string $message): void {
+    if (PHP_SAPI === 'cli') { fwrite(STDERR, $message . "\n"); exit(1); }
+    throw new RuntimeException($message);
+};
 
 $root       = dirname(__DIR__);
 $dbPath     = getenv('JAYFOODS_DB') ?: $root . '/database/jayfoods.sqlite';
@@ -14,8 +21,7 @@ $schemaPath = $root . '/database/schema.sql';
 
 $schema = file_get_contents($schemaPath);
 if ($schema === false) {
-    fwrite(STDERR, "[migrate] Could not read schema at $schemaPath\n");
-    exit(1);
+    $fail("[migrate] Could not read schema at $schemaPath");
 }
 
 try {
@@ -25,8 +31,7 @@ try {
     $pdo->exec('PRAGMA foreign_keys = ON;');
     $pdo->exec($schema);
 } catch (Throwable $e) {
-    fwrite(STDERR, '[migrate] Failed: ' . $e->getMessage() . "\n");
-    exit(1);
+    $fail('[migrate] Failed: ' . $e->getMessage());
 }
 
 echo "[migrate] Schema applied to $dbPath\n";
@@ -162,3 +167,8 @@ if ((int) $pdo->query("SELECT COUNT(*) FROM admins WHERE role='super_admin' AND 
         echo "[migrate] Made {$first['email']} the super admin\n";
     }
 }
+
+// Mark this schema as applied, so the live site does not run the migration again on its own.
+require_once $root . '/src/Support/AutoMigrate.php';
+$fingerprint = AutoMigrate::fingerprint($root);
+if ($fingerprint !== '') @file_put_contents(dirname($dbPath) . '/schema.stamp', $fingerprint);

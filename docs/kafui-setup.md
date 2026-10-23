@@ -7,7 +7,7 @@ Keep every token and secret out of chats, email and the repository. Type them on
 ## 1. Put the code on the live site
 
 1. Deploy `main` with cPanel, Git Version Control: clone `https://github.com/CalebPrince/jayfoods.git` into a folder **outside** `public_html` (done 23 Oct 2026: `/home/spribvtm/jayfoods-app`). Then, in Domains, set the document root of `jayfoods.princecaleb.dev` to that folder's `public` subfolder. Only `public/` is then reachable from the web. `public/.htaccess` sends `/api/v1/...` requests to `index.php` and adds the security headers. If the document root can only be the project folder, the root `.htaccess` still serves `public/` and refuses `database/`, `src/` and the other private folders. To update later, use Pull or Deploy on the same Git repository page.
-2. Run the migration once on the server: `php database/migrate.php` (or `python server.py` locally). It adds Kafui's tables and the order columns, and is safe to run again.
+2. The database updates itself on the first request after each pull (`src/Support/AutoMigrate.php`). You can still run `php database/migrate.php` by hand; it is safe to run again. On a brand-new database, the first admin's random password is saved to `database/first-run-admin.txt` on the server (read it in the cPanel terminal, then delete it).
 3. Add a second cron job next to the stock one, for the daily clean-up (chats deleted after 90 days, invoice files after 30):
 
    ```cron

@@ -41,6 +41,9 @@ require $src . '/Support/Config.php';
 require $src . '/Support/Database.php';
 require $src . '/Support/ErrorLog.php';
 ErrorLog::install();
+// After a deploy, bring the database up to date before anything reads it.
+require $src . '/Support/AutoMigrate.php';
+AutoMigrate::ensure();
 require $src . '/Support/Jwt.php';
 require $src . '/Support/Auth.php';
 require $src . '/Support/Roles.php';

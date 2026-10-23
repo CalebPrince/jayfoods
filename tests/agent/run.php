@@ -674,6 +674,26 @@ AgentHttp::$transport = function (string $method, string $url, array $headers, ?
     return ['status' => 500, 'body' => '{}', 'error' => 'no network in tests'];
 };
 
+// ---------------------------------------------------------------- automatic database updates
+section('The database updates itself after a deploy');
+require_once $root . '/src/Support/AutoMigrate.php';
+check(AutoMigrate::ensure() === 'current', 'after `php database/migrate.php` the schema is marked current and nothing runs again');
+$freshDir = $tmp . '/fresh';
+mkdir($freshDir);
+$mainDb = getenv('JAYFOODS_DB');
+putenv('JAYFOODS_DB=' . $freshDir . '/site.sqlite');
+$first = AutoMigrate::ensure();
+$second = AutoMigrate::ensure();
+$fresh = new PDO('sqlite:' . $freshDir . '/site.sqlite');
+$cols = array_column($fresh->query('PRAGMA table_info(admins)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+check($first === 'migrated' && $second === 'current' && in_array('role', $cols, true) && $fresh->query("SELECT COUNT(*) FROM sqlite_master WHERE name='error_log'")->fetchColumn() == 1, 'a database behind the code is brought up to date by the first request, once');
+check(is_file($freshDir . '/first-run-admin.txt') && $fresh->query("SELECT role FROM admins")->fetchColumn() === 'super_admin', 'a brand-new database gets its first admin, whose password is kept on the server only');
+unlink($freshDir . '/schema.stamp');
+touch($freshDir . '/schema.failed');
+check(AutoMigrate::ensure() === 'waiting', 'after a failed run it waits five minutes before trying again');
+$fresh = null;
+putenv('JAYFOODS_DB=' . $mainDb);
+
 // ---------------------------------------------------------------- housekeeping
 section('Retention (CTL-DATA-001)');
 $oldConv = newWhatsApp('233200000011');
