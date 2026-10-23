@@ -1,6 +1,6 @@
 # Architecture: Kafui, the JayFoods ordering agent
 
-Status: built on branch `claude/whatsapp-agent`, not merged or deployed. Baseline 0.3.0 (CHG-002, Twilio) waits for Caleb's approval; 0.2.0 was approved 23 Oct 2026
+Status: deployed at https://jayfoods.princecaleb.dev on 23 Oct 2026, with Kafui switched off until WhatsApp is connected. Baseline 0.3.0 (CHG-002, WhatsApp through Twilio) approved by Caleb, 23 Oct 2026
 Owner: Prince Caleb (PrinceCaleb.dev)
 Version: 0.3.0, matches `security-baseline.yaml` baseline_version
 Last reviewed: 2026-10-23
@@ -108,7 +108,7 @@ Deployment: the existing cPanel PHP host. The method (cPanel Git pull or uploadi
 | Decision ID | Decision | Rationale | Alternatives | Security impact | Status |
 |---|---|---|---|---|---|
 | ARCH-1 | One agent engine and one tool set for WhatsApp and the website chat | Caleb's rule: the live chat is the same agent; one place to fix | Separate bots per channel | Role is set per channel; the website never gets owner tools | DECIDED (Caleb, 23 Oct 2026) |
-| ARCH-2 | WhatsApp through a Twilio WhatsApp sender, our server runs the brain, as Lisa (CHG-002) | Caleb's choice; Twilio's sign-up does the Meta side, and a Meta app was blocked until the business is registered | Meta Cloud API directly (kept as an alternative provider) | Twilio auth token is account-wide: JayFoods-only subaccount (DEC-008) | WAITING for approval of 0.3.0 |
+| ARCH-2 | WhatsApp through a Twilio WhatsApp sender, our server runs the brain, as Lisa (CHG-002) | Caleb's choice; Twilio's sign-up does the Meta side, and a Meta app was blocked until the business is registered | Meta Cloud API directly (kept as an alternative provider) | Twilio auth token is account-wide: JayFoods-only subaccount (DEC-008) | DECIDED (Caleb, 23 Oct 2026, baseline 0.3.0) |
 | ARCH-3 | Prices only from the admin catalogue through tools | No invented prices; one price list | A separate WhatsApp price list | Money never comes from model output | DECIDED (Caleb, 23 Oct 2026) |
 | ARCH-4 | Lisa's provider chain with a backup model per provider (CHG-001) | One slow or failing provider never stops a reply | One shared time budget; Gemini and DeepSeek | Up to five attempts per message; spend caps per provider | DECIDED (Caleb, 23 Oct 2026, baseline 0.2.0) |
 | DEC-001 to DEC-007 | See `security-baseline.yaml` | | | | OPEN |

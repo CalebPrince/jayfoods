@@ -1,6 +1,6 @@
 schema_version: "2.3"
 baseline_version: "0.3.0"
-record_digest: "bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb"
+record_digest: "600e78131a5a40078d90f85952c2590a2f3ea08ef5bf9cab30148f2a22024b31"
 project:
   id: "PRJ-JAYFOODS-AGENT-001"
   name: "Kafui, the JayFoods ordering agent (WhatsApp and website live chat)"
@@ -68,11 +68,11 @@ risk:
     slsa_build_level: 2
     slsa_source_level: 3
 lifecycle:
-  status: "SUSPENDED"
+  status: "APPROVED"
   production_posture: "ELIGIBLE_WHEN_APPROVED"
   spike_expires_at: null
-  development_lock: "LOCKED"
-  deployment_lock: "LOCKED"
+  development_lock: "UNLOCKED"
+  deployment_lock: "UNLOCKED"
 classification_levels: [PUBLIC, INTERNAL, CONFIDENTIAL, SENSITIVE, RESTRICTED]
 assets:
   - {id: "AST-001", name: "Customer personal data (name, phone, delivery address)", classification: "CONFIDENTIAL", owner: "JayFoods owner", retention: "Kept with the order record; deleted on request"}
@@ -237,7 +237,7 @@ decisions:
   - {id: "DEC-008", question: "Whose Twilio account holds the JayFoods WhatsApp sender, and who pays the Twilio fees?", owner: "Prince Caleb", required_decision: "Proposed: a separate Twilio subaccount for JayFoods under Caleb's account (so its auth token cannot touch Lisa's numbers), billed to JayFoods through Opskeep", blocks_approval: false, status: "OPEN"}
   - {id: "DEC-007", question: "Is the client's existing customer list imported?", owner: "JayFoods owner", required_decision: "Proposed: not in this change. If later, import only name, phone, area and usual order, with a marketing-consent flag, and never message customers first without consent", blocks_approval: false, status: "OPEN"}
 evidence:
-  - {id: "EVD-001", type: "OWNER_APPROVAL", status: "PASSED", observed_at: "2026-10-23T13:08:35Z", observer: "Prince Caleb", location: "Kafui build session: 0.1.0 approved 2026-10-23T12:33:39Z (digest f08aa843...), 0.2.0 approved 2026-10-23T13:08:35Z (digest bf6e6f80...)"}
+  - {id: "EVD-001", type: "OWNER_APPROVAL", status: "PASSED", observed_at: "2026-10-23T14:25:08Z", observer: "Prince Caleb", location: "Kafui build session: 0.1.0 approved 2026-10-23T12:33:39Z (digest f08aa843...), 0.2.0 approved 2026-10-23T13:08:35Z (digest bf6e6f80...), 0.3.0 approved 2026-10-23T14:25:08Z (digest 600e7813...)"}
   - {id: "EVD-002", type: "CI_RUN", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-003", type: "CONFIG_INSPECTION", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-004", type: "TEST_RESULT", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
@@ -251,7 +251,7 @@ monitoring:
     owner: "Prince Caleb"
     configuration_status: "NOT_CONFIGURED"
     baseline_version: "0.3.0"
-    record_digest: "bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb"
+    record_digest: "600e78131a5a40078d90f85952c2590a2f3ea08ef5bf9cab30148f2a22024b31"
     environments: ["production"]
     handed_off_at: null
     acknowledged_at: null
@@ -314,11 +314,11 @@ ai_profile:
   human_trust: {status: "PLANNED", practice: "Agent discloses it is automatic, offers a person, states orders are pending until staff confirm, and shows a server-made summary before placing"}
   rogue_agent_controls: {status: "PLANNED", practice: "Admin kill switch for both channels, action log, counters and alert emails (CTL-AI-007, CTL-LOG-002)"}
 approval:
-  decision: "SUSPENDED"
+  decision: "APPROVED"
   approver: "Prince Caleb"
-  approved_at: "2026-10-23T13:08:35Z"
-  baseline_version: "0.2.0"
-  record_digest: "bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb"
+  approved_at: "2026-10-23T14:25:08Z"
+  baseline_version: "0.3.0"
+  record_digest: "600e78131a5a40078d90f85952c2590a2f3ea08ef5bf9cab30148f2a22024b31"
   scope: ["development", "staging:test number and local copy", "production:jayfoods live site and business WhatsApp number"]
   expires_at: null
 changes:

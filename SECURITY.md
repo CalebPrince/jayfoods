@@ -1,6 +1,6 @@
 # Security
 
-Status: SUSPENDED. Baseline 0.2.0 was approved by Prince Caleb on 23 Oct 2026. Version 0.3.0 (CHG-002, WhatsApp through Twilio) waits for his approval.
+Status: APPROVED. Baseline 0.3.0 (CHG-002, WhatsApp through Twilio) approved by Prince Caleb on 23 Oct 2026 for development, staging and production (digest `600e78131a5a40078d90f85952c2590a2f3ea08ef5bf9cab30148f2a22024b31`).
 Baseline version: 0.3.0
 Canonical record: `security-baseline.yaml`
 Owner: Prince Caleb (PrinceCaleb.dev)
@@ -101,14 +101,15 @@ None of it ran on the live site or on GitHub.
 
 | Gate | Stage | Blocking | Status |
 |---|---|---|---|
-| GATE-001 Baseline approval | Before implementation | Yes | CONFIGURED: 0.2.0 approved (EVD-001); 0.3.0 waiting |
+| GATE-001 Baseline approval | Before implementation | Yes | CONFIGURED: 0.3.0 approved (EVD-001) |
 | GATE-002 PR checks: lint, agent tests, secret scan, digest | Pull request | Yes | NOT_YET_BUILT on GitHub (workflow written, branch protection off) |
 | GATE-003 Go-live checklist on the live number | Before deploy | Yes | NOT_YET_BUILT (checklist in docs/kafui-setup.md) |
 | GATE-004 Runtime limits and kill switch | Runtime | Yes | NOT_YET_BUILT on the live site (built and tested locally) |
 
 ## Known risks and open decisions
 
-- **Blocking:** Caleb's approval of baseline 0.3.0 (CHG-002, WhatsApp through Twilio).
+- **Blocking:** none.
+- **Open, not blocking:** DEC-008, whose Twilio account holds the sender and who pays Twilio's fees.
 - **Open, not blocking:**
   - **DEC-005:** payment for chat orders. The default sentence is a placeholder.
   - **DEC-006:** deploy method and live domain.
