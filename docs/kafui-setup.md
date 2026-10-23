@@ -6,12 +6,12 @@ Keep every token and secret out of chats, email and the repository. Type them on
 
 ## 1. Put the code on the live site
 
-1. Merge the Kafui pull request, then deploy `main` to the cPanel site as you deploy the rest of JayFoods (DEC-006 is still open: cPanel Git pull of `main`, or upload of a tagged release from the `release` workflow).
+1. Deploy `main` with cPanel, Git Version Control: clone `https://github.com/CalebPrince/jayfoods.git` into a folder **outside** `public_html` (done 23 Oct 2026: `/home/spribvtm/jayfoods-app`). Then, in Domains, set the document root of `jayfoods.princecaleb.dev` to that folder's `public` subfolder. Only `public/` is then reachable from the web. `public/.htaccess` sends `/api/v1/...` requests to `index.php` and adds the security headers. If the document root can only be the project folder, the root `.htaccess` still serves `public/` and refuses `database/`, `src/` and the other private folders. To update later, use Pull or Deploy on the same Git repository page.
 2. Run the migration once on the server: `php database/migrate.php` (or `python server.py` locally). It adds Kafui's tables and the order columns, and is safe to run again.
 3. Add a second cron job next to the stock one, for the daily clean-up (chats deleted after 90 days, invoice files after 30):
 
    ```cron
-   0 3 * * * /usr/local/bin/php /home/spribvtm/public_html/jayfoods/database/kafui-cleanup.php >/dev/null 2>&1
+   0 3 * * * /usr/local/bin/php /home/spribvtm/jayfoods-app/database/kafui-cleanup.php >/dev/null 2>&1
    ```
 
 4. Check that `https://<live domain>/api/v1/whatsapp/webhook` answers. A plain GET should return `403`, which is correct because the verify token is missing.
