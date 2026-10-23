@@ -83,6 +83,22 @@ Sign in to the JayFoods admin and open **Kafui**, then **Settings**.
 - [ ] A database backup has been downloaded (Backups) and restored once on a copy, with Kafui orders in it.
 - [ ] The test script in step 5 passed on the live number.
 
+## Moving to the permanent domain
+
+The site runs on `jayfoods.princecaleb.dev` for now. When it moves to its own domain:
+
+1. **cPanel, Domains:** add the new domain with the same document root, `jayfoods-app/public`. The code, database and cron jobs stay as they are.
+2. **Admin, Kafui, Settings:** set **Live site address** to `https://<new domain>`. Invoice links are built from it.
+3. **Meta:** in the app, WhatsApp, Configuration, change the Callback URL to `https://<new domain>/api/v1/whatsapp/webhook` and click Verify and save (same verify token). Change the privacy policy URL in App settings, Basic.
+4. **Paystack dashboard:** change the webhook URL to `https://<new domain>/api/v1/payments/webhook`, and save the same URL in admin, Settings, Paystack.
+5. **Old address:** redirect `jayfoods.princecaleb.dev` to the new domain (cPanel, Domains, Redirects) so old links keep working.
+6. **Everywhere the web address is shown:** the WhatsApp business profile, social profiles, and printed or video material.
+
+**Email does not change** unless you also move the mailbox. The SMTP settings belong to the mailbox, not the website. To send from an address on the new domain:
+- Create the mailbox in cPanel, Email Accounts.
+- Run cPanel, Email Deliverability, for the new domain (SPF and DKIM).
+- Enter the new address, its password and `mail.<new domain>` in admin, Settings, Email sending (SMTP), then Send test email.
+
 ## Rotating secrets (incident steps in SECURITY.md)
 
 - **Meta token:** generate a new token for the `kafui` system user, paste it into the admin, then revoke the old one.
