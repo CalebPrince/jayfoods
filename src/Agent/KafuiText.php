@@ -12,6 +12,12 @@ final class KafuiText
         return str_replace([', ,', ',,'], ',', $text);
     }
 
+    /** Puts a space back where two sentences ran together ("pick up.Sure thing"). Amounts and web addresses are left alone. */
+    public static function spaceSentences(string $text): string
+    {
+        return preg_replace('/(?<=[a-z\)][.!?])(?=[A-Z][a-z])/u', ' ', $text) ?? $text;
+    }
+
     public static function money(int $pesewas): string
     {
         return 'GHS ' . number_format($pesewas / 100, 2);

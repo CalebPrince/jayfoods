@@ -6,7 +6,7 @@ declare(strict_types=1);
 $agentDir = __DIR__;
 require_once dirname($agentDir) . '/Support/Signer.php';
 foreach ([
-    'KafuiText', 'AgentHttp', 'AgentSettings', 'WhatsAppCloud', 'TwilioWhatsApp', 'WhatsAppSender', 'InvoicePdf', 'Invoices', 'KafuiStore',
+    'KafuiText', 'AgentHttp', 'AgentSettings', 'WhatsAppCloud', 'TwilioWhatsApp', 'WhatsAppSender','WhatsAppTemplates', 'InvoicePdf', 'Invoices', 'KafuiStore',
     'AgentMonitor', 'KafuiNotify', 'KafuiContext', 'KafuiTools', 'KafuiPrompt', 'ModelProviders', 'Kafui',
 ] as $class) {
     require_once $agentDir . '/' . $class . '.php';

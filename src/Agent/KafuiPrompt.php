@@ -10,7 +10,7 @@ declare(strict_types=1);
  */
 final class KafuiPrompt
 {
-    public static function build(string $role, string $channel, bool $firstReply): string
+    public static function build(string $role, string $channel, bool $firstReply, string $phone = ''): string
     {
         $c = self::content();
         $menu = [];
@@ -80,13 +80,37 @@ TXT;
             $p .= "\n\nBUSINESS BRIEF FROM JAY FOODS (facts you may use, answers to common questions, and when to hand over):\n" . mb_substr($brief, 0, 12000);
         }
 
+        $p .= "\n\nWrite one reply only, as a single message, with a space after every full stop.";
         if ($firstReply) {
-            $p .= "\n\nThis is your first reply in this chat: start with \"Hi, I'm Kafui, the Jay foods customer assistant. I'm an automated assistant, and you can ask for a person any time.\"";
+            $p .= "\n\nThis is your first reply in this chat: start with \"" . self::greeting($role, $phone) . "\"";
         }
         if ($role === 'owner') {
-            $p .= "\n\nOWNER\nThis WhatsApp number is on the owner list, so you are talking to the Jay foods owner. You can also use sales_summary, list_orders, list_bookings and create_invoice for them. Report numbers exactly as the tools give them. You cannot change, cancel or refund orders, change prices or stock, or message customers: tell the owner to use the admin for that.";
+            $p .= "\n\nOWNER\nThis WhatsApp number is on the owner list, so you are talking to " . (self::ownerName($phone) ?: 'a Jay foods owner') . ", one of the Jay foods owners. Do not try to sell to them or take them through an order unless they ask to place one. Help with what they ask: today's sales (sales_summary), orders (list_orders), bookings (list_bookings) and invoices (create_invoice). Report numbers exactly as the tools give them. You cannot change, cancel or refund orders, change prices or stock, or message customers: tell the owner to use the admin for that.";
         }
         return KafuiText::noDashes($p);
+    }
+
+    /** The first line of a chat. Owners are greeted by name and told what they can ask for. */
+    public static function greeting(string $role, string $phone = ''): string
+    {
+        if ($role === 'owner') {
+            $name = self::ownerName($phone);
+            return 'Hi' . ($name !== '' ? ' ' . $name : '') . ", I'm Kafui. Your number is on the owner list, so you can ask me for today's sales, orders, bookings or an invoice.";
+        }
+        return "Hi, I'm Kafui, the Jay foods customer assistant. I'm an automated assistant, and you can ask for a person any time.";
+    }
+
+    /** The first word of the owner number's label in the settings, for example "Ellen". */
+    private static function ownerName(string $phone): string
+    {
+        $digits = KafuiText::digits($phone);
+        foreach (AgentSettings::ownerNumbers() as $o) {
+            if ($digits !== '' && $o['number'] === $digits) {
+                $first = preg_split('/[\s,(]+/u', trim((string) $o['label'])) ?: [''];
+                return mb_substr(preg_replace('/[^\p{L}\p{M}\'-]/u', '', (string) $first[0]) ?? '', 0, 30);
+            }
+        }
+        return '';
     }
 
     private static function deliveryRules(): string

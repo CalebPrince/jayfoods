@@ -361,6 +361,120 @@ AgentHttp::$transport = function (string $method, string $url, array $headers, ?
 };
 
 
+// ---------------------------------------------------------------- WhatsApp templates
+section('WhatsApp templates through Twilio, as Lisa (owner alerts, order updates)');
+$defs = WhatsAppTemplates::definitions();
+check(count($defs) === 12 && count(WhatsAppTemplates::all()) === 12, 'twelve Jay foods templates listed');
+$shapeOk = true;
+foreach ($defs as $k => $d) {
+    preg_match_all('/\{\{(\d+)\}\}/', $d['body'] . ($d['button']['path'] ?? ''), $mm);
+    $used = array_unique($mm[1]); sort($used);
+    $declared = array_map('strval', array_keys($d['vars'])); sort($declared);
+    if (preg_match('/^\s*\{\{|\}\}\s*$/', $d['body']) || str_contains($d['body'] . $d['use'], '—') || $used !== $declared || array_keys($d['samples']) !== array_keys($d['vars'])
+        || !str_starts_with($d['name'], 'jf_') || !in_array($d['category'], ['UTILITY', 'MARKETING'], true)) { $shapeOk = false; echo "    bad template: $k\n"; }
+}
+check($shapeOk, 'every template follows WhatsApp\'s rules: no variable at the start or end, numbered variables with samples, no em dashes');
+check(WhatsAppTemplates::status('owner_alert') === 'not_created', 'nothing is submitted until staff press Submit');
+
+$tpl = [];
+$tplReply = [];
+AgentHttp::$transport = function (string $method, string $url, array $headers, ?string $body, int $timeout) use (&$tpl, &$tplReply) {
+    $tpl[] = ['method' => $method, 'url' => $url, 'body' => $body, 'headers' => $headers];
+    foreach ($tplReply as $match => $reply) if (str_contains($method . ' ' . $url, $match)) return $reply;
+    return ['status' => 201, 'body' => '{"sid":"SM777"}', 'error' => ''];
+};
+$hx = 'HX' . str_repeat('a', 32);
+$tplReply = [
+    'POST https://content.twilio.com/v1/Content/' . $hx . '/ApprovalRequests/whatsapp' => ['status' => 201, 'body' => '{"name":"jf_owner_alert","category":"UTILITY","status":"received"}', 'error' => ''],
+    'POST https://content.twilio.com/v1/Content' => ['status' => 201, 'body' => json_encode(['sid' => $hx]), 'error' => ''],
+];
+$t = WhatsAppTemplates::submit('owner_alert');
+$create = json_decode((string) ($tpl[0]['body'] ?? ''), true);
+check(($tpl[0]['url'] ?? '') === 'https://content.twilio.com/v1/Content' && ($create['friendly_name'] ?? '') === 'jf_owner_alert' && ($create['language'] ?? '') === 'en', 'Submit creates the content in Twilio');
+check(($create['types']['twilio/call-to-action']['actions'][0]['url'] ?? '') === 'https://jayfoods.example/admin/index.html', 'the button links to the live admin');
+$approval = json_decode((string) ($tpl[1]['body'] ?? ''), true);
+check(str_ends_with($tpl[1]['url'] ?? '', '/ApprovalRequests/whatsapp') && ($approval['category'] ?? '') === 'UTILITY', 'then asks WhatsApp to approve it as a utility template');
+check($t['status'] === 'received' && $t['content_sid'] === $hx, 'shown as pending with its content SID');
+check(in_array('Authorization: Basic ' . base64_encode('AC' . str_repeat('0', 32) . ':twilio-test-token'), $tpl[0]['headers'], true), 'Content API calls use the saved Twilio credentials');
+$threw = false; try { WhatsAppTemplates::submit('owner_alert'); } catch (RuntimeException $e) { $threw = true; }
+check($threw, 'a template already in Twilio is not submitted twice');
+check(!WhatsAppTemplates::send('owner_alert', '233200000031', ['1' => 'a', '2' => 'b', '3' => 'c'])['ok'], 'a pending template cannot be sent');
+
+$tplReply = ['GET https://content.twilio.com/v1/Content/' . $hx . '/ApprovalRequests' => ['status' => 200, 'body' => '{"whatsapp":{"name":"jf_owner_alert","status":"approved"}}', 'error' => '']];
+check(WhatsAppTemplates::refresh('owner_alert')['status'] === 'approved' && WhatsAppTemplates::isApproved('owner_alert'), 'Check status reads WhatsApp\'s verdict: approved');
+
+$tpl = [];
+$r = WhatsAppTemplates::send('owner_alert', 'whatsapp:+233200000031', ['1' => 'New order', '2' => 'Ama', '3' => '2 x Orange—500ml']);
+parse_str((string) ($tpl[0]['body'] ?? ''), $f);
+check($r['ok'] && ($f['ContentSid'] ?? '') === $hx && ($f['To'] ?? '') === 'whatsapp:+233200000031', 'an approved template is sent by its content SID');
+check(json_decode($f['ContentVariables'] ?? '', true) === ['1' => 'New order', '2' => 'Ama', '3' => '2 x Orange, 500ml'], 'with its variables filled in (and no em dashes)');
+check(!WhatsAppTemplates::send('owner_alert', '233200000031', ['1' => 'x', '2' => '', '3' => 'y'])['ok'], 'an empty variable is refused before anything is sent');
+
+// Rejected, then deleted and rebuilt
+$hx2 = 'HX' . str_repeat('b', 32);
+$tplReply = [
+    'POST https://content.twilio.com/v1/Content/' . $hx2 . '/ApprovalRequests/whatsapp' => ['status' => 201, 'body' => '{"status":"received"}', 'error' => ''],
+    'POST https://content.twilio.com/v1/Content' => ['status' => 201, 'body' => json_encode(['sid' => $hx2]), 'error' => ''],
+    'GET https://content.twilio.com/v1/Content/' . $hx2 . '/ApprovalRequests' => ['status' => 200, 'body' => '{"whatsapp":{"status":"rejected","rejection_reason":"Too promotional"}}', 'error' => ''],
+    'DELETE https://content.twilio.com/v1/Content/' . $hx2 => ['status' => 204, 'body' => '', 'error' => ''],
+];
+WhatsAppTemplates::submit('new_flavour');
+$t = WhatsAppTemplates::refresh('new_flavour');
+check($t['status'] === 'rejected' && $t['rejection_reason'] === 'Too promotional', 'a rejection shows WhatsApp\'s reason');
+$tpl = [];
+$t = WhatsAppTemplates::delete('new_flavour');
+check(($tpl[0]['method'] ?? '') === 'DELETE' && $t['status'] === 'not_created', 'Delete removes it from Twilio so it can be submitted again');
+$tplReply = ['POST https://content.twilio.com/v1/Content' => ['status' => 400, 'body' => '{"message":"Invalid variable"}', 'error' => '']];
+$threw = ''; try { WhatsAppTemplates::submit('pickup_ready'); } catch (RuntimeException $e) { $threw = $e->getMessage(); }
+check($threw === 'Invalid variable' && WhatsAppTemplates::status('pickup_ready') === 'not_created', 'Twilio\'s error is shown and nothing is saved');
+$tplReply = [];
+
+// Owner alerts on WhatsApp
+$db->exec("INSERT OR REPLACE INTO agent_owner_numbers(number,label) VALUES('233200000041','Rufus Ayertey')");
+$tpl = [];
+KafuiNotify::owners('A customer is waiting for a person', 'Ama, +233200000042', 'Asked for a person.');
+$toRufus = array_values(array_filter($tpl, static function ($c) { parse_str((string) $c['body'], $x); return ($x['To'] ?? '') === 'whatsapp:+233200000041'; }));
+parse_str((string) ($toRufus[0]['body'] ?? ''), $f);
+check(count($tpl) === count(AgentSettings::ownerNumbers()) && ($f['ContentSid'] ?? '') === $hx, 'handovers alert each owner number on WhatsApp with the approved owner_alert template');
+$db->exec("UPDATE agent_templates SET status='pending' WHERE template_key='owner_alert'");
+$tpl = [];
+KafuiNotify::owners('New order JF-1 to confirm', 'Ama', '2 x Orange.');
+parse_str((string) ($tpl[count($tpl) - 1]['body'] ?? ''), $f);
+check(!isset($f['ContentSid']) && str_contains($f['Body'] ?? '', 'New order JF-1 to confirm'), 'until it is approved, owners get plain text (works within their 24 hours)');
+$db->exec("UPDATE agent_templates SET status='approved' WHERE template_key='owner_alert'");
+check(str_starts_with(KafuiPrompt::greeting('owner', '233200000041'), 'Hi Rufus, I\'m Kafui. Your number is on the owner list'), 'owners are greeted by name and told what they can ask for');
+check(str_contains(KafuiPrompt::build('owner', 'whatsapp', true, '233200000041'), 'Do not try to sell to them'), 'Kafui does not push owners to order');
+check(str_starts_with(KafuiPrompt::greeting('customer'), 'Hi, I\'m Kafui, the Jay foods customer assistant'), 'customers keep the customer greeting');
+$db->exec("DELETE FROM agent_owner_numbers WHERE number='233200000041'");
+
+// Order confirmed: plain text inside the 24 hours, the template after
+$oc = newWhatsApp('233200000043');
+$db->prepare("UPDATE conversations SET last_inbound_at=datetime('now','-1 hour') WHERE id=:id")->execute([':id' => $oc['id']]);
+$db->exec("INSERT INTO orders (reference,order_type,customer_name,customer_phone,customer_email,delivery_address,region,notes,subtotal_pesewas,delivery_fee_pesewas,total_pesewas,status,payment_status,source,fulfilment,requested_date)
+           VALUES ('JF-TPL-1','single','Ama Mensah','233200000043','','Osu','Greater Accra','',5000,0,5000,'confirmed','unpaid','kafui-whatsapp','delivery','2026-10-30')");
+$orderId = (int) $db->lastInsertId();
+$tpl = [];
+check(KafuiNotify::orderConfirmed($orderId) === 'sent', 'confirming a Kafui WhatsApp order messages the customer');
+parse_str((string) ($tpl[0]['body'] ?? ''), $f);
+check(!isset($f['ContentSid']) && str_contains($f['Body'] ?? '', 'Hi Ama, Jay foods has confirmed your order JF-TPL-1. Total: GHS 50.00. Delivery date: Friday 30 October.'), 'inside the 24 hours it is plain text');
+$db->prepare("UPDATE conversations SET last_inbound_at=datetime('now','-2 days') WHERE id=:id")->execute([':id' => $oc['id']]);
+check(KafuiNotify::orderConfirmed($orderId) === 'not_sent', 'after 24 hours, without an approved template, nothing is sent and the chat says so');
+$db->exec("INSERT OR REPLACE INTO agent_templates(template_key,content_sid,status) VALUES('order_confirmed','HX" . str_repeat('c', 32) . "','approved')");
+$tpl = [];
+check(KafuiNotify::orderConfirmed($orderId) === 'sent', 'after 24 hours, with the approved template, it is sent');
+parse_str((string) ($tpl[0]['body'] ?? ''), $f);
+check(($f['ContentSid'] ?? '') === 'HX' . str_repeat('c', 32), 'using the order_confirmed template');
+$db->exec("UPDATE orders SET source='website' WHERE id=" . $orderId);
+check(KafuiNotify::orderConfirmed($orderId) === '', 'website orders are left to the email the site already sends');
+
+check(KafuiText::spaceSentences('Is that for pick up.Sure thing, see you.') === 'Is that for pick up. Sure thing, see you.', 'two sentences that ran together get their space back');
+check(KafuiText::spaceSentences('Total GHS 25.00 at jayfoods.princecaleb.dev. Thanks') === 'Total GHS 25.00 at jayfoods.princecaleb.dev. Thanks', 'amounts and web addresses are left alone');
+
+AgentHttp::$transport = function (string $method, string $url, array $headers, ?string $body, int $timeout) use (&$sent) {
+    if (str_contains($url, 'graph.facebook.com')) { $sent[] = json_decode((string) $body, true); return ['status' => 200, 'body' => '{"messages":[{"id":"wamid.TEST"}]}', 'error' => '']; }
+    return ['status' => 500, 'body' => '{}', 'error' => 'no network in tests'];
+};
+
 // ---------------------------------------------------------------- owner tools and invoices
 section('Owner tools and invoices (CTL-AUTHZ-002, CTL-FILE-001)');
 $ownerCtx = new KafuiContext(KafuiStore::get((int) $owner['id']), 'owner', 99);

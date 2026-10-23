@@ -24,6 +24,7 @@
     if (page === 'test') return renderTest(body);
     if (page === 'log') return renderLog(body);
     if (page === 'settings') return renderSettings(body);
+    if (page === 'templates') return renderTemplates(body);
     return renderInbox(body);
   }
 
@@ -69,7 +70,7 @@
     }
 
     const tabs = el('nav', 'kf-tabs');
-    [['inbox', 'Inbox'], ['bookings', 'Bookings'], ['test', 'Try Kafui'], ['log', 'Action log'], ['settings', 'Settings']].forEach(([key, label]) => {
+    [['inbox', 'Inbox'], ['bookings', 'Bookings'], ['test', 'Try Kafui'], ['log', 'Action log'], ['settings', 'Settings'], ['templates', 'Templates']].forEach(([key, label]) => {
       const a = el('a', page === key || (key === 'inbox' && page === 'c') ? 'active' : '', label);
       a.href = '#/kafui/' + key;
       tabs.appendChild(a);
@@ -157,6 +158,7 @@
     });
     ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) form.requestSubmit(); });
     panel.appendChild(form);
+    if (c.channel === 'whatsapp') panel.appendChild(await templateSender(c, id));
     grid.appendChild(panel);
 
     const side = el('div', 'panel kf-side');
@@ -281,6 +283,122 @@
   }
 
   // ---------------------------------------------------------------- settings
+  // ---------------------------------------------------------------- templates
+
+  const STATUS = {
+    not_created: ['Not submitted', 'off'], pending: ['Pending', 'st-pending'], received: ['Pending', 'st-pending'],
+    approved: ['Approved', 'on'], rejected: ['Rejected', 'st-cancelled'], paused: ['Paused', 'st-pending'], disabled: ['Disabled', 'st-cancelled'],
+  };
+  const pill = (status) => { const [t, cls] = STATUS[status] || [status, 'off']; return el('span', 'pill ' + cls, t); };
+
+  async function renderTemplates(body) {
+    const { data } = await call('/admin/agent/templates');
+    const panel = el('div', 'panel');
+    const head = el('div', 'panel-head');
+    head.appendChild(el('h2', null, 'WhatsApp message templates'));
+    const all = h.button('Check all statuses', 'btn-ghost btn-sm', async () => {
+      all.disabled = true; all.textContent = 'Checking...';
+      try { const { data: r } = await call('/admin/agent/templates/refresh-all', 'POST', {}); if (r.errors.length) alertBox(panel, r.errors.join(' ')); else h.router(); }
+      catch (err) { alertBox(panel, err.message); }
+      all.disabled = false; all.textContent = 'Check all statuses';
+    });
+    head.appendChild(all);
+    panel.appendChild(head);
+
+    const intro = el('div', 'panel-body');
+    intro.appendChild(el('p', 'hint', 'WhatsApp lets Jay foods send free text only within 24 hours of a customer\'s last message. After that, only a template WhatsApp has approved goes through. Submit a template here, and Twilio sends it to WhatsApp for approval. Approval usually takes from a few minutes to a day. Marketing templates are only for customers who agreed to hear from Jay foods.'));
+    const n = { approved: 0, pending: 0, rejected: 0 };
+    data.templates.forEach((t) => { if (t.status === 'approved') n.approved++; else if (t.status === 'rejected') n.rejected++; else if (t.status !== 'not_created') n.pending++; });
+    intro.appendChild(el('p', null, n.approved + ' approved, ' + n.pending + ' pending, ' + n.rejected + ' rejected, ' + (data.templates.length - n.approved - n.pending - n.rejected) + ' not submitted.'));
+    if (data.provider !== 'twilio') intro.appendChild(el('div', 'form-error', 'Templates are managed through Twilio. Choose Twilio as the WhatsApp provider in Settings.'));
+    else if (!data.twilio_ready) intro.appendChild(el('div', 'form-error', 'Save the Twilio Account SID, auth token and sender number in Settings first.'));
+    panel.appendChild(intro);
+
+    const list = el('div', 'kf-list');
+    data.templates.forEach((t) => {
+      const row = el('div', 'kf-row kf-tpl');
+      const top = el('div', 'kf-row-top');
+      top.appendChild(el('strong', null, t.title));
+      top.appendChild(pill(t.status));
+      top.appendChild(el('span', 'pill ' + (t.category === 'MARKETING' ? 'type-bulk' : 'type-single'), t.category === 'MARKETING' ? 'Marketing' : 'Utility'));
+      top.appendChild(el('span', 'kf-preview', t.name));
+      row.appendChild(top);
+      row.appendChild(el('div', 'kf-preview', t.use));
+      const bodyText = el('div', 'kf-tpl-body', t.body);
+      row.appendChild(bodyText);
+      if (t.button) row.appendChild(el('div', 'kf-preview', 'Button: ' + t.button.text + ' (' + t.button.url + ')'));
+      row.appendChild(el('div', 'kf-preview', 'Fills in: ' + Object.entries(t.vars).map(([k, v]) => '{{' + k + '}} ' + v).join(', ')));
+      if (t.rejection_reason) row.appendChild(el('div', 'form-error', 'WhatsApp said: ' + t.rejection_reason));
+      if (t.checked_at && t.status !== 'not_created') row.appendChild(el('div', 'kf-preview', 'Last checked ' + h.fmtDateText(t.checked_at)));
+      const act = el('div', 'kf-actions');
+      const run = (label, cls, method, path, confirmText) => {
+        const b = h.button(label, cls, async () => {
+          if (confirmText && !confirm(confirmText)) return;
+          b.disabled = true; b.textContent = 'Working...';
+          try { await call('/admin/agent/templates/' + t.key + path, method, method === 'DELETE' ? undefined : {}); h.router(); }
+          catch (err) { alertBox(row, err.message); b.disabled = false; b.textContent = label; }
+        });
+        act.appendChild(b);
+      };
+      if (t.status === 'not_created') run('Submit to WhatsApp', 'btn-primary btn-sm', 'POST', '/submit');
+      else {
+        run('Check status', 'btn-ghost btn-sm', 'POST', '/refresh');
+        run(t.status === 'rejected' ? 'Delete and rebuild' : 'Delete', 'btn-danger btn-sm', 'DELETE', '',
+          'Delete the "' + t.title + '" template from Twilio? You can submit it again afterwards, and WhatsApp reviews it again.');
+      }
+      row.appendChild(act);
+      list.appendChild(row);
+    });
+    panel.appendChild(list);
+    body.appendChild(panel);
+  }
+
+  /** In a WhatsApp chat: send an approved template, the only way through once the 24 hours have passed. */
+  async function templateSender(c, id) {
+    const box = el('details', 'kf-tpl-send');
+    box.appendChild(el('summary', null, c.window_open ? 'Send a template instead' : 'Send a template (works after the 24 hours)'));
+    let templates = [];
+    try { templates = (await call('/admin/agent/templates')).data.templates.filter((t) => t.status === 'approved' && t.key !== 'owner_alert'); } catch (_) {}
+    if (!templates.length) { box.appendChild(el('p', 'hint', 'No templates are approved yet. Submit them under Kafui, Templates.')); return box; }
+    const form = el('form', 'kf-tpl-form');
+    const pick = el('select', 'kf-filter'); pick.setAttribute('aria-label', 'Template');
+    templates.forEach((t) => { const o = el('option', null, t.title); o.value = t.key; pick.appendChild(o); });
+    const fields = el('div', 'form-2col');
+    const preview = el('div', 'kf-tpl-body');
+    const fill = () => {
+      const t = templates.find((x) => x.key === pick.value);
+      fields.innerHTML = '';
+      Object.entries(t.vars).forEach(([k, label]) => {
+        const f = el('div', 'field');
+        const lab = el('label', null, label); lab.htmlFor = 'kf-tv-' + k;
+        const inp = el('input'); inp.id = 'kf-tv-' + k; inp.dataset.var = k; inp.maxLength = 300;
+        if (k === '1' && /name/i.test(label)) inp.value = (c.name || '').split(' ')[0];
+        inp.addEventListener('input', show);
+        f.appendChild(lab); f.appendChild(inp); fields.appendChild(f);
+      });
+      show();
+    };
+    function show() {
+      const t = templates.find((x) => x.key === pick.value);
+      let text = t.body;
+      fields.querySelectorAll('input').forEach((i) => { text = text.split('{{' + i.dataset.var + '}}').join(i.value || '[' + t.vars[i.dataset.var] + ']'); });
+      preview.textContent = text;
+    }
+    pick.addEventListener('change', fill);
+    const send = el('button', 'btn btn-primary btn-sm', 'Send template'); send.type = 'submit';
+    form.appendChild(pick); form.appendChild(fields); form.appendChild(preview); form.appendChild(send);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const vars = {}; fields.querySelectorAll('input').forEach((i) => { vars[i.dataset.var] = i.value; });
+      send.disabled = true; send.textContent = 'Sending...';
+      try { await call('/admin/agent/conversations/' + id + '/template', 'POST', { key: pick.value, vars }); h.router(); }
+      catch (err) { alertBox(form, err.message); send.disabled = false; send.textContent = 'Send template'; }
+    });
+    box.appendChild(form);
+    fill();
+    return box;
+  }
+
   async function renderSettings(body) {
     const { data } = await call('/admin/agent/settings');
     const s = data.settings, has = data.has;

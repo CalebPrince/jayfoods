@@ -208,6 +208,10 @@ table.data .sub { color: var(--muted); font-size: .8rem; }
 a.kf-row:hover { background: var(--green-lt); }
 .kf-row.attention { box-shadow: inset 4px 0 0 var(--orange); }
 .kf-row-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.kf-tpl-body { white-space: pre-wrap; background: #f6f8f4; border-left: 3px solid var(--green); padding: 10px 12px; border-radius: 6px; font-size: .92rem; }
+.kf-tpl-send { border-top: 1px solid var(--line); padding: 12px 20px; }
+.kf-tpl-send summary { cursor: pointer; font-weight: 700; color: var(--green-dk); }
+.kf-tpl-form { display: grid; gap: 10px; margin-top: 10px; }
 .kf-time { margin-left: auto; font-size: .8rem; color: var(--muted); }
 .kf-preview { color: var(--muted); font-size: .88rem; overflow-wrap: anywhere; }
 .kf-unread { background: var(--orange); color: #fff; border-radius: 999px; font-size: .7rem; padding: 1px 8px; font-weight: 700; }

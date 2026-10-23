@@ -24,6 +24,17 @@ final class KafuiStore
         return $s->fetch() ?: [];
     }
 
+    /** The WhatsApp chat for a number (latest first), so messages go to the exact address WhatsApp gave us. */
+    public static function byPhone(string $phone): ?array
+    {
+        $digits = KafuiText::digits($phone);
+        if ($digits === '') return null;
+        if (strlen($digits) === 10 && str_starts_with($digits, '0')) $digits = '233' . substr($digits, 1);
+        $s = Database::connection()->prepare("SELECT * FROM conversations WHERE channel='whatsapp' AND (phone=:p OR contact_key=:p) ORDER BY last_message_at DESC LIMIT 1");
+        $s->execute([':p' => $digits]);
+        return $s->fetch() ?: null;
+    }
+
     public static function get(int $id): ?array
     {
         $s = Database::connection()->prepare('SELECT * FROM conversations WHERE id=:id');

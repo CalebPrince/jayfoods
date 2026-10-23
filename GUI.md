@@ -25,8 +25,11 @@ Applies to: the website chat widget on the JayFoods storefront, and the new Kafu
 | Conversation detail and reply | `#/kafui/c/{id}` | Admin | `GET .../conversations/{id}`, `POST .../reply`, `POST .../take-over`, `POST .../hand-back` | PARTIAL | thread, sending, failed, 24-hour window closed, staff mode, Kafui mode | Browser: website reply reached the widget; WhatsApp reply refused while not connected | WhatsApp send not seen with a real token |
 | Agent action log | `#/kafui/log` | Admin | `GET /api/v1/admin/agent/actions` | WORKING | empty, list | Browser check | |
 | Try Kafui (test chat) | `#/kafui/test` | Admin | `POST /api/v1/admin/agent/test` | PARTIAL | chat as customer or owner, tools used, error | Code and tests | Needs a provider key to see real replies. Orders and bookings made here are not saved and nothing is sent |
+| WhatsApp templates | `#/kafui/templates` | Admin | `GET .../agent/templates`, `POST .../templates/{key}/submit`, `POST .../templates/{key}/refresh`, `POST .../templates/refresh-all`, `DELETE .../templates/{key}` | PARTIAL | not submitted, pending, approved, rejected with WhatsApp's reason, paused, disabled, working, error | Tests with a fake Twilio | Not yet seen against the real Twilio account |
+| Send a template from a chat | `#/kafui/c/{id}`, under the reply box | Admin | `POST .../conversations/{id}/template` | PARTIAL | none approved, fill-in fields, live preview, sending, refused | Tests | Only approved templates are offered |
 | Agent orders flagged | Existing `#/orders` | Admin | existing orders API plus `source` | WORKING | Kafui badge, taken-by and wanted-on rows | Code | |
-| Bookings list | `#/kafui/bookings` | Admin | `GET/PATCH /api/v1/admin/bookings` | WORKING | empty, list, confirm, decline, done, staff note | Browser check | |
+| Bookings list | `#/kafui/templates` | Submit WhatsApp templates and follow their approval | Kafui sub-nav, after Settings | Admin | submit, check status, check all, delete and rebuild | templates with status | Cards | Template wording is fixed in code, not edited here |
+| `#/kafui/bookings` | Admin | `GET/PATCH /api/v1/admin/bookings` | WORKING | empty, list, confirm, decline, done, staff note | Browser check | |
 
 ## Route and screen inventory
 
