@@ -41,6 +41,10 @@ final class AgentSettings
         'pickup_enabled'     => '0',
         'pickup_details'     => '',
         'payment_note'       => 'Our team will confirm your order and tell you how to pay (Mobile Money or cash on delivery).',
+        'agent_brief'        => '',   // business facts, honest claims, answers and handover rules, written by the business
+        'min_days_ahead'     => '0',  // earliest delivery date: 0 = today, 1 = next day
+        'handoff_min_bottles' => '0', // orders of this many bottles or more go to a person (0 = off)
+        'handoff_name'       => '',   // who takes over chats, e.g. Ellen
         'anthropic_enabled' => '0', 'anthropic_model' => '', 'anthropic_fallback_model' => '',
         'openai_enabled' => '0', 'openai_model' => '', 'openai_fallback_model' => '',
         'openrouter_enabled' => '0', 'openrouter_model' => '', 'openrouter_fallback_model' => '',

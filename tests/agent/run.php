@@ -383,6 +383,29 @@ $r = KafuiTools::run('create_booking', ['kind' => 'event', 'customer_name' => 'E
 check(isset($r['error']), 'date more than 60 days ahead refused (hand to a person)');
 
 // ---------------------------------------------------------------- prompt and data minimisation
+section('Business brief, rider-paid delivery, next-day rule, big orders to a person');
+AgentSettings::set('agent_brief', "Sobolo is sweetened with sugar. TO CONFIRM: 100% natural.");
+AgentSettings::set('handoff_name', 'Ellen');
+$bp = KafuiPrompt::build('customer', 'whatsapp', false);
+check(str_contains($bp, 'BUSINESS BRIEF FROM JAY FOODS') && str_contains($bp, 'Sobolo is sweetened with sugar'), 'the business brief reaches Kafui');
+check(str_contains($bp, 'TO CONFIRM; hand over to Ellen'), 'TO CONFIRM items go to the named person');
+check(str_contains($bp, 'Reply in English') && !str_contains($bp, 'Twi or Pidgin'), 'English unless the brief says otherwise');
+$db->exec("INSERT INTO delivery_zones(name,fee_pesewas,is_active,sort_order) VALUES('Anywhere (Uber or Yango)',0,1,50)");
+$rq = KafuiTools::price([['size_id' => $sizeId, 'quantity' => 2]], 'delivery', 'Anywhere (Uber or Yango)');
+check(($rq['fee'] ?? -1) === 0 && str_contains(KafuiTools::summaryText($rq, 'delivery'), 'you pay the Uber or Yango rider directly'), 'a zero-fee area reads as "you pay the rider", not GHS 0.00');
+check(str_contains(KafuiPrompt::build('customer', 'whatsapp', false), 'pays the dispatch rider'), 'Kafui is told the customer pays the rider');
+AgentSettings::set('min_days_ahead', '1');
+$nd = newWhatsApp('233200000051');
+$ndq = KafuiTools::run('quote_order', ['items' => [['size_id' => $sizeId, 'quantity' => 2]], 'fulfilment' => 'delivery', 'delivery_area' => 'Greater Accra'], new KafuiContext(KafuiStore::get((int) $nd['id']), 'customer', 1));
+$same = KafuiTools::run('place_order', ['quote_id' => $ndq['quote_id'], 'customer_name' => 'Kwame', 'requested_date' => gmdate('Y-m-d'), 'address' => 'Osu'], new KafuiContext(KafuiStore::get((int) $nd['id']), 'customer', PHP_INT_MAX));
+check(isset($same['error']) && str_contains($same['error'], 'tomorrow'), 'same-day delivery refused when the earliest is the next day');
+$next = KafuiTools::run('place_order', ['quote_id' => $ndq['quote_id'], 'customer_name' => 'Kwame', 'requested_date' => gmdate('Y-m-d', strtotime('+1 day')), 'address' => 'Osu'], new KafuiContext(KafuiStore::get((int) $nd['id']), 'customer', PHP_INT_MAX));
+check(isset($next['reference']), 'next-day delivery accepted');
+AgentSettings::set('handoff_min_bottles', '100');
+$bigq = KafuiTools::run('quote_order', ['items' => [['size_id' => $sizeId, 'quantity' => 100]], 'fulfilment' => 'delivery', 'delivery_area' => 'Greater Accra'], new KafuiContext(KafuiStore::get((int) $nd['id']), 'customer', 9));
+check(isset($bigq['error']) && str_contains($bigq['error'], 'Ellen'), 'orders of 100 bottles or more go to Ellen instead of being quoted');
+AgentSettings::set('handoff_min_bottles', '0'); AgentSettings::set('min_days_ahead', '0'); AgentSettings::set('agent_brief', '');
+
 section('Prompts carry no secrets (CTL-DATA-001, CTL-SEC-001)');
 AgentSettings::set('anthropic_key', 'sk-ant-TESTSECRETVALUE');
 $prompt = KafuiPrompt::build('owner', 'whatsapp', true);

@@ -332,7 +332,14 @@
           ${field('owner_email', 'Owner email', s.owner_email, 'Invoices and owner-request notices go here. Blank uses ' + h.esc(data.smtp_notification_email || 'the SMTP notification email') + '.', 'email')}
           ${field('alert_email', 'Alert email', s.alert_email, 'Warnings (rejected webhooks, AI failures, wrong prices). Blank uses the SMTP notification email.', 'email')}
         </div>
-        <h3>5. Orders</h3>
+        <h3>5. What Kafui knows</h3>
+        <div class="field" data-f="agent_brief"><label for="kf-agent_brief">Business brief</label><textarea id="kf-agent_brief" name="agent_brief" rows="14" maxlength="12000" placeholder="Facts Kafui may use, what you can honestly say, answers to common questions, and when to hand over. Mark anything not yet confirmed as TO CONFIRM: Kafui never says those and hands over instead.">${h.esc(s.agent_brief)}</textarea><div class="hint">Prices, sizes, delivery areas and hours still come from Products, Delivery zones and Site content.</div></div>
+        <div class="form-2col">
+          ${field('handoff_name', 'Who takes over chats', s.handoff_name, 'For example Ellen. Kafui names them when it hands over.')}
+          ${field('handoff_min_bottles', 'Hand over orders of this many bottles or more', s.handoff_min_bottles, '0 means Kafui takes orders of any size.', 'number')}
+          ${field('min_days_ahead', 'Earliest delivery (days from today)', s.min_days_ahead, '1 means next day, never same day.', 'number')}
+        </div>
+        <h3>6. Orders</h3>
         <label class="checkline"><input type="checkbox" name="pickup_enabled" ${s.pickup_enabled === '1' ? 'checked' : ''}> Customers can pick up orders</label>
         ${field('pickup_details', 'Pickup place and times', s.pickup_details, 'Shown to customers when pickup is on. Placeholder until JayFoods confirms.')}
         <div class="field" data-f="payment_note"><label for="kf-payment_note">How chat orders are paid</label><textarea id="kf-payment_note" name="payment_note" rows="2" maxlength="300">${h.esc(s.payment_note)}</textarea><div class="hint">Kafui says this after every order.</div></div>
