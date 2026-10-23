@@ -152,7 +152,13 @@ final class AdminOrderController
 
         if ($order['status'] !== $status) EmailNotifications::statusChanged($order, $status);
 
-        Response::json(['data' => ['ok' => true, 'status' => $status]]);
+        // A Kafui WhatsApp order: tell the customer on WhatsApp once it is confirmed.
+        $whatsapp = '';
+        if ($order['status'] !== $status && $status === 'confirmed') {
+            try { $whatsapp = KafuiNotify::orderConfirmed($id); } catch (Throwable $e) { error_log('[kafui order confirmed] ' . $e->getMessage()); $whatsapp = 'failed'; }
+        }
+
+        Response::json(['data' => ['ok' => true, 'status' => $status, 'whatsapp' => $whatsapp]]);
     }
 
     /** GET /api/v1/admin/orders/{id}/invoice: the branded invoice PDF, built on request and not stored. */

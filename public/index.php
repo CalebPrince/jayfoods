@@ -171,6 +171,12 @@ $router->post('/api/v1/admin/agent/conversations/{id}/take-over', static fn(arra
 $router->post('/api/v1/admin/agent/conversations/{id}/hand-back', static fn(array $p) => $kafui->handBack((int)$p['id']));
 $router->get('/api/v1/admin/agent/actions', static fn(array $p) => $kafui->actions());
 $router->post('/api/v1/admin/agent/test', static fn(array $p) => $kafui->test());
+$router->get('/api/v1/admin/agent/templates', static fn(array $p) => $kafui->templates());
+$router->post('/api/v1/admin/agent/templates/refresh-all', static fn(array $p) => $kafui->refreshAllTemplates());
+$router->post('/api/v1/admin/agent/templates/{key}/submit', static fn(array $p) => $kafui->submitTemplate($p['key']));
+$router->post('/api/v1/admin/agent/templates/{key}/refresh', static fn(array $p) => $kafui->refreshTemplate($p['key']));
+$router->delete('/api/v1/admin/agent/templates/{key}', static fn(array $p) => $kafui->deleteTemplate($p['key']));
+$router->post('/api/v1/admin/agent/conversations/{id}/template', static fn(array $p) => $kafui->sendTemplate((int)$p['id']));
 $router->get('/api/v1/admin/bookings', static fn(array $p) => $kafui->bookings());
 $router->patch('/api/v1/admin/bookings/{id}', static fn(array $p) => $kafui->updateBooking((int)$p['id']));
 

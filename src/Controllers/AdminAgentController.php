@@ -206,6 +206,61 @@ final class AdminAgentController
         Response::json(['data' => ['sent' => true]]);
     }
 
+    /** Sends an approved template, the only way to reach a customer after their 24 hours have passed. */
+    public function sendTemplate(int $id): void
+    {
+        if (!self::guard()) return;
+        $c = KafuiStore::get($id);
+        if (!$c || $c['channel'] !== 'whatsapp') { Response::json(['error' => 'Templates are for WhatsApp chats only.'], 404); return; }
+        $in = self::input();
+        $key = (string) ($in['key'] ?? '');
+        if (!isset(WhatsAppTemplates::definitions()[$key])) { Response::json(['error' => 'Choose a template.'], 422); return; }
+        $vars = [];
+        foreach ((array) ($in['vars'] ?? []) as $n => $v) $vars[(string) $n] = KafuiText::field($v, 300);
+        $sent = WhatsAppTemplates::send($key, KafuiStore::replyAddress($c), $vars);
+        if (!$sent['ok']) { Response::json(['error' => 'Not sent: ' . $sent['error']], 422); return; }
+        $admin = Auth::user();
+        KafuiStore::add($id, 'staff', WhatsAppTemplates::render($key, $vars), null, (string) ($admin['name'] ?? 'Staff'));
+        KafuiStore::setMode($id, 'staff', false);
+        Response::json(['data' => ['sent' => true]]);
+    }
+
+    // ------------------------------------------------------------------ templates
+
+    public function templates(): void
+    {
+        Response::json(['data' => [
+            'templates' => WhatsAppTemplates::all(),
+            'provider' => WhatsAppSender::provider(),
+            'twilio_ready' => TwilioWhatsApp::isConfigured(),
+            'site_url' => AgentSettings::siteUrl(),
+        ]]);
+    }
+
+    public function submitTemplate(string $key): void { $this->templateAction($key, static fn() => WhatsAppTemplates::submit($key)); }
+    public function refreshTemplate(string $key): void { $this->templateAction($key, static fn() => WhatsAppTemplates::refresh($key)); }
+    public function deleteTemplate(string $key): void { $this->templateAction($key, static fn() => WhatsAppTemplates::delete($key)); }
+
+    public function refreshAllTemplates(): void
+    {
+        if (!self::guard()) return;
+        $errors = [];
+        foreach (WhatsAppTemplates::all() as $t) {
+            if ($t['content_sid'] === null) continue;
+            try { WhatsAppTemplates::refresh($t['key']); } catch (RuntimeException $e) { $errors[] = $t['title'] . ': ' . $e->getMessage(); }
+        }
+        Response::json(['data' => ['templates' => WhatsAppTemplates::all(), 'errors' => $errors]]);
+    }
+
+    private function templateAction(string $key, callable $action): void
+    {
+        if (!self::guard()) return;
+        if (!isset(WhatsAppTemplates::definitions()[$key])) { Response::json(['error' => 'Unknown template.'], 404); return; }
+        if (WhatsAppSender::provider() !== 'twilio') { Response::json(['error' => 'Templates are managed through Twilio. Choose Twilio as the WhatsApp provider in Settings.'], 409); return; }
+        try { Response::json(['data' => ['template' => $action()]]); }
+        catch (RuntimeException $e) { Response::json(['error' => $e->getMessage()], 502); }
+    }
+
     public function takeOver(int $id): void
     {
         if (!self::guard()) return;

@@ -82,6 +82,17 @@ Sign in to the JayFoods admin and open **Kafui**, then **Settings**.
 - [ ] A database backup has been downloaded (Backups) and restored once on a copy, with Kafui orders in it.
 - [ ] The test script in step 5 passed on the live number.
 
+## WhatsApp templates (Kafui, Templates)
+
+WhatsApp only lets Jay foods send free text within 24 hours of a person's last message. After that, only a template WhatsApp has approved goes through. Kafui, Templates lists twelve, written for a juice business:
+
+- **Owner alert**: tells the owner numbers about a handover, a new order or a booking. Until it is approved, owners get plain text, which only arrives within 24 hours of their own last message to Kafui. Submit this one first.
+- **Order confirmed**: sent to the customer when staff set a Kafui WhatsApp order to Confirmed. Within the 24 hours it goes as plain text; after that it needs this template, or the chat notes that nothing was sent.
+- **Payment reminder, Payment received, Out for delivery, Ready for pickup, Invoice ready, Booking confirmed, Bulk quote**: staff send these from a chat (Send a template, under the reply box).
+- **Feedback request, Re-order reminder, Flavour back in stock**: marketing templates. WhatsApp charges more for these and they may only go to customers who agreed to hear from Jay foods.
+
+Steps: Twilio must be the WhatsApp provider with the Account SID, auth token and sender number saved, and the Live site address set (two templates have buttons that link to it). Press **Submit to WhatsApp** on each template. It shows as Pending; press **Check status** (or Check all statuses) later. If WhatsApp rejects one, its reason shows: press **Delete and rebuild**, ask PrinceCaleb.dev to change the wording in `src/Agent/WhatsAppTemplates.php`, then submit again. If the site moves domain, delete and resubmit the two templates with buttons.
+
 ## Moving to the permanent domain
 
 The site runs on `jayfoods.princecaleb.dev` for now. When it moves to its own domain:

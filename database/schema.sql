@@ -315,3 +315,14 @@ CREATE TABLE IF NOT EXISTS agent_invoices (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (order_id) REFERENCES orders (id) ON DELETE CASCADE
 );
+
+-- WhatsApp message templates (Twilio Content API), one row per template.
+-- Definitions live in src/Agent/WhatsAppTemplates.php; this keeps the Twilio
+-- content SID and the WhatsApp approval status the admin last saw.
+CREATE TABLE IF NOT EXISTS agent_templates (
+    template_key     TEXT PRIMARY KEY,
+    content_sid      TEXT NOT NULL DEFAULT '',
+    status           TEXT NOT NULL DEFAULT '',   -- pending, approved, rejected, paused, disabled
+    rejection_reason TEXT NOT NULL DEFAULT '',
+    updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
+);

@@ -88,7 +88,7 @@ final class Kafui
             if ($m['sender'] === 'system') continue;
             $messages[] = ['role' => $m['sender'] === 'customer' ? 'user' : 'assistant', 'content' => ($m['sender'] === 'staff' ? '[Jay foods staff] ' : '') . $m['body']];
         }
-        $system = KafuiPrompt::build($ctx->role, $ctx->channel() === 'whatsapp' ? 'whatsapp' : 'web', $firstReply)
+        $system = KafuiPrompt::build($ctx->role, $ctx->channel() === 'whatsapp' ? 'whatsapp' : 'web', $firstReply, (string) $conv['phone'])
             . self::quoteContext((int) $conv['id'], $turnId);
         $tools = KafuiTools::definitions($ctx->role, $ctx->channel());
         $runTool = static fn(string $name, array $args): array => KafuiTools::run($name, $args, $ctx);
@@ -139,9 +139,9 @@ final class Kafui
             Database::connection()->prepare('UPDATE conversations SET failed_answers=0 WHERE id=:id')->execute([':id' => $conv['id']]);
         }
 
-        $reply = KafuiText::noDashes($reply);
+        $reply = KafuiText::spaceSentences(KafuiText::noDashes($reply));
         if ($firstReply && stripos($reply, 'Kafui') === false) {
-            $reply = "Hi, I'm Kafui, the Jay foods customer assistant. I'm an automated assistant, and you can ask for a person any time.\n\n" . $reply;
+            $reply = KafuiPrompt::greeting($ctx->role, (string) $conv['phone']) . "\n\n" . $reply;
         }
         return ['reply' => mb_substr($reply, 0, 3500), 'document' => $ctx->document, 'handed_off' => $ctx->handedOff];
     }

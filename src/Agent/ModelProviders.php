@@ -87,7 +87,7 @@ final class ModelProviders
             $data = AgentHttp::json('POST', 'https://api.anthropic.com/v1/messages', ['x-api-key: ' . $p['key'], 'anthropic-version: 2023-06-01'], $body, self::timeout($deadline));
             $blocks = $data['content'] ?? [];
             $uses = array_values(array_filter($blocks, static fn($b) => ($b['type'] ?? '') === 'tool_use'));
-            $text = trim(implode('', array_map(static fn($b) => ($b['type'] ?? '') === 'text' ? (string) $b['text'] : '', $blocks)));
+            $text = trim(implode("\n\n", array_filter(array_map(static fn($b) => ($b['type'] ?? '') === 'text' ? trim((string) $b['text']) : '', $blocks), static fn($t) => $t !== '')));
             if (!$uses) {
                 if (($data['stop_reason'] ?? '') === 'max_tokens') throw new RuntimeException('truncated');
                 return $text;

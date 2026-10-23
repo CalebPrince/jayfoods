@@ -75,6 +75,13 @@ final class TwilioWhatsApp
         return self::create($to, ['MediaUrl' => $link, 'Body' => mb_substr(WhatsAppCloud::clean($caption), 0, self::MAX_BODY)]);
     }
 
+    /** Sends an approved template (Twilio Content API), which works outside the 24-hour window. @param array<string,string> $vars */
+    public static function sendTemplate(string $to, string $contentSid, array $vars): array
+    {
+        if (!preg_match('/^HX[0-9a-fA-F]{32}$/', $contentSid)) return ['ok' => false, 'id' => null, 'error' => 'Invalid template.'];
+        return self::create($to, ['ContentSid' => $contentSid, 'ContentVariables' => json_encode((object) $vars, JSON_UNESCAPED_UNICODE)]);
+    }
+
     /** Splits on blank lines, then lines, then words, so every part stays under the limit. @return list<string> */
     public static function parts(string $text): array
     {
