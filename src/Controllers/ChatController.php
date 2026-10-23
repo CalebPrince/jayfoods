@@ -22,7 +22,7 @@ final class ChatController
         KafuiStore::findOrCreate('web', $sid);
         Response::json(['data' => [
             'session' => Signer::sign('chat', $sid, time() + self::SESSION_HOURS * 3600),
-            'greeting' => "Hi, I'm Kafui, Jay foods' automatic assistant. I can help you order fresh juice, book juice for an event or check an order. You can ask for a person any time.",
+            'greeting' => "Hi, I'm Kafui, the Jay foods automatic assistant. I can help you order fresh juice, book juice for an event or check an order. You can ask for a person any time.",
             'whatsapp' => self::whatsappNumber(),
         ]]);
     }
