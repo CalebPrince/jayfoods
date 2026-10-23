@@ -18,6 +18,18 @@ final class KafuiText
         return preg_replace('/(?<=[a-z\)][.!?])(?=[A-Z][a-z])/u', ' ', $text) ?? $text;
     }
 
+    /**
+     * Markdown the models like to write, made right for the channel: WhatsApp bolds with one *,
+     * the website chat shows plain text. Headings and doubled asterisks never reach a customer.
+     */
+    public static function forChannel(string $text, string $channel): string
+    {
+        $text = preg_replace('/^\s{0,3}#{1,6}\s+/mu', '', $text) ?? $text;
+        $text = preg_replace('/\*\*(.+?)\*\*/su', $channel === 'whatsapp' ? '*$1*' : '$1', $text) ?? $text;
+        $text = preg_replace('/__(.+?)__/su', $channel === 'whatsapp' ? '_$1_' : '$1', $text) ?? $text;
+        return $channel === 'whatsapp' ? $text : str_replace('*', '', $text);
+    }
+
     public static function money(int $pesewas): string
     {
         return 'GHS ' . number_format($pesewas / 100, 2);

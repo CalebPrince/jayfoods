@@ -149,7 +149,7 @@ final class Kafui
             Database::connection()->prepare('UPDATE conversations SET failed_answers=0 WHERE id=:id')->execute([':id' => $conv['id']]);
         }
 
-        $reply = KafuiText::spaceSentences(KafuiText::noDashes($reply));
+        $reply = KafuiText::forChannel(KafuiText::spaceSentences(KafuiText::noDashes($reply)), $ctx->channel() === 'whatsapp' ? 'whatsapp' : 'web');
         if ($firstReply && stripos($reply, 'Kafui') === false) {
             $reply = KafuiPrompt::greeting($ctx->role, (string) $conv['phone']) . "\n\n" . $reply;
         }

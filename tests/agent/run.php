@@ -477,6 +477,14 @@ check(($f['ContentSid'] ?? '') === 'HX' . str_repeat('c', 32), 'using the order_
 $db->exec("UPDATE orders SET source='website' WHERE id=" . $orderId);
 check(KafuiNotify::orderConfirmed($orderId) === '', 'website orders are left to the email the site already sends');
 
+check(KafuiText::forChannel("**Order Summary:**
+## Total
+2 x Orange", 'whatsapp') === "*Order Summary:*
+Total
+2 x Orange", 'WhatsApp replies use WhatsApp bold, never ** or headings');
+check(KafuiText::forChannel("**Total:** GHS 30.00", 'web') === 'Total: GHS 30.00', 'website chat replies are plain text');
+$ownerPrompt = KafuiPrompt::build('customer', 'whatsapp', false);
+check(str_contains($ownerPrompt, 'Never choose a juice for the customer') && str_contains($ownerPrompt, 'never that it is confirmed'), 'Kafui asks which juice when a name fits several, and never calls a new order confirmed');
 check(KafuiText::spaceSentences('Is that for pick up.Sure thing, see you.') === 'Is that for pick up. Sure thing, see you.', 'two sentences that ran together get their space back');
 check(KafuiText::spaceSentences('Total GHS 25.00 at jayfoods.princecaleb.dev. Thanks') === 'Total GHS 25.00 at jayfoods.princecaleb.dev. Thanks', 'amounts and web addresses are left alone');
 
