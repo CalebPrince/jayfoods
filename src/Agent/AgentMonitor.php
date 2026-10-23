@@ -55,7 +55,7 @@ final class AgentMonitor
             'owner_tools_24h'      => (int) $db->query("SELECT COUNT(*) FROM agent_actions WHERE role='owner' AND tool IN ('sales_summary','list_orders','list_bookings','create_invoice') AND created_at>=datetime('now','-1 day')")->fetchColumn(),
             'kafui_orders_today'   => (int) $db->query("SELECT COUNT(*) FROM orders WHERE source LIKE 'kafui%' AND created_at>=date('now')")->fetchColumn(),
             'needs_attention'      => (int) $db->query('SELECT COUNT(*) FROM conversations WHERE needs_attention=1')->fetchColumn(),
-            'unread'               => (int) $db->query('SELECT COALESCE(SUM(unread),0) FROM conversations')->fetchColumn(),
+            'unread'               => (int) $db->query("SELECT COALESCE(SUM(unread),0) FROM conversations WHERE channel!='test'")->fetchColumn(),
         ];
     }
 

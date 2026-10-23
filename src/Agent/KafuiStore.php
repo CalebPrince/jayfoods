@@ -51,7 +51,7 @@ final class KafuiStore
         if ($s->rowCount() === 0) return null;
         $id = (int) $db->lastInsertId();
         $sql = $sender === 'customer'
-            ? "UPDATE conversations SET last_message_at=datetime('now'),last_inbound_at=datetime('now'),unread=unread+1 WHERE id=:id"
+            ? "UPDATE conversations SET last_message_at=datetime('now'),last_inbound_at=datetime('now'),unread=unread+(channel!='test') WHERE id=:id"
             : "UPDATE conversations SET last_message_at=datetime('now') WHERE id=:id";
         $db->prepare($sql)->execute([':id' => $conversationId]);
         return $id;
