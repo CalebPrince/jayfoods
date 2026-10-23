@@ -1,7 +1,7 @@
 # Security
 
-Status: APPROVED. Baseline 0.4.0 (CHG-003, admin roles and the error log) approved by Prince Caleb on 23 Oct 2026 for development, staging and production (digest `9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf`).
-Baseline version: 0.4.0
+Status: SUSPENDED for review. Baseline 0.5.0 (CHG-004, deploys update the database by themselves) waits for Prince Caleb's approval (digest `363effad56c4b35ccf546984df38ed82f90981046f85dcfeec6f89c49602ccd0`). Baseline 0.4.0 (CHG-003, admin roles and the error log) was approved on 23 Oct 2026 (digest `9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf`).
+Baseline version: 0.5.0
 Canonical record: `security-baseline.yaml`
 Owner: Prince Caleb (PrinceCaleb.dev)
 Last reviewed: 2026-10-23

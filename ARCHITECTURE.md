@@ -2,7 +2,7 @@
 
 Status: deployed at https://jayfoods.princecaleb.dev on 23 Oct 2026, with Kafui switched off until WhatsApp is connected. Baseline 0.4.0 (CHG-003, admin roles and the error log) approved by Caleb, 23 Oct 2026
 Owner: Prince Caleb (PrinceCaleb.dev)
-Version: 0.4.0, matches `security-baseline.yaml` baseline_version
+Version: 0.5.0, matches `security-baseline.yaml` baseline_version
 Last reviewed: 2026-10-23
 
 This covers the agent added to the existing JayFoods site. The rest of the site (storefront, checkout, Paystack, admin) is described in `README.md`.
