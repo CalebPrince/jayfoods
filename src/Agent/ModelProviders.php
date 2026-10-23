@@ -61,6 +61,20 @@ final class ModelProviders
         return is_array($decoded) ? $decoded : [];
     }
 
+    /**
+     * Thinking models (gpt-oss, Gemini 2.5, OpenAI o-series and gpt-5) count their
+     * thinking against the reply limit; a long prompt then cuts the reply off.
+     * Ask them to think briefly. Models that do not think are left alone.
+     */
+    private static function reasoning(array $p): array
+    {
+        $model = strtolower($p['model']);
+        if ($p['name'] === 'openrouter') return ['reasoning' => ['effort' => 'low']];
+        if ($p['name'] === 'groq' && str_contains($model, 'gpt-oss')) return ['reasoning_effort' => 'low'];
+        if ($p['name'] === 'openai' && (preg_match('/^o\d/', $model) || str_starts_with($model, 'gpt-5'))) return ['reasoning_effort' => 'low'];
+        return [];
+    }
+
     // ------------------------------------------------------------------ Anthropic
 
     private static function anthropic(array $p, string $system, array $messages, array $tools, callable $runTool, int $maxRounds, float $deadline, int $maxTokens): string
@@ -100,6 +114,7 @@ final class ModelProviders
         for ($round = 1; $round <= $maxRounds; $round++) {
             $body = ['model' => $p['model'], 'messages' => $msgs];
             $body[$p['name'] === 'openai' ? 'max_completion_tokens' : 'max_tokens'] = $maxTokens;
+            $body += self::reasoning($p);
             if ($defs) $body['tools'] = $defs;
             $headers = ['Authorization: Bearer ' . $p['key']];
             if ($p['name'] === 'openrouter') { $headers[] = 'HTTP-Referer: ' . (AgentSettings::siteUrl() ?: 'https://jayfoods.local'); $headers[] = 'X-Title: Jay foods Kafui'; }
@@ -108,7 +123,7 @@ final class ModelProviders
             $msg = $choice['message'] ?? [];
             $calls = $msg['tool_calls'] ?? [];
             if (!$calls) {
-                if (($choice['finish_reason'] ?? '') === 'length') throw new RuntimeException('truncated');
+                if (($choice['finish_reason'] ?? '') === 'length') throw new RuntimeException('truncated (reply limit reached' . (isset($data['usage']['completion_tokens_details']['reasoning_tokens']) ? ', ' . (int) $data['usage']['completion_tokens_details']['reasoning_tokens'] . ' spent thinking' : '') . ')');
                 return trim((string) ($msg['content'] ?? ''));
             }
             $msgs[] = ['role' => 'assistant', 'content' => $msg['content'] ?? null, 'tool_calls' => $calls];

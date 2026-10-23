@@ -34,6 +34,14 @@ final class AgentMonitor
         return (int) $s->fetchColumn();
     }
 
+    /** The last AI provider errors, so a failure shows its cause in the admin. @return list<array{at:string,detail:string}> */
+    public static function recentProviderErrors(int $limit = 8): array
+    {
+        $s = Database::connection()->prepare("SELECT created_at AS at, type || ': ' || detail AS detail FROM agent_events WHERE type IN ('provider_error','provider_empty') AND created_at >= datetime('now','-1 day') ORDER BY id DESC LIMIT " . max(1, $limit));
+        $s->execute();
+        return $s->fetchAll();
+    }
+
     /** @return array<string,int> */
     public static function counters(): array
     {

@@ -61,6 +61,13 @@
       .forEach(([label, n]) => { const s = el('div', 'kf-stat' + (n > 0 && /Need|failures|Rejected|Replaced/.test(label) ? ' warn' : '')); s.appendChild(el('div', 'num', String(n || 0))); s.appendChild(el('div', 'lbl', label)); stats.appendChild(s); });
     wrap.appendChild(stats);
 
+    if (ov.provider_errors && ov.provider_errors.length) {
+      const box = el('details', 'kf-missing');
+      box.appendChild(el('summary', null, 'Recent AI provider errors (last 24 hours)'));
+      ov.provider_errors.forEach((e) => box.appendChild(el('div', 'kf-preview', h.fmtDateText(e.at) + '  ' + e.detail)));
+      wrap.appendChild(box);
+    }
+
     const tabs = el('nav', 'kf-tabs');
     [['inbox', 'Inbox'], ['bookings', 'Bookings'], ['test', 'Try Kafui'], ['log', 'Action log'], ['settings', 'Settings']].forEach(([key, label]) => {
       const a = el('a', page === key || (key === 'inbox' && page === 'c') ? 'active' : '', label);

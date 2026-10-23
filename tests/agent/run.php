@@ -435,6 +435,25 @@ foreach (['anthropic', 'openai', 'openrouter', 'groq'] as $name) {
     check($toolRan && $text === 'We have orange juice.' && $calls === 2, $name . ': tool call then reply (' . $host . ')');
 }
 
+section('Thinking models are asked to think briefly');
+$bodies = [];
+AgentHttp::$transport = function ($method, $url, $headers, $body) use (&$bodies) {
+    $bodies[] = json_decode((string) $body, true);
+    return ['status' => 200, 'body' => json_encode(['choices' => [['message' => ['content' => 'Hi.'], 'finish_reason' => 'stop']]]), 'error' => ''];
+};
+foreach ([['groq', 'openai/gpt-oss-120b'], ['groq', 'llama-3.3-70b-versatile'], ['openrouter', 'google/gemini-2.5-flash'], ['openai', 'gpt-4o-mini']] as [$prov, $model]) {
+    ModelProviders::converse(['name' => $prov, 'key' => 'k', 'model' => $model], 'sys', [['role' => 'user', 'content' => 'hi']], [], fn() => [], 2, microtime(true) + 20, 300);
+}
+check(($bodies[0]['reasoning_effort'] ?? '') === 'low', 'gpt-oss on Groq: low reasoning effort');
+check(!isset($bodies[1]['reasoning_effort']), 'llama on Groq: no reasoning setting (it would be refused)');
+check(($bodies[2]['reasoning']['effort'] ?? '') === 'low', 'OpenRouter: low reasoning effort');
+check(!isset($bodies[3]['reasoning_effort']), 'gpt-4o-mini on OpenAI: no reasoning setting');
+AgentHttp::$transport = function () { return ['status' => 200, 'body' => json_encode(['choices' => [['message' => ['content' => ''], 'finish_reason' => 'length']], 'usage' => ['completion_tokens_details' => ['reasoning_tokens' => 600]]]), 'error' => '']; };
+try { ModelProviders::converse(['name' => 'groq', 'key' => 'k', 'model' => 'openai/gpt-oss-120b'], 'sys', [['role' => 'user', 'content' => 'hi']], [], fn() => [], 2, microtime(true) + 20, 300); $msg = ''; } catch (Throwable $e) { $msg = $e->getMessage(); }
+check(str_contains($msg, '600 spent thinking'), 'a reply cut off by thinking says so in the error log');
+AgentMonitor::event('provider_error', 'groq openai/gpt-oss-120b: truncated');
+check(count(AgentMonitor::recentProviderErrors()) >= 1, 'recent provider errors are available to the admin');
+
 section('Fallback chain like Lisa: Anthropic, OpenAI, OpenRouter, Groq, each with a backup model');
 foreach (['anthropic', 'openai', 'openrouter', 'groq'] as $p) { AgentSettings::set($p . '_enabled', '1'); AgentSettings::set($p . '_key', 'key-' . $p); AgentSettings::set($p . '_model', 'main-' . $p); }
 AgentSettings::set('openai_fallback_model', 'backup-openai');
