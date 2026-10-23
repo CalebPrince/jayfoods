@@ -61,6 +61,16 @@ final class ModelProviders
         return is_array($decoded) ? $decoded : [];
     }
 
+    /** Free OpenRouter models cost nothing and count their thinking in the reply limit, so they get room to finish. */
+    public const FREE_MODEL_REPLY_LIMIT = 2000;
+
+    public static function replyLimit(array $p, int $maxTokens): int
+    {
+        $model = strtolower((string) $p['model']);
+        $free = $p['name'] === 'openrouter' && ($model === 'openrouter/free' || str_ends_with($model, ':free'));
+        return $free ? max($maxTokens, self::FREE_MODEL_REPLY_LIMIT) : $maxTokens;
+    }
+
     /**
      * Thinking models (gpt-oss, Gemini 2.5, OpenAI o-series and gpt-5) count their
      * thinking against the reply limit; a long prompt then cuts the reply off.
@@ -113,7 +123,7 @@ final class ModelProviders
         $defs = array_map(static fn($t) => ['type' => 'function', 'function' => ['name' => $t['name'], 'description' => $t['description'], 'parameters' => $t['parameters']]], $tools);
         for ($round = 1; $round <= $maxRounds; $round++) {
             $body = ['model' => $p['model'], 'messages' => $msgs];
-            $body[$p['name'] === 'openai' ? 'max_completion_tokens' : 'max_tokens'] = $maxTokens;
+            $body[$p['name'] === 'openai' ? 'max_completion_tokens' : 'max_tokens'] = self::replyLimit($p, $maxTokens);
             $body += self::reasoning($p);
             if ($defs) $body['tools'] = $defs;
             $headers = ['Authorization: Bearer ' . $p['key']];

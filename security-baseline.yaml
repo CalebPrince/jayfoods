@@ -1,6 +1,6 @@
 schema_version: "2.3"
-baseline_version: "0.5.0"
-record_digest: "363effad56c4b35ccf546984df38ed82f90981046f85dcfeec6f89c49602ccd0"
+baseline_version: "0.6.0"
+record_digest: "8507124c93d941c49e198618de8dbdeafb0bad1770f7cbcfd1f5e9e53a2c4b5d"
 project:
   id: "PRJ-JAYFOODS-AGENT-001"
   name: "Kafui, the JayFoods ordering agent (WhatsApp and website live chat)"
@@ -195,7 +195,7 @@ controls:
   - {id: "CTL-AI-001", domain: "AI_AGENT", requirement: "Tool allow-list per role, decided in code from the authenticated channel identity, never from anything the model or the customer says. Customer role: get_menu, quote_order, place_order, create_booking, my_orders, request_invoice, handoff. Owner role adds sales_summary, list_orders, list_bookings, create_invoice. Unknown tool names and extra arguments are rejected; every argument is validated (ids exist and are active, quantities 1 to 5000, dates in the next 60 days, text fields length-capped)", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests: a customer-role turn that asks for list_orders gets a refusal from the tool layer; unknown tool and out-of-range arguments are rejected; seeded injection messages produce no privileged tool call", refs: ["OWASP-LLM-2025:LLM06", "OWASP-ASI-2026:ASI02", "OWASP-LLM-2025:LLM01"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-AI-002", domain: "AI_AGENT", requirement: "Money is computed only by tools from the database: quote_order returns the line prices, bulk tier, delivery fee and total with a quote id; place_order accepts only a quote id the customer was shown in this conversation within 2 hours, re-prices it, and refuses if any price changed. The model cannot pass prices, discounts or totals; promo codes are not available through the chat", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests: place_order without a quote, with another conversation's quote, an expired quote, or after a price edit is refused; the stored order total equals the database price", refs: ["OWASP-LLM-2025:LLM06", "OWASP-ASI-2026:ASI02"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-AI-003", domain: "AI_AGENT", requirement: "Reply check before sending: every money amount in the model's reply must match a catalogue price, a delivery fee or a quote total from this conversation; otherwise the reply is replaced with the server-written quote text and the event is logged", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Test: a reply with an invented amount is replaced and logged; a reply quoting the real total passes", refs: ["OWASP-LLM-2025:LLM05", "OWASP-LLM-2025:LLM09"], evidence_ids: ["EVD-006"]}
-  - {id: "CTL-AI-004", domain: "AI_AGENT", requirement: "Limits: at most 6 tool calls and 2 model rounds per attempt, each provider attempt its own time limit (20 s; OpenRouter 30 s) and the whole chain at most 90 s, 600 output tokens, last 20 turns of history; per sender 20 messages per 10 minutes and 200 per day; at most 5 agent orders and 3 bookings per sender per day. Over the limit the agent stops calling the model and sends a fixed message", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests trip each limit and show no model call past it", refs: ["OWASP-LLM-2025:LLM10", "OWASP-ASI-2026:ASI08"], evidence_ids: ["EVD-006"]}
+  - {id: "CTL-AI-004", domain: "AI_AGENT", requirement: "Limits: at most 6 tool calls and 2 model rounds per attempt, each provider attempt its own time limit (20 s; OpenRouter 30 s) and the whole chain at most 90 s, 600 output tokens (2,000 for free OpenRouter models, CHG-005), last 20 turns of history; per sender 20 messages per 10 minutes and 200 per day; at most 5 agent orders and 3 bookings per sender per day. Over the limit the agent stops calling the model and sends a fixed message", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests trip each limit and show no model call past it", refs: ["OWASP-LLM-2025:LLM10", "OWASP-ASI-2026:ASI08"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-AI-005", domain: "AI_AGENT", requirement: "Handoff: the handoff tool, the words agent/person/human/manager, or two failed answers switch the conversation to staff mode; the agent then sends one fixed message and stays silent until staff hand it back in the admin. Staff are emailed with the conversation link", status: "VERIFIED", owner: "JayFoods owner", acceptance: "Test: after handoff an inbound message gets no model call and no reply; hand-back restores replies", refs: ["OWASP-ASI-2026:ASI09"], evidence_ids: ["EVD-006", "EVD-007"]}
   - {id: "CTL-AI-006", domain: "AI_AGENT", requirement: "Disclosure and trust: the first reply in a conversation introduces Kafui as JayFoods' automatic assistant and that a person is available on request; every order reply states the order is pending until staff confirm; the agent states facts only from the admin data and says it does not know otherwise", status: "IMPLEMENTED", owner: "JayFoods owner", acceptance: "Transcript review of the test scenarios shows the disclosure and pending wording", refs: ["OWASP-ASI-2026:ASI09", "OWASP-LLM-2025:LLM09"], evidence_ids: []}
   - {id: "CTL-AI-007", domain: "AI_AGENT", requirement: "Kill switch and action log: an admin switch turns the agent off on both channels at once (messages are still stored for staff); every tool call is logged with conversation, role, tool, arguments, result status and time, and shown in the admin", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Test: with the switch off no model or tool runs and the fixed away message is sent; log rows appear for every tool call", refs: ["OWASP-ASI-2026:ASI10"], evidence_ids: ["EVD-006"]}
@@ -241,7 +241,7 @@ decisions:
   - {id: "DEC-008", question: "Whose Twilio account holds the JayFoods WhatsApp sender, and who pays the Twilio fees?", owner: "Prince Caleb", required_decision: "Proposed: a separate Twilio subaccount for JayFoods under Caleb's account (so its auth token cannot touch Lisa's numbers), billed to JayFoods through Opskeep", blocks_approval: false, status: "OPEN"}
   - {id: "DEC-007", question: "Is the client's existing customer list imported?", owner: "JayFoods owner", required_decision: "Proposed: not in this change. If later, import only name, phone, area and usual order, with a marketing-consent flag, and never message customers first without consent", blocks_approval: false, status: "OPEN"}
 evidence:
-  - {id: "EVD-001", type: "OWNER_APPROVAL", status: "PASSED", observed_at: "2026-10-23T17:18:46Z", observer: "Prince Caleb", location: "Kafui build session: 0.1.0 approved 2026-10-23T12:33:39Z (digest f08aa843...), 0.2.0 approved 2026-10-23T13:08:35Z (digest bf6e6f80...), 0.3.0 approved 2026-10-23T14:25:08Z (digest 600e7813...), 0.4.0 approved 2026-10-23T17:07:24Z (digest 9a7910f4...), 0.5.0 approved 2026-10-23T17:18:46Z (digest 363effad...)"}
+  - {id: "EVD-001", type: "OWNER_APPROVAL", status: "PASSED", observed_at: "2026-10-23T17:36:19Z", observer: "Prince Caleb", location: "Kafui build session: 0.1.0 approved 2026-10-23T12:33:39Z (digest f08aa843...), 0.2.0 approved 2026-10-23T13:08:35Z (digest bf6e6f80...), 0.3.0 approved 2026-10-23T14:25:08Z (digest 600e7813...), 0.4.0 approved 2026-10-23T17:07:24Z (digest 9a7910f4...), 0.5.0 approved 2026-10-23T17:18:46Z (digest 363effad...), 0.6.0 approved 2026-10-23T17:36:19Z (digest 8507124c...)"}
   - {id: "EVD-002", type: "CI_RUN", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-003", type: "CONFIG_INSPECTION", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-004", type: "TEST_RESULT", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
@@ -254,8 +254,8 @@ monitoring:
     provider: "NONE"
     owner: "Prince Caleb"
     configuration_status: "NOT_CONFIGURED"
-    baseline_version: "0.5.0"
-    record_digest: "363effad56c4b35ccf546984df38ed82f90981046f85dcfeec6f89c49602ccd0"
+    baseline_version: "0.6.0"
+    record_digest: "8507124c93d941c49e198618de8dbdeafb0bad1770f7cbcfd1f5e9e53a2c4b5d"
     environments: ["production"]
     handed_off_at: null
     acknowledged_at: null
@@ -320,9 +320,9 @@ ai_profile:
 approval:
   decision: "APPROVED"
   approver: "Prince Caleb"
-  approved_at: "2026-10-23T17:18:46Z"
-  baseline_version: "0.5.0"
-  record_digest: "363effad56c4b35ccf546984df38ed82f90981046f85dcfeec6f89c49602ccd0"
+  approved_at: "2026-10-23T17:36:19Z"
+  baseline_version: "0.6.0"
+  record_digest: "8507124c93d941c49e198618de8dbdeafb0bad1770f7cbcfd1f5e9e53a2c4b5d"
   scope: ["development", "staging:test number and local copy", "production:jayfoods live site and business WhatsApp number"]
   expires_at: null
 changes:
@@ -373,4 +373,16 @@ changes:
     affected: ["CMP-008", "CMP-010", "CTL-REC-003", "THR-016", "DEC-006"]
     impact: "The web server process now applies schema changes, which it could already do (it owns the database file). Only code from the repository runs; nothing a visitor sends decides whether or what migrates. A failed migration no longer needs someone at the terminal to notice it: it shows in the error log. On a brand-new database the first-admin password goes to a server-only file instead of the terminal."
     compensating_controls: ["CTL-REC-003", "CTL-LOG-003", "CTL-SC-001"]
+    status: "PROPOSED"
+  - id: "CHG-005"
+    type: "MODIFIED"
+    material: true
+    summary: "Free OpenRouter models (openrouter/free and any model ending in :free) may use up to 2,000 output tokens instead of 600. They are thinking models that count their thinking in that limit, and with 600 they ran out before replying, so every price or order question fell through to Groq."
+    old_rule: "600 output tokens for every provider and model"
+    new_rule: "600 output tokens, except 2,000 for free OpenRouter models; paid models and Groq keep 600"
+    reason: "Caleb (23 Oct 2026): raise the reply limit so the free models can answer"
+    security_impact: "LOW"
+    affected: ["CTL-AI-004", "CMP-006", "THR-005"]
+    impact: "No cost: free models are not billed. A free-model attempt can take a little longer, still inside its 30 s attempt limit and the 90 s chain limit. Groq keeps 600 because it counts the requested limit against its per-minute allowance. Free OpenRouter endpoints may keep what they are sent; acceptable while only the owners and testers use Kafui, and to be replaced by paid models before launch (noted with Caleb)."
+    compensating_controls: ["CTL-AI-004", "CTL-AI-003", "CTL-API-003"]
     status: "PROPOSED"

@@ -578,6 +578,12 @@ check(($bodies[0]['reasoning_effort'] ?? '') === 'low', 'gpt-oss on Groq: low re
 check(!isset($bodies[1]['reasoning_effort']), 'llama on Groq: no reasoning setting (it would be refused)');
 check(($bodies[2]['reasoning']['effort'] ?? '') === 'low', 'OpenRouter: low reasoning effort');
 check(!isset($bodies[3]['reasoning_effort']), 'gpt-4o-mini on OpenAI: no reasoning setting');
+$bodies = [];
+foreach ([['openrouter', 'openrouter/free'], ['openrouter', 'nvidia/nemotron-3.5-lightning:free'], ['openrouter', 'google/gemini-2.5-flash'], ['groq', 'openai/gpt-oss-120b']] as [$prov, $model]) {
+    ModelProviders::converse(['name' => $prov, 'key' => 'k', 'model' => $model], 'sys', [['role' => 'user', 'content' => 'hi']], [], fn() => [], 2, microtime(true) + 20, 600);
+}
+check(($bodies[0]['max_tokens'] ?? 0) === 2000 && ($bodies[1]['max_tokens'] ?? 0) === 2000, 'free OpenRouter models get room to think before replying (2,000)');
+check(($bodies[2]['max_tokens'] ?? 0) === 600 && ($bodies[3]['max_tokens'] ?? 0) === 600, 'paid models and Groq keep the 600 limit (cost, and Groq counts it against its per-minute allowance)');
 AgentHttp::$transport = function () { return ['status' => 200, 'body' => json_encode(['choices' => [['message' => ['content' => ''], 'finish_reason' => 'length']], 'usage' => ['completion_tokens_details' => ['reasoning_tokens' => 600]]]), 'error' => '']; };
 try { ModelProviders::converse(['name' => 'groq', 'key' => 'k', 'model' => 'openai/gpt-oss-120b'], 'sys', [['role' => 'user', 'content' => 'hi']], [], fn() => [], 2, microtime(true) + 20, 300); $msg = ''; } catch (Throwable $e) { $msg = $e->getMessage(); }
 check(str_contains($msg, '600 spent thinking'), 'a reply cut off by thinking says so in the error log');
