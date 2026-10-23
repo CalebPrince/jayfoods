@@ -1,6 +1,6 @@
 # Connecting Kafui to the JayFoods WhatsApp number
 
-Kafui answers the JayFoods WhatsApp number and the chat on the website. This is the list of steps to put it live, in order. It assumes the number is already added and connected in WhatsApp Manager, with its profile set (done on 23 Oct 2026).
+Kafui answers the JayFoods WhatsApp number and the chat on the website. This is the list of steps to put it live, in order. WhatsApp runs through a **Twilio WhatsApp sender**, as Lisa does (CHG-002). Connecting Meta's Cloud API directly is kept as an alternative at the end.
 
 Keep every token and secret out of chats, email and the repository. Type them only into the admin (Kafui, Settings), where they are stored encrypted and never shown again.
 
@@ -17,28 +17,32 @@ Keep every token and secret out of chats, email and the repository. Type them on
 4. Check that `https://<live domain>/api/v1/whatsapp/webhook` answers. A plain GET should return `403`, which is correct because the verify token is missing.
 5. Make sure PHP on the host has `curl`, `openssl`, `pdo_sqlite`, `mbstring` and `iconv` (cPanel, Select PHP Version).
 
-## 2. Meta: the app and the token
+## 2. Twilio: register the number as a WhatsApp sender
 
-Done in Meta, signed in as the JayFoods Business portfolio admin.
+Kafui uses Twilio, as Lisa does (CHG-002). Twilio's sign-up screen does the Meta side, so you don't create a Meta app.
 
-1. **App.** At developers.facebook.com, open My Apps, then Create app, type Business, and link it to the JayFoods Business portfolio. Add the **WhatsApp** product. When asked, choose the existing WhatsApp Business account that holds the JayFoods number.
-2. **Privacy policy and Live mode.** In App settings, Basic, set the privacy policy URL to `https://<live domain>/privacy.html`. Then switch the app from Development to **Live**. Messages from real customers only reach the webhook when the app is Live.
-3. **App secret.** In App settings, Basic, click Show next to App secret. You will paste it into the admin in step 3.
-4. **System user and permanent token.**
-   - In business.facebook.com, open Settings, Users, System users, Add. Name it `kafui`, role Employee.
-   - Assign assets: the app (Develop app) and the JayFoods WhatsApp account (Manage WhatsApp Business account, partial access is enough).
-   - Click Generate new token, choose the app, set expiry to **Never**, and tick only `whatsapp_business_messaging` and `whatsapp_business_management`. Nothing else.
-   - Copy the token straight into the admin (step 3).
-5. **Phone number ID and API version.** In the app, open WhatsApp, API Setup. Under "From", pick the JayFoods number and copy its **Phone number ID** (digits, not the phone number). The sample request on the same page shows the Graph API version, for example `v23.0`. Use that version.
-6. **Number status.** In WhatsApp Manager, Phone numbers, the JayFoods number must show **Connected**. If it shows Pending, finish registration there (it asks for a 6-digit PIN; keep the PIN somewhere safe, it is needed to move the number later).
+1. **Account.** Sign in to the Twilio Console (console.twilio.com). Use a separate **subaccount for JayFoods** (Account, Subaccounts, Create), so its auth token can't send from Lisa's numbers (DEC-008). The account must be upgraded from trial (add billing) to register a WhatsApp sender.
+2. **Start the sender.** In the JayFoods subaccount, open Messaging, Senders, WhatsApp senders, then **Create new sender**. Enter the JayFoods number, `+233 24 632 8461`.
+3. **Meta sign-up (inside Twilio).** Click **Continue with Facebook**. In Meta's window:
+   - sign in;
+   - choose or create the **JayFoods business** and its WhatsApp Business account;
+   - set the display name (**Jay foods**);
+   - verify the number with the code Meta sends by SMS or call.
+   You don't need a Meta app or a developer account for this.
+4. **If the number is refused as already in use.** It was added directly in WhatsApp Manager earlier, so Meta may say it's taken.
+   - In WhatsApp Manager, Phone numbers, open the number's settings and **turn off two-step verification**, then try again.
+   - If Twilio still refuses it, remove the number from the WhatsApp account in WhatsApp Manager and register it again through Twilio. The business profile text has to be entered again afterwards.
+5. **Business verification.** Meta may limit how many new customers the number can message each day, and review the display name, until JayFoods' business is verified (Business settings, Security centre). Customer-started chats, which is all Kafui does, still work meanwhile. Verify once the business registration documents are ready.
+6. **Wait for "Online".** The sender shows **Online** in the Twilio Console when Meta has approved it. This can take from minutes to a day.
+7. **Keys for the admin.** On the subaccount's Console home, under Account info, copy the **Account SID** (starts with `AC`) and the **Auth token**.
 
 ## 3. The admin: Kafui, Settings
 
 Sign in to the JayFoods admin and open **Kafui**, then **Settings**.
 
 1. **Live site address:** `https://<live domain>`, with no trailing slash.
-2. **WhatsApp:** the Phone number ID, the Graph API version, the permanent token and the app secret.
-3. Click **Generate new token** under "Verify token for Meta" and copy it. It is shown once.
+2. **WhatsApp:** choose **Twilio**, then enter the Account SID, the auth token and the WhatsApp sender number (`233246328461`).
+3. Note the **Webhook URL for Twilio** shown under the WhatsApp fields; it goes into Twilio in step 4.
 4. **AI providers** (DEC-003, CHG-001). Kafui uses the same chain as Lisa: **Anthropic, then OpenAI, then OpenRouter, then Groq**. For each provider you turn on, enter its API key, a **main model** and, optionally, a **backup model**. Model names come from each provider's own site.
    - **How the fallback works.** If the main model fails or takes too long (20 seconds, or 30 for OpenRouter), Kafui tries that provider's backup model, then the next provider. If every one fails, the customer is told a person will reply, and the chat goes to staff.
    - **No double orders.** A provider that already placed an order or handed the chat over is never retried, so a failure cannot cause a second order.
@@ -50,17 +54,11 @@ Sign in to the JayFoods admin and open **Kafui**, then **Settings**.
 7. **Orders:** leave pickup off unless JayFoods confirms a pickup place and times. Check the payment sentence (placeholder, see below).
 8. Save.
 
-## 4. Meta: the webhook
+## 4. Twilio: point the sender at Kafui
 
-1. In the app, open WhatsApp, Configuration, then Webhook, Edit.
-2. **Callback URL:** the address shown in the admin under "Webhook URL for Meta" (`https://<live domain>/api/v1/whatsapp/webhook`).
-3. **Verify token:** the one you generated in step 3.3. Click **Verify and save**. If Meta says it could not validate, check the live site address and that the migration ran.
-4. Under Webhook fields, **Subscribe** to `messages`. Leave the others off.
-5. If test messages still do not arrive, subscribe the app to the WhatsApp account once (replace the two values):
-
-   ```bash
-   curl -X POST "https://graph.facebook.com/v23.0/<WHATSAPP_BUSINESS_ACCOUNT_ID>/subscribed_apps" -H "Authorization: Bearer <SYSTEM_USER_TOKEN>"
-   ```
+1. In the Twilio Console, open Messaging, Senders, WhatsApp senders, and click the JayFoods number.
+2. Under the messaging endpoint settings, set **Webhook URL for incoming messages** to the address shown in the admin under "Webhook URL for Twilio": `https://jayfoods.princecaleb.dev/api/v1/whatsapp/twilio`, method **POST**. Leave the status callback empty.
+3. Save. The URL must match the admin's **Live site address** exactly (same `https`, no `www`, no trailing slash), because Twilio signs it. If messages are rejected, the admin's Kafui counters show rejected webhooks and the server error log names the URL it checked.
 
 ## 5. Test, then turn Kafui on
 
@@ -76,8 +74,8 @@ Sign in to the JayFoods admin and open **Kafui**, then **Settings**.
 
 - [ ] The admin password on the live site is not the old first-run password (it used to be published in this public repository). Change it under Settings if in doubt.
 - [ ] `main` is protected on GitHub: pull request required, and the `kafui-checks` jobs (`php-lint`, `agent-tests`, `secret-scan`, `baseline-digest`) are required checks. Turn on "Require review from Code Owners".
-- [ ] The repository variable `APPROVED_BASELINE_DIGEST` is set to `bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb`, the approved baseline 0.2.0 (Settings, Secrets and variables, Actions, Variables). After any later approved change, update it to the new `record_digest`.
-- [ ] The Meta token has only the two WhatsApp permissions, on this one account.
+- [ ] The repository variable `APPROVED_BASELINE_DIGEST` is set to the `record_digest` of the approved baseline in `security-baseline.yaml` (Settings, Secrets and variables, Actions, Variables). After any later approved change, update it to the new `record_digest`.
+- [ ] The Twilio sender is Online, in a JayFoods-only subaccount, and the auth token in the admin is that subaccount's.
 - [ ] Every AI provider has a spend limit.
 - [ ] The privacy page shows the "WhatsApp and website chat with Kafui" section.
 - [ ] A database backup has been downloaded (Backups) and restored once on a copy, with Kafui orders in it.
@@ -89,7 +87,7 @@ The site runs on `jayfoods.princecaleb.dev` for now. When it moves to its own do
 
 1. **cPanel, Domains:** add the new domain with the same document root, `jayfoods-app/public`. The code, database and cron jobs stay as they are.
 2. **Admin, Kafui, Settings:** set **Live site address** to `https://<new domain>`. Invoice links are built from it.
-3. **Meta:** in the app, WhatsApp, Configuration, change the Callback URL to `https://<new domain>/api/v1/whatsapp/webhook` and click Verify and save (same verify token). Change the privacy policy URL in App settings, Basic.
+3. **Twilio:** change the sender's Webhook URL for incoming messages to `https://<new domain>/api/v1/whatsapp/twilio`. It must match the new Live site address exactly.
 4. **Paystack dashboard:** change the webhook URL to `https://<new domain>/api/v1/payments/webhook`, and save the same URL in admin, Settings, Paystack.
 5. **Old address:** redirect `jayfoods.princecaleb.dev` to the new domain (cPanel, Domains, Redirects) so old links keep working.
 6. **Everywhere the web address is shown:** the WhatsApp business profile, social profiles, and printed or video material.
@@ -99,9 +97,41 @@ The site runs on `jayfoods.princecaleb.dev` for now. When it moves to its own do
 - Run cPanel, Email Deliverability, for the new domain (SPF and DKIM).
 - Enter the new address, its password and `mail.<new domain>` in admin, Settings, Email sending (SMTP), then Send test email.
 
+## Alternative: Meta Cloud API directly
+
+Only if JayFoods later moves off Twilio. It needs a Meta developer app, which Meta allows once the business is registered. In Kafui, Settings, choose **Meta Cloud API directly**; only one provider receives messages at a time.
+
+### Meta: the app and the token
+
+Done in Meta, signed in as the JayFoods Business portfolio admin.
+
+1. **App.** At developers.facebook.com, open My Apps, then Create app, type Business, and link it to the JayFoods Business portfolio. Add the **WhatsApp** product. When asked, choose the existing WhatsApp Business account that holds the JayFoods number.
+2. **Privacy policy and Live mode.** In App settings, Basic, set the privacy policy URL to `https://<live domain>/privacy.html`. Then switch the app from Development to **Live**. Messages from real customers only reach the webhook when the app is Live.
+3. **App secret.** In App settings, Basic, click Show next to App secret. You will paste it into the admin in step 3.
+4. **System user and permanent token.**
+   - In business.facebook.com, open Settings, Users, System users, Add. Name it `kafui`, role Employee.
+   - Assign assets: the app (Develop app) and the JayFoods WhatsApp account (Manage WhatsApp Business account, partial access is enough).
+   - Click Generate new token, choose the app, set expiry to **Never**, and tick only `whatsapp_business_messaging` and `whatsapp_business_management`. Nothing else.
+   - Copy the token straight into the admin (step 3).
+5. **Phone number ID and API version.** In the app, open WhatsApp, API Setup. Under "From", pick the JayFoods number and copy its **Phone number ID** (digits, not the phone number). The sample request on the same page shows the Graph API version, for example `v23.0`. Use that version.
+6. **Number status.** In WhatsApp Manager, Phone numbers, the JayFoods number must show **Connected**. If it shows Pending, finish registration there (it asks for a 6-digit PIN; keep the PIN somewhere safe, it is needed to move the number later).
+
+### Meta: the webhook
+
+1. In the app, open WhatsApp, Configuration, then Webhook, Edit.
+2. **Callback URL:** the address shown in the admin under "Webhook URL for Meta" (`https://<live domain>/api/v1/whatsapp/webhook`).
+3. **Verify token:** the one you generated in step 3.3. Click **Verify and save**. If Meta says it could not validate, check the live site address and that the migration ran.
+4. Under Webhook fields, **Subscribe** to `messages`. Leave the others off.
+5. If test messages still do not arrive, subscribe the app to the WhatsApp account once (replace the two values):
+
+   ```bash
+   curl -X POST "https://graph.facebook.com/v23.0/<WHATSAPP_BUSINESS_ACCOUNT_ID>/subscribed_apps" -H "Authorization: Bearer <SYSTEM_USER_TOKEN>"
+   ```
+
 ## Rotating secrets (incident steps in SECURITY.md)
 
-- **Meta token:** generate a new token for the `kafui` system user, paste it into the admin, then revoke the old one.
+- **Twilio auth token:** in the JayFoods subaccount, Account info, request a secondary token, paste it into the admin, then promote it to primary (this retires the old one). Twilio signs webhooks with the primary token, so do both steps together.
+- **Meta token** (only if Meta is the chosen provider): generate a new token for the `kafui` system user, paste it into the admin, then revoke the old one.
 - **App secret:** App settings, Basic, Reset. Paste the new one into the admin straight away, because webhooks fail until you do.
 - **Verify token:** generate a new one in the admin and enter it in Meta, Configuration.
 - **AI keys:** create a new key at the provider, paste it, delete the old one.
@@ -110,7 +140,7 @@ The site runs on `jayfoods.princecaleb.dev` for now. When it moves to its own do
 ## Testing locally without a phone
 
 - `php tests/agent/run.php` runs the 80 tests with a fake model and a fake WhatsApp. Nothing leaves the machine.
-- With the site running (`python server.py`), `php tests/agent/send-test-webhook.php --url=http://localhost:8010 --secret=<app secret saved in the admin> --from=233XXXXXXXXX --text="Hi"` posts a message signed exactly as Meta signs it. Add `--bad-signature` to see it rejected.
+- `php tests/agent/send-test-webhook.php --url=<Live site address> --secret=<Twilio auth token> --from=233XXXXXXXXX --to=233246328461 --text="Hi"` posts a message signed exactly as Twilio signs it, to the running site. Add `--bad-signature` to see it rejected (403). `--provider=meta` does the same for the Meta webhook.
 
 ## Placeholders to confirm with JayFoods
 

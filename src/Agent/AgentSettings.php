@@ -22,6 +22,7 @@ final class AgentSettings
     public const TIMEOUTS = ['anthropic' => 20, 'openai' => 20, 'openrouter' => 30, 'groq' => 20];
 
     public const SECRETS = [
+        'twilio_auth_token',
         'wa_access_token', 'wa_app_secret', 'wa_verify_token',
         'anthropic_key', 'openai_key', 'openrouter_key', 'groq_key',
     ];
@@ -30,6 +31,9 @@ final class AgentSettings
     public const PLAIN = [
         'agent_enabled'      => '0',
         'site_url'           => '',
+        'whatsapp_provider'  => 'twilio',   // twilio (as Lisa) or meta (Cloud API directly)
+        'twilio_account_sid' => '',
+        'twilio_whatsapp_number' => '',
         'wa_phone_number_id' => '',
         'wa_graph_version'   => '',
         'owner_email'        => '',

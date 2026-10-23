@@ -268,11 +268,62 @@ $wrongNumber = $payload; $wrongNumber['entry'][0]['changes'][0]['value']['metada
 $wrongNumber['entry'][0]['changes'][0]['value']['messages'][0]['id'] = 'wamid.OTHER';
 check(WhatsAppWebhookController::store($wrongNumber) === [], 'events for another phone number id ignored');
 
+AgentSettings::set('whatsapp_provider', 'meta');
 $sent = [];
 $steps[] = fn() => 'Hello from Kafui.';
 WhatsAppWebhookController::answer($q1[0]['conversation'], $q1[0]['message_id'], $q1[0]['text']);
 check(count($sent) === 1 && ($sent[0]['to'] ?? '') === '233200000009' && ($sent[0]['type'] ?? '') === 'text', 'reply sent to the sender through the Graph API');
 check(!str_contains((string) json_encode($sent), '—'), 'no em dashes in what is sent');
+
+section('Twilio WhatsApp sender, as Lisa (CTL-API-001, CTL-API-002, CHG-002)');
+AgentSettings::set('whatsapp_provider', 'twilio');
+AgentSettings::set('twilio_account_sid', 'AC' . str_repeat('0', 32));
+AgentSettings::set('twilio_auth_token', 'twilio-test-token');
+AgentSettings::set('twilio_whatsapp_number', '233246328461');
+$tw = ['MessageSid' => 'SM111', 'From' => 'whatsapp:+233200000021', 'To' => 'whatsapp:+233246328461', 'Body' => 'Hi, how much is orange juice?', 'ProfileName' => 'Esi', 'NumMedia' => '0', 'AccountSid' => 'AC' . str_repeat('0', 32)];
+$twUrl = TwilioWhatsApp::webhookUrl();
+check($twUrl === 'https://jayfoods.example/api/v1/whatsapp/twilio', 'signed URL is the live site address plus the Twilio path');
+// Reference value computed separately (Python hmac) for this URL, these fields and this token.
+check(TwilioWhatsApp::verifySignature($twUrl, $tw, 'y1Q/zx/MTqs8VJuA6CSMSm6hWmM=', 'twilio-test-token'), 'correct Twilio signature accepted');
+check(!TwilioWhatsApp::verifySignature($twUrl, array_merge($tw, ['Body' => 'tampered']), 'y1Q/zx/MTqs8VJuA6CSMSm6hWmM=', 'twilio-test-token'), 'tampered message rejected');
+check(!TwilioWhatsApp::verifySignature('https://evil.example/api/v1/whatsapp/twilio', $tw, 'y1Q/zx/MTqs8VJuA6CSMSm6hWmM=', 'twilio-test-token'), 'signature for another URL rejected');
+check(!TwilioWhatsApp::verifySignature($twUrl, $tw, '', 'twilio-test-token'), 'missing signature rejected');
+check(WhatsAppSender::provider() === 'twilio' && WhatsAppSender::isConfigured(), 'Twilio is the default provider and is configured');
+$q1 = TwilioWebhookController::store($tw);
+$q2 = TwilioWebhookController::store($tw);
+check(count($q1) === 1 && count($q2) === 0, 'same MessageSid stored once (Twilio retries do nothing)');
+check(TwilioWebhookController::store(array_merge($tw, ['MessageSid' => 'SM112', 'To' => 'whatsapp:+233999999999'])) === [], 'messages to another sender number ignored');
+check(TwilioWebhookController::store(array_merge($tw, ['MessageSid' => 'SM113', 'From' => '+233200000021'])) === [], 'non-WhatsApp (SMS) messages ignored');
+$m = TwilioWebhookController::store(array_merge($tw, ['MessageSid' => 'SM114', 'Body' => '', 'NumMedia' => '1', 'MediaContentType0' => 'audio/ogg']));
+check(str_contains($m[0]['text'] ?? '', 'voice note'), 'voice notes stored as a note, not downloaded');
+
+$twSent = [];
+AgentHttp::$transport = function (string $method, string $url, array $headers, ?string $body, int $timeout) use (&$twSent) {
+    parse_str((string) $body, $fields);
+    $twSent[] = ['url' => $url, 'auth' => implode(' ', array_filter($headers, fn($h) => str_starts_with($h, 'Authorization'))), 'fields' => $fields];
+    return ['status' => 201, 'body' => '{"sid":"SM999"}', 'error' => ''];
+};
+$steps[] = fn() => 'Orange juice 500ml is ' . KafuiText::money((int) $size['unit_price_pesewas']) . '.';
+WhatsAppWebhookController::answer($q1[0]['conversation'], $q1[0]['message_id'], $q1[0]['text']);
+$first = $twSent[0] ?? [];
+check(str_ends_with($first['url'] ?? '', '/Accounts/AC' . str_repeat('0', 32) . '/Messages.json'), 'reply goes to Twilio\'s Messages API');
+check(($first['fields']['To'] ?? '') === 'whatsapp:+233200000021' && ($first['fields']['From'] ?? '') === 'whatsapp:+233246328461', 'from the JayFoods sender to the customer');
+check(($first['auth'] ?? '') === 'Authorization: Basic ' . base64_encode('AC' . str_repeat('0', 32) . ':twilio-test-token'), 'authenticated with the account SID and auth token');
+$long = str_repeat("A line of a long reply about juice.\n", 80);
+$parts = TwilioWhatsApp::parts($long);
+check(count($parts) >= 2 && max(array_map('mb_strlen', $parts)) <= 1500 && str_replace(["\n", ' '], '', implode('', $parts)) === str_replace(["\n", ' '], '', $long), 'long replies split under Twilio\'s 1,600 limit with nothing lost');
+$twSent = [];
+TwilioWhatsApp::sendDocument('233200000021', 'https://jayfoods.example/api/v1/invoices/abc', 'x.pdf', 'Invoice JF-1');
+check(($twSent[0]['fields']['MediaUrl'] ?? '') === 'https://jayfoods.example/api/v1/invoices/abc', 'invoice PDFs sent as Twilio media');
+check(!TwilioWhatsApp::sendDocument('233200000021', 'http://insecure/x.pdf', 'x.pdf', '')['ok'], 'non-HTTPS document links refused');
+AgentSettings::set('whatsapp_provider', 'meta');
+check(WhatsAppSender::provider() === 'meta', 'switching the provider to Meta in settings');
+AgentSettings::set('whatsapp_provider', 'twilio');
+AgentHttp::$transport = function (string $method, string $url, array $headers, ?string $body, int $timeout) use (&$sent) {
+    if (str_contains($url, 'graph.facebook.com')) { $sent[] = json_decode((string) $body, true); return ['status' => 200, 'body' => '{"messages":[{"id":"wamid.TEST"}]}', 'error' => '']; }
+    return ['status' => 500, 'body' => '{}', 'error' => 'no network in tests'];
+};
+
 
 // ---------------------------------------------------------------- owner tools and invoices
 section('Owner tools and invoices (CTL-AUTHZ-002, CTL-FILE-001)');

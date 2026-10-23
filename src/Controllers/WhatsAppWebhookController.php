@@ -17,6 +17,7 @@ final class WhatsAppWebhookController
 
     public function verify(): void
     {
+        if (WhatsAppSender::provider() !== 'meta') { http_response_code(403); return; }
         $mode = (string) ($_GET['hub_mode'] ?? '');
         $token = (string) ($_GET['hub_verify_token'] ?? '');
         $challenge = (string) ($_GET['hub_challenge'] ?? '');
@@ -31,6 +32,8 @@ final class WhatsAppWebhookController
 
     public function receive(): void
     {
+        // Only the chosen provider's webhook takes messages (Twilio is the default).
+        if (WhatsAppSender::provider() !== 'meta') { http_response_code(200); return; }
         $raw = (string) file_get_contents('php://input', false, null, 0, self::MAX_BODY + 1);
         if (strlen($raw) > self::MAX_BODY) { http_response_code(413); return; }
         $secret = AgentSettings::secret('wa_app_secret');
@@ -90,8 +93,8 @@ final class WhatsAppWebhookController
         }
         $to = (string) $conversation['phone'];
         if ($result['reply'] !== null) {
-            $sent = WhatsAppCloud::sendText($to, $result['reply']);
-            if (!$sent['ok']) $sent = WhatsAppCloud::sendText($to, $result['reply']);
+            $sent = WhatsAppSender::sendText($to, $result['reply']);
+            if (!$sent['ok']) $sent = WhatsAppSender::sendText($to, $result['reply']);
             if ($sent['ok']) {
                 KafuiStore::add((int) $conversation['id'], $result['sender'] ?? 'kafui', $result['reply']);
             } else {
@@ -102,7 +105,7 @@ final class WhatsAppWebhookController
         }
         if (!empty($result['document'])) {
             $doc = $result['document'];
-            $sent = WhatsAppCloud::sendDocument($to, $doc['link'], $doc['filename'], $doc['caption']);
+            $sent = WhatsAppSender::sendDocument($to, $doc['link'], $doc['filename'], $doc['caption']);
             KafuiStore::add((int) $conversation['id'], $sent['ok'] ? 'kafui' : 'system', $sent['ok'] ? '[sent ' . $doc['filename'] . ']' : 'Invoice PDF could not be sent: ' . mb_substr((string) $sent['error'], 0, 160));
         }
     }
@@ -125,15 +128,15 @@ final class WhatsAppWebhookController
         };
     }
 
-    /** Sends the 200 to Meta now and keeps running, so slow AI replies never cause retries. */
-    public static function finishResponse(): void
+    /** Sends the 200 to Meta or Twilio now and keeps running, so slow AI replies never cause retries. */
+    public static function finishResponse(string $body = '{"ok":true}', string $type = 'application/json'): void
     {
         ignore_user_abort(true);
         @set_time_limit(Kafui::BUDGET_SECONDS * 2 + 30);
         http_response_code(200);
-        header('Content-Type: application/json');
-        $body = '{"ok":true}';
+        header('Content-Type: ' . $type);
         if (function_exists('fastcgi_finish_request')) { echo $body; fastcgi_finish_request(); return; }
+        if (function_exists('litespeed_finish_request')) { echo $body; litespeed_finish_request(); return; } // cPanel hosts on LiteSpeed
         header('Connection: close');
         header('Content-Length: ' . strlen($body));
         echo $body;

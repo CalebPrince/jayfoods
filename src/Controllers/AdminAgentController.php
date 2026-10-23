@@ -26,6 +26,7 @@ final class AdminAgentController
             'providers' => AgentSettings::PROVIDERS,
             'owner_numbers' => AgentSettings::ownerNumbers(),
             'webhook_path' => '/api/v1/whatsapp/webhook',
+            'twilio_webhook_path' => '/api/v1/whatsapp/twilio',
             'smtp_notification_email' => (new SmtpMailer())->notificationEmail(),
         ]]);
     }
@@ -38,6 +39,14 @@ final class AdminAgentController
         $errors = [];
         $siteUrl = rtrim(trim((string) ($s['site_url'] ?? '')), '/');
         if ($siteUrl !== '' && (!filter_var($siteUrl, FILTER_VALIDATE_URL) || !str_starts_with($siteUrl, 'https://'))) $errors['site_url'] = 'Use the live https:// address, for example https://jayfoods.com.gh';
+        $provider = (string) ($s['whatsapp_provider'] ?? AgentSettings::get('whatsapp_provider'));
+        if (!in_array($provider, ['twilio', 'meta'], true)) $errors['whatsapp_provider'] = 'Choose Twilio or Meta.';
+        $twilioSid = trim((string) ($s['twilio_account_sid'] ?? ''));
+        if ($twilioSid !== '' && !preg_match('/^AC[0-9a-fA-F]{32}$/', $twilioSid)) $errors['twilio_account_sid'] = 'The Account SID starts with AC followed by 32 letters and digits (Twilio Console, Account info).';
+        $twilioNumber = KafuiText::digits((string) ($s['twilio_whatsapp_number'] ?? ''));
+        if ($twilioNumber !== '' && str_starts_with($twilioNumber, '0') && strlen($twilioNumber) === 10) $twilioNumber = '233' . substr($twilioNumber, 1);
+        if ($twilioNumber !== '' && !preg_match('/^[1-9]\d{9,14}$/', $twilioNumber)) $errors['twilio_whatsapp_number'] = 'Use the WhatsApp sender number with country code, for example 233246328461.';
+        if (array_key_exists('twilio_whatsapp_number', $s)) $s['twilio_whatsapp_number'] = $twilioNumber;
         $phoneId = trim((string) ($s['wa_phone_number_id'] ?? ''));
         if ($phoneId !== '' && !ctype_digit($phoneId)) $errors['wa_phone_number_id'] = 'The phone number ID is digits only (from WhatsApp Manager, API setup).';
         $version = trim((string) ($s['wa_graph_version'] ?? ''));
@@ -110,9 +119,13 @@ final class AdminAgentController
     {
         $missing = [];
         if (!AgentSettings::providers()) $missing[] = 'turn on at least one AI provider with a key and a model';
-        if (!WhatsAppCloud::isConfigured()) $missing[] = 'add the WhatsApp phone number ID, Graph API version and access token';
-        if (!AgentSettings::hasSecret('wa_app_secret')) $missing[] = 'add the Meta app secret';
-        if (!AgentSettings::hasSecret('wa_verify_token')) $missing[] = 'generate the webhook verify token';
+        if (WhatsAppSender::provider() === 'twilio') {
+            if (!TwilioWhatsApp::isConfigured()) $missing[] = 'add the Twilio Account SID, auth token and WhatsApp sender number';
+        } else {
+            if (!WhatsAppCloud::isConfigured()) $missing[] = 'add the WhatsApp phone number ID, Graph API version and access token';
+            if (!AgentSettings::hasSecret('wa_app_secret')) $missing[] = 'add the Meta app secret';
+            if (!AgentSettings::hasSecret('wa_verify_token')) $missing[] = 'generate the webhook verify token';
+        }
         if (AgentSettings::siteUrl() === '') $missing[] = 'add the live site address';
         return $missing;
     }
@@ -177,7 +190,7 @@ final class AdminAgentController
                 Response::json(['error' => 'WhatsApp only allows replies within 24 hours of the customer\'s last message. Call the customer on +' . $c['phone'] . ' instead.'], 409);
                 return;
             }
-            $sent = WhatsAppCloud::sendText((string) $c['phone'], $text);
+            $sent = WhatsAppSender::sendText((string) $c['phone'], $text);
             if (!$sent['ok']) { Response::json(['error' => 'WhatsApp did not accept the message: ' . $sent['error']], 502); return; }
         }
         $admin = Auth::user();

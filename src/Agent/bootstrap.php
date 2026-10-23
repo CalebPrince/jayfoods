@@ -6,11 +6,12 @@ declare(strict_types=1);
 $agentDir = __DIR__;
 require_once dirname($agentDir) . '/Support/Signer.php';
 foreach ([
-    'KafuiText', 'AgentHttp', 'AgentSettings', 'WhatsAppCloud', 'InvoicePdf', 'Invoices', 'KafuiStore',
+    'KafuiText', 'AgentHttp', 'AgentSettings', 'WhatsAppCloud', 'TwilioWhatsApp', 'WhatsAppSender', 'InvoicePdf', 'Invoices', 'KafuiStore',
     'AgentMonitor', 'KafuiNotify', 'KafuiContext', 'KafuiTools', 'KafuiPrompt', 'ModelProviders', 'Kafui',
 ] as $class) {
     require_once $agentDir . '/' . $class . '.php';
 }
 require_once dirname($agentDir) . '/Controllers/WhatsAppWebhookController.php';
+require_once dirname($agentDir) . '/Controllers/TwilioWebhookController.php';
 require_once dirname($agentDir) . '/Controllers/ChatController.php';
 require_once dirname($agentDir) . '/Controllers/AdminAgentController.php';

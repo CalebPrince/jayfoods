@@ -297,8 +297,22 @@
         <div class="form-error" id="kf-err" style="display:none"></div>
         <div class="form-ok" id="kf-ok" style="display:none">Settings saved.</div>
         <h3>1. The live site</h3>
-        ${field('site_url', 'Live site address', s.site_url, 'The public https address. Meta fetches invoice PDFs from it. For example https://jayfoods.com.gh', 'url')}
-        <h3>2. WhatsApp (Meta)</h3>
+        ${field('site_url', 'Live site address', s.site_url, 'The public https address, for example https://jayfoods.princecaleb.dev. WhatsApp fetches invoice PDFs from it, and Twilio signs messages with it, so it must match exactly.', 'url')}
+        <h3>2. WhatsApp</h3>
+        <div class="field" data-f="whatsapp_provider"><label for="kf-whatsapp_provider">Connected through</label>
+          <select id="kf-whatsapp_provider" name="whatsapp_provider" class="kf-filter">
+            <option value="twilio" ${s.whatsapp_provider !== 'meta' ? 'selected' : ''}>Twilio (WhatsApp sender in the Twilio Console)</option>
+            <option value="meta" ${s.whatsapp_provider === 'meta' ? 'selected' : ''}>Meta Cloud API directly</option>
+          </select><div class="hint">Only the chosen one receives messages.</div></div>
+        <div id="kf-twilio-box">
+          <div class="form-2col">
+            ${field('twilio_account_sid', 'Account SID', s.twilio_account_sid, 'Twilio Console, Account info. Starts with AC.')}
+            ${field('twilio_whatsapp_number', 'WhatsApp sender number', s.twilio_whatsapp_number, 'The JayFoods number with country code, for example 233246328461.')}
+          </div>
+          ${secret('twilio_auth_token', 'Auth token', 'Twilio Console, Account info. It also checks that every incoming message really comes from Twilio.')}
+          <div class="field"><label>Webhook URL for Twilio</label><div class="kf-copy"><code id="kf-twilio-webhook"></code></div><div class="hint">In the Twilio Console, open Messaging, Senders, WhatsApp senders, the JayFoods number. Paste this as the webhook URL for incoming messages, method POST. It must match the Live site address above exactly.</div></div>
+        </div>
+        <div id="kf-meta-box">
         <div class="form-2col">
           ${field('wa_phone_number_id', 'Phone number ID', s.wa_phone_number_id, 'WhatsApp Manager or your Meta app, WhatsApp, API setup. Digits only.')}
           ${field('wa_graph_version', 'Graph API version', s.wa_graph_version, 'As shown in your Meta app, for example v23.0.')}
@@ -307,6 +321,7 @@
         ${secret('wa_app_secret', 'App secret', 'Your Meta app, App settings, Basic. Used to check every webhook really comes from Meta.')}
         <div class="field"><label>Webhook URL for Meta</label><div class="kf-copy"><code id="kf-webhook"></code></div><div class="hint">Paste this into your Meta app, WhatsApp, Configuration, Callback URL. Subscribe to the "messages" field.</div></div>
         <div class="field"><label>Verify token for Meta</label><div class="kf-copy"><code id="kf-verify">${has.wa_verify_token ? 'Saved. Generate a new one only if you need to reconnect.' : 'Not set'}</code> <button type="button" class="btn btn-ghost btn-sm" id="kf-gen">Generate new token</button></div><div class="hint">Shown once. Paste it into Meta next to the Callback URL, then press Verify and save there.</div></div>
+        </div>
         <h3>3. AI providers</h3>
         <p class="sub">Kafui tries Anthropic, then OpenAI, then OpenRouter, then Groq. If a provider fails or is too slow, its backup model is tried, then the next provider. If every one fails, the customer is told a person will reply and the chat goes to staff. Turn on at least two for a real fallback, with keys and model names from each provider's own site, and set a monthly spend limit at each.</p>
         <div class="kf-providers">${providerRows}</div>
@@ -325,6 +340,10 @@
       </form>`;
     body.appendChild(panel);
     panel.querySelector('#kf-webhook').textContent = webhook;
+    panel.querySelector('#kf-twilio-webhook').textContent = (s.site_url || location.origin) + data.twilio_webhook_path;
+    const prov = panel.querySelector('#kf-whatsapp_provider');
+    const showProvider = () => { panel.querySelector('#kf-twilio-box').hidden = prov.value !== 'twilio'; panel.querySelector('#kf-meta-box').hidden = prov.value !== 'meta'; };
+    prov.addEventListener('change', showProvider); showProvider();
 
     panel.querySelector('#kf-gen').addEventListener('click', async () => {
       const { data: t } = await call('/admin/agent/verify-token', 'POST', {});
@@ -336,7 +355,7 @@
       err.style.display = 'none'; ok.style.display = 'none';
       f.querySelectorAll('.field').forEach((x) => x.classList.remove('err'));
       const settings = {}, secrets = {};
-      f.querySelectorAll('input[name], textarea[name]').forEach((i) => {
+      f.querySelectorAll('input[name], textarea[name], select[name]').forEach((i) => {
         if (i.name.startsWith('secret:')) { if (i.value) secrets[i.name.slice(7)] = i.value; }
         else settings[i.name] = i.type === 'checkbox' ? (i.checked ? '1' : '0') : i.value;
       });

@@ -41,7 +41,7 @@ Kafui (said kah-FOO-ee) is the AI assistant on the JayFoods WhatsApp number and 
 
 Where things are:
 
-- [docs/kafui-setup.md](docs/kafui-setup.md): every step to connect the number in Meta and go live, plus what is still a placeholder.
+- [docs/kafui-setup.md](docs/kafui-setup.md): every step to register the number as a Twilio WhatsApp sender and go live, plus what is still a placeholder.
 - Code: `src/Agent/` (engine, tools, prompt, providers, WhatsApp sender, invoices), `src/Controllers/WhatsAppWebhookController.php`, `ChatController.php`, `AdminAgentController.php`, `public/js/kafui-chat.js`, `public/admin/kafui.js`.
 - Tests: `php tests/agent/run.php` (fake model and fake WhatsApp, no network). `php tests/agent/send-test-webhook.php` posts a signed test message to a running site.
 - Security: [SECURITY.md](SECURITY.md) and [security-baseline.yaml](security-baseline.yaml). Design: [ARCHITECTURE.md](ARCHITECTURE.md) and [GUI.md](GUI.md).
