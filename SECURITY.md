@@ -1,6 +1,6 @@
 # Security
 
-Status: SUSPENDED for review. Baseline 0.4.0 (CHG-003, admin roles and the error log) waits for Prince Caleb's approval (digest `9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf`). Baseline 0.3.0 (CHG-002, WhatsApp through Twilio) was approved on 23 Oct 2026 (digest `600e78131a5a40078d90f85952c2590a2f3ea08ef5bf9cab30148f2a22024b31`).
+Status: APPROVED. Baseline 0.4.0 (CHG-003, admin roles and the error log) approved by Prince Caleb on 23 Oct 2026 for development, staging and production (digest `9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf`).
 Baseline version: 0.4.0
 Canonical record: `security-baseline.yaml`
 Owner: Prince Caleb (PrinceCaleb.dev)
@@ -105,7 +105,7 @@ None of it ran on the live site or on GitHub.
 
 | Gate | Stage | Blocking | Status |
 |---|---|---|---|
-| GATE-001 Baseline approval | Before implementation | Yes | CONFIGURED: 0.3.0 approved (EVD-001) |
+| GATE-001 Baseline approval | Before implementation | Yes | CONFIGURED: 0.4.0 approved (EVD-001) |
 | GATE-002 PR checks: lint, agent tests, secret scan, digest | Pull request | Yes | NOT_YET_BUILT on GitHub (workflow written, branch protection off) |
 | GATE-003 Go-live checklist on the live number | Before deploy | Yes | NOT_YET_BUILT (checklist in docs/kafui-setup.md) |
 | GATE-004 Runtime limits and kill switch | Runtime | Yes | NOT_YET_BUILT on the live site (built and tested locally) |
