@@ -33,7 +33,7 @@ final class Auth
         }
 
         $stmt = Database::connection()->prepare(
-            'SELECT id, email, name FROM admins WHERE id = :id AND is_active=1'
+            'SELECT id, email, name, role FROM admins WHERE id = :id AND is_active=1'
         );
         $stmt->execute([':id' => (int) $claims['sub']]);
         $admin = $stmt->fetch();
@@ -43,10 +43,18 @@ final class Auth
                 'id'    => (int) $admin['id'],
                 'email' => $admin['email'],
                 'name'  => $admin['name'],
+                'role'  => $admin['role'],
             ];
         }
 
         return self::$cached;
+    }
+
+    /** super_admin, admin or staff. Read from the database on every request, so a change applies at once. */
+    public static function role(): ?string
+    {
+        $user = self::user();
+        return $user ? (string) $user['role'] : null;
     }
 
     public static function id(): ?int

@@ -19,7 +19,8 @@ Jay foods is a lightweight juice catalogue, ordering, payment, and administratio
 - Timestamped order-status history for administrators and customer tracking
 - Customer directory with order counts, paid lifetime value, calling, and WhatsApp actions
 - Authenticated timestamped SQLite database backups from the admin area
-- Multi-admin account management with password resets and active/inactive access controls
+- Accounts with three roles, checked on the server for every admin request: **Super admin** (everything, including Kafui and AI provider settings, WhatsApp templates, email and Paystack settings, backups, accounts and the error log), **Admin** (products and prices, site content, delivery zones, promo codes, the Kafui switch and logs) and **Staff** (orders, customers, messages, the Kafui inbox and bookings). Rules are in `src/Support/Roles.php`; a new admin route is super admin only until it is added there
+- Error log for the super admin: server errors, failed API responses, failed calls to Twilio, the AI providers and Paystack, failed email, and script errors from visitors' browsers, with keys, emails and phone numbers masked, kept 30 days
 - Protected administrator activity log for successful data-changing actions
 - Server-enforced store open/closed control with an editable customer message
 - Consolidated low-stock email alerts with configurable thresholds and recovery detection
@@ -128,7 +129,8 @@ server.py       Migration and local-server entry point
 - Paystack secret keys are never exposed to browser code.
 - Payment success is verified server-side for status, GHS currency, and exact amount.
 - Webhook requests are authenticated with Paystack's HMAC-SHA512 signature.
-- Admin authentication uses an HttpOnly JWT cookie.
+- Admin authentication uses an HttpOnly JWT cookie. Each account's role is read from the database on every request, so a change applies at once.
+- After deploying the roles change, run `php database/migrate.php`: it adds the role column, makes existing accounts admins, and makes the first account the super admin.
 - Runtime databases, application keys, and uploaded files are excluded from Git.
 
 ## License

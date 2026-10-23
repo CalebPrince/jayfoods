@@ -42,3 +42,16 @@ const api = {
   verifyPayment: (reference) => apiFetch('/payments/verify/' + encodeURIComponent(reference)),
   sendMessage: (message) => apiFetch('/messages', { method: 'POST', body: JSON.stringify(message) }),
 };
+
+// Script errors on this page go to the site's error log (seen by the super admin). At most 5 per page.
+(function () {
+  let sent = 0;
+  function report(message, where) {
+    if (sent >= 5 || !message) return;
+    sent++;
+    const body = JSON.stringify({ message: String(message).slice(0, 400), where: String(where || '').slice(0, 300), page: location.pathname });
+    try { if (!(navigator.sendBeacon && navigator.sendBeacon('/api/v1/client-errors', new Blob([body], { type: 'application/json' })))) fetch('/api/v1/client-errors', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(() => {}); } catch (_) {}
+  }
+  window.addEventListener('error', (e) => report(e.message, (e.filename || '').split('/').pop() + ':' + (e.lineno || 0)));
+  window.addEventListener('unhandledrejection', (e) => report(e.reason && e.reason.message ? e.reason.message : e.reason, 'promise'));
+})();

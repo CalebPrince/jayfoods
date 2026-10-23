@@ -19,8 +19,9 @@ putenv('JAYFOODS_KEY=' . $tmp . '/app.key');
 exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($root . '/database/migrate.php'), $out, $code);
 if ($code !== 0) { fwrite(STDERR, "migration failed\n" . implode("\n", $out)); exit(1); }
 
-foreach (['Response', 'Config', 'Database', 'Jwt', 'Auth', 'SecretBox', 'SmtpMailer', 'EmailNotifications', 'Inventory'] as $c) require $root . '/src/Support/' . $c . '.php';
+foreach (['Response', 'Config', 'Database', 'ErrorLog', 'Jwt', 'Auth', 'Roles', 'SecretBox', 'SmtpMailer', 'EmailNotifications', 'Inventory'] as $c) require $root . '/src/Support/' . $c . '.php';
 require $root . '/src/Controllers/SiteContentController.php';
+require $root . '/src/Controllers/AdminUserController.php';
 require $root . '/src/Agent/bootstrap.php';
 
 // ---------------------------------------------------------------- tiny harness
@@ -266,7 +267,7 @@ $steps[] = function () { throw new RuntimeException('provider down'); };
 $r = say($f, 'I want juice');
 check($r['reply'] === Kafui::failText() && KafuiStore::get((int) $f['id'])['mode'] === 'staff', 'all providers failing: fixed message and handoff');
 $note = (string) $db->query("SELECT body FROM conversation_messages WHERE sender='system' AND conversation_id=" . (int) $f['id'] . " ORDER BY id DESC LIMIT 1")->fetchColumn();
-check(str_contains($note, 'provider down'), 'the cause is written into the chat in the admin');
+check(str_contains($note, 'could not get an answer') && !str_contains($note, 'provider down'), 'the chat gets a plain note; the provider details stay out of the inbox');
 $sentBefore = count($sent);
 $steps[] = function () { throw new RuntimeException('provider down'); };
 $r = say($owner, 'Any orders?');
@@ -613,6 +614,65 @@ Kafui::$modelOverride = function (array $p, $system, $messages, $tools, $runTool
 };
 say(newWhatsApp('233200000014'), 'hello');
 check($tried === ['anthropic'], 'a provider that already acted (handoff, order) is not retried on the next one');
+
+// ---------------------------------------------------------------- admin roles
+section('Admin roles: super admin, admin, staff');
+$superOnly = [['GET', '/api/v1/admin/agent/settings'], ['PUT', '/api/v1/admin/agent/settings'], ['POST', '/api/v1/admin/agent/verify-token'],
+    ['POST', '/api/v1/admin/agent/templates/owner_alert/submit'], ['DELETE', '/api/v1/admin/agent/templates/owner_alert'],
+    ['GET', '/api/v1/admin/users'], ['POST', '/api/v1/admin/users'], ['DELETE', '/api/v1/admin/users/2'],
+    ['GET', '/api/v1/admin/settings/smtp'], ['PUT', '/api/v1/admin/settings/paystack'], ['GET', '/api/v1/admin/backups/database'],
+    ['GET', '/api/v1/admin/errors'], ['DELETE', '/api/v1/admin/errors'], ['GET', '/api/v1/admin/something-new']];
+$ok = true;
+foreach ($superOnly as [$m, $p]) if (!Roles::allows('super_admin', $m, $p) || Roles::allows('admin', $m, $p) || Roles::allows('staff', $m, $p)) { $ok = false; echo "    wrong: $m $p\n"; }
+check($ok, 'AI providers, Kafui settings, templates, users, email and Paystack settings, backups and the error log: super admin only (new routes too)');
+$adminUp = [['PUT', '/api/v1/admin/products/3'], ['PUT', '/api/v1/admin/content'], ['PUT', '/api/v1/admin/delivery-zones'], ['POST', '/api/v1/admin/promo-codes'], ['PUT', '/api/v1/admin/agent/enabled'], ['GET', '/api/v1/admin/agent/actions'], ['GET', '/api/v1/admin/activity'], ['DELETE', '/api/v1/admin/messages/4']];
+$ok = true;
+foreach ($adminUp as [$m, $p]) if (!Roles::allows('admin', $m, $p) || Roles::allows('staff', $m, $p)) { $ok = false; echo "    wrong: $m $p\n"; }
+check($ok, 'prices, content, delivery zones, promo codes and the Kafui switch: admin and super admin');
+$staffUp = [['GET', '/api/v1/admin/orders'], ['PATCH', '/api/v1/admin/orders/5'], ['GET', '/api/v1/admin/orders/5/invoice'], ['GET', '/api/v1/admin/customers'], ['GET', '/api/v1/admin/messages'],
+    ['GET', '/api/v1/admin/agent/conversations/7'], ['POST', '/api/v1/admin/agent/conversations/7/reply'], ['POST', '/api/v1/admin/agent/conversations/7/template'], ['GET', '/api/v1/admin/agent/templates'], ['PATCH', '/api/v1/admin/bookings/2'], ['POST', '/api/v1/admin/account/password']];
+$ok = true;
+foreach ($staffUp as [$m, $p]) if (!Roles::allows('staff', $m, $p) || !Roles::allows('admin', $m, $p) || !Roles::allows('super_admin', $m, $p)) { $ok = false; echo "    wrong: $m $p\n"; }
+check($ok, 'orders, customers, messages, the Kafui inbox and bookings: every role');
+check(!Roles::allows(null, 'GET', '/api/v1/admin/orders') && !Roles::allows('owner', 'GET', '/api/v1/admin/orders'), 'no role or an unknown role gets nothing');
+
+$adminCols = array_column($db->query('PRAGMA table_info(admins)')->fetchAll(), 'name');
+check(in_array('role', $adminCols, true) && (int) $db->query("SELECT COUNT(*) FROM admins WHERE role='super_admin' AND is_active=1")->fetchColumn() === 1, 'the migration makes the first account the super admin');
+$superId = (int) $db->query("SELECT id FROM admins WHERE role='super_admin'")->fetchColumn();
+[$r, $code] = AdminUserController::store($db, ['name' => 'Ama Staff', 'email' => 'staff@example.test', 'password' => 'long-enough-1', 'role' => 'staff', 'is_active' => true], $superId);
+$staffId = (int) $db->query("SELECT id FROM admins WHERE email='staff@example.test'")->fetchColumn();
+check($code === 200 && $db->query('SELECT role FROM admins WHERE id=' . $staffId)->fetchColumn() === 'staff', 'the super admin adds a staff account');
+[$r, $code] = AdminUserController::store($db, ['name' => 'X', 'email' => 'x@example.test', 'password' => 'long-enough-1', 'role' => 'owner', 'is_active' => true], $superId);
+check($code === 422, 'only the three roles can be given');
+[$r, $code] = AdminUserController::store($db, ['id' => $superId, 'name' => 'Caleb', 'email' => 'admin@jayfoods.gh', 'role' => 'admin', 'is_active' => true], $superId);
+check($code === 422 && str_contains($r['error'], 'own role'), 'the super admin cannot demote themselves');
+[$r, $code] = AdminUserController::remove($db, $superId, $staffId);
+check($code === 422 && str_contains($r['error'], 'one active super admin'), 'the last super admin cannot be deleted');
+[$r, $code] = AdminUserController::store($db, ['id' => $staffId, 'name' => 'Ama Staff', 'email' => 'staff@example.test', 'role' => 'super_admin', 'is_active' => true], $superId);
+[$r2, $code2] = AdminUserController::store($db, ['id' => $superId, 'name' => 'Caleb', 'email' => 'admin@jayfoods.gh', 'role' => 'admin', 'is_active' => true], $staffId);
+check($code === 200 && $code2 === 200, 'with a second super admin, one can change the other');
+AdminUserController::store($db, ['id' => $superId, 'name' => 'Caleb', 'email' => 'admin@jayfoods.gh', 'role' => 'super_admin', 'is_active' => true], $staffId);
+AdminUserController::remove($db, $staffId, $superId);
+
+// ---------------------------------------------------------------- error log
+section('Error log (super admin only)');
+$db->exec('DELETE FROM error_log');
+ErrorLog::record('server', 'Undefined index: total', 'OrderController.php:120', '/api/v1/orders');
+ErrorLog::record('server', 'Undefined index: total', 'OrderController.php:120', '/api/v1/orders');
+check((int) $db->query("SELECT count FROM error_log WHERE source='server'")->fetchColumn() === 2 && (int) $db->query('SELECT COUNT(*) FROM error_log')->fetchColumn() === 1, 'the same error within the hour is counted on one row');
+AgentHttp::$transport = fn() => ['status' => 402, 'body' => '{"error":{"message":"needs more credits"}}', 'error' => ''];
+AgentHttp::request('POST', 'https://openrouter.ai/api/v1/chat/completions?key=sk-or-v1-abcdefabcdefabcdef', ['Authorization: Bearer sk-or-v1-abcdefabcdefabcdef'], '{}', 5);
+$row = $db->query("SELECT * FROM error_log WHERE source='outgoing'")->fetch();
+check($row && str_contains($row['message'], 'openrouter.ai/api/v1/chat/completions failed: HTTP 402') && $row['detail'] === 'needs more credits', 'failed calls to other services are logged with their reason');
+check(!str_contains(json_encode($db->query('SELECT * FROM error_log')->fetchAll()), 'abcdefabcdef'), 'keys in the address or headers are never saved');
+check(ErrorLog::clean('Bearer abc.def key sk_live_123456789 mail ama@example.com call +233 24 632 8461') === 'Bearer [hidden] key [key] mail [email] call [number]', 'tokens, keys, emails and phone numbers are masked');
+$db->exec("UPDATE error_log SET last_seen=datetime('now','-31 days') WHERE source='server'");
+ErrorLog::prune();
+check((int) $db->query("SELECT COUNT(*) FROM error_log WHERE source='server'")->fetchColumn() === 0, 'entries older than 30 days are cleared');
+AgentHttp::$transport = function (string $method, string $url, array $headers, ?string $body, int $timeout) use (&$sent) {
+    if (str_contains($url, 'graph.facebook.com')) { $sent[] = json_decode((string) $body, true); return ['status' => 200, 'body' => '{"messages":[{"id":"wamid.TEST"}]}', 'error' => '']; }
+    return ['status' => 500, 'body' => '{}', 'error' => 'no network in tests'];
+};
 
 // ---------------------------------------------------------------- housekeeping
 section('Retention (CTL-DATA-001)');

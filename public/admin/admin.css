@@ -247,3 +247,5 @@ a.kf-row:hover { background: var(--green-lt); }
 .kf-copy { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .kf-copy code { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: .85rem; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .kf-chat-grid { grid-template-columns: 1fr; } .kf-msg { max-width: 92%; } .kf-status .btn { margin-left: 0; } }
+/* Pages a role cannot open are left out of the menu. */
+#nav a[hidden] { display: none; }

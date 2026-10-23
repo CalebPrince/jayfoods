@@ -102,7 +102,6 @@ final class Kafui
         // attempt with its own time limit; the next one only runs if this one fails.
         @set_time_limit(self::BUDGET_SECONDS + 30);
         $reply = null;
-        $errors = [];
         $chainEnd = microtime(true) + self::BUDGET_SECONDS;
         foreach (self::$providersOverride ?? AgentSettings::providers() as $provider) {
             if ($ctx->handedOff) break;
@@ -119,7 +118,6 @@ final class Kafui
                 AgentMonitor::event('provider_empty', $provider['name'] . ' ' . $provider['model']);
             } catch (Throwable $e) {
                 AgentMonitor::event('provider_error', $provider['name'] . ' ' . $provider['model'] . ': ' . mb_substr($e->getMessage(), 0, 120));
-                $errors[] = $provider['name'] . ' ' . $provider['model'] . ': ' . mb_substr($e->getMessage(), 0, 160);
                 // A tool may already have acted (an order placed); never repeat the turn on another provider then.
                 if ($ctx->customerText !== null) break;
             }
@@ -131,7 +129,8 @@ final class Kafui
         if (($reply === null || $reply === '') && $ctx->customerText === null) {
             AgentMonitor::event('provider_failed', (string) $conv['channel']);
             // Errors go to the admin only: a note in this chat with the cause, never a WhatsApp alert.
-            if (!$ctx->isTest()) KafuiStore::add((int) $conv['id'], 'system', 'Kafui could not get an answer from any AI provider. ' . ($errors ? 'Errors: ' . implode(' | ', $errors) : 'No provider answered in time.'));
+            // The cause (which provider, which error) is in Recent AI provider errors, seen by the super admin only.
+            if (!$ctx->isTest()) KafuiStore::add((int) $conv['id'], 'system', 'Kafui could not get an answer just now. The super admin can see why under Recent AI provider errors on the Kafui page.');
             // An owner is not handed to staff (that would silence Kafui in their own chat); they just try again.
             if ($ctx->role === 'owner') return ['reply' => self::ownerFailText(), 'document' => null, 'handed_off' => false];
             self::handOff($ctx, 'Kafui could not get an answer from any AI provider', self::failText(), false);

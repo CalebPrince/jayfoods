@@ -149,6 +149,7 @@ final class KafuiNotify
             $mailer->send($to, $subject, '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#173c25"><div style="max-width:600px;margin:auto"><h2 style="color:#176b3a">' . self::e($subject) . '</h2>' . $html . '<p style="color:#68756d;font-size:13px">Kafui, Jay foods</p></div></body></html>');
         } catch (Throwable $e) {
             error_log('[kafui email] ' . $e->getMessage());
+            if (class_exists('ErrorLog', false)) ErrorLog::record('email', 'Kafui email "' . $subject . '" not sent: ' . $e->getMessage());
         }
     }
 

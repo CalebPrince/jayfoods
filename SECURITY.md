@@ -1,7 +1,7 @@
 # Security
 
-Status: APPROVED. Baseline 0.3.0 (CHG-002, WhatsApp through Twilio) approved by Prince Caleb on 23 Oct 2026 for development, staging and production (digest `600e78131a5a40078d90f85952c2590a2f3ea08ef5bf9cab30148f2a22024b31`).
-Baseline version: 0.3.0
+Status: SUSPENDED for review. Baseline 0.4.0 (CHG-003, admin roles and the error log) waits for Prince Caleb's approval (digest `9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf`). Baseline 0.3.0 (CHG-002, WhatsApp through Twilio) was approved on 23 Oct 2026 (digest `600e78131a5a40078d90f85952c2590a2f3ea08ef5bf9cab30148f2a22024b31`).
+Baseline version: 0.4.0
 Canonical record: `security-baseline.yaml`
 Owner: Prince Caleb (PrinceCaleb.dev)
 Last reviewed: 2026-10-23
@@ -86,6 +86,10 @@ None of it ran on the live site or on GitHub.
 | CTL-REC-002 | Daily off-server backup and a rehearsed restore | PLANNED | | Before go-live |
 
 ## Identity, data and boundaries
+
+**Admin roles (CHG-003, CTL-AUTHZ-004).** Super admin: everything. Admin: running the shop. Staff: day to day. AI provider and Kafui settings, the owner list, WhatsApp template management, email and Paystack settings, backups, accounts and the error log are super admin only. The check is on the server for every admin route (`src/Support/Roles.php`), deny by default; the menu only hides what a role cannot open. Nobody can change their own role, and the last active super admin cannot be removed.
+
+**Error log (CTL-LOG-003).** Super admin only. Keys, tokens, emails and phone numbers are masked before saving, query strings are dropped from addresses, entries are kept 30 days. Visitors' browsers can report script errors to a public, write-only endpoint limited to 20 reports per IP per hour.
 
 - **Customers on WhatsApp** are identified by the sender number inside Twilio's signed webhook (or Meta's, if Meta is the chosen provider).
 - **Website visitors** are anonymous, with a signed 24-hour session. To look up an order they need its reference and phone number.

@@ -64,8 +64,8 @@ final class PaymentController
     {
         $headers="Authorization: Bearer ".$this->secret()."\r\nContent-Type: application/json\r\n";
         $opts=['http'=>['method'=>$method,'header'=>$headers,'ignore_errors'=>true,'timeout'=>20]]; if($body!==null)$opts['http']['content']=json_encode($body);
-        $raw=@file_get_contents('https://api.paystack.co'.$path,false,stream_context_create($opts)); if($raw===false)throw new RuntimeException('Paystack is unreachable.');
-        $data=json_decode($raw,true); if(!is_array($data)||empty($data['status']))throw new RuntimeException((string)($data['message']??'Paystack rejected the request.')); return $data;
+        $raw=@file_get_contents('https://api.paystack.co'.$path,false,stream_context_create($opts)); if($raw===false){ErrorLog::outgoing($method,'https://api.paystack.co'.$path,0,'Paystack is unreachable.');throw new RuntimeException('Paystack is unreachable.');}
+        $data=json_decode($raw,true); if(!is_array($data)||empty($data['status'])){ErrorLog::outgoing($method,'https://api.paystack.co'.$path,0,'Paystack rejected the request',$raw);throw new RuntimeException((string)($data['message']??'Paystack rejected the request.'));} return $data;
     }
     private function isHttps(): bool { $v=strtolower((string)($_SERVER['HTTPS']??'')); return ($v!==''&&$v!=='off'&&$v!=='0')||strtolower((string)($_SERVER['HTTP_X_FORWARDED_PROTO']??''))==='https'; }
 }
