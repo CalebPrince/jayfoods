@@ -74,7 +74,7 @@ None of it ran on the live site or on GitHub.
 | CTL-CRY-001 | Per-purpose HMAC keys, AES-256-GCM at rest, HTTPS | VERIFIED | EVD-006 | HTTPS checked at go-live |
 | CTL-SEC-001 | Secrets typed into the admin, encrypted, never returned, logged or committed | VERIFIED | EVD-006, EVD-008 | |
 | CTL-SEC-002 | Meta token limited to WhatsApp on one account; AI spend caps; rotation steps | PLANNED | | Caleb, in Meta and at each provider (docs/kafui-setup.md) |
-| CTL-CFG-001 | Kafui off by default; security headers; errors not displayed | PLANNED | | Off by default, API headers and error hiding are built. Admin frame-blocking and a storefront content policy need server (`.htaccess`) settings on cPanel |
+| CTL-CFG-001 | Kafui off by default; security headers; errors not displayed | PLANNED | | Off by default, API headers, error hiding, and site-wide nosniff, frame-blocking and referrer headers (`public/.htaccess`) are built. A storefront content policy is still to do; check the headers on the live site |
 | CTL-DATA-001 | Prompts carry public facts and this chat only; 90-day and 30-day deletion | VERIFIED | EVD-006 | Add the cleanup cron on cPanel |
 | CTL-DATA-002 | Privacy notice updated; providers set not to train; deletion on request | PLANNED | | Privacy page section written; provider settings at go-live |
 | CTL-ERR-001 | All providers failing gives a fixed message and a handoff | VERIFIED | EVD-006 | |

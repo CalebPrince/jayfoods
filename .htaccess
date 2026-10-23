@@ -1,0 +1,22 @@
+# Safety net for when the domain's document root is this project folder
+# instead of public/ (the recommended setting). It serves public/ as the site
+# and refuses the database, the app key, the code and everything else here.
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Private folders and files: always 403.
+    RewriteRule ^(database|src|tests|docs|brand-source|\.git|\.github|\.opskeep|\.claude|\.agents)(/|$) - [F,L]
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+    RewriteRule \.(sqlite|key|md|yaml|yml|json|zip|py|sh)$ - [F,L]
+
+    # Everything else is served from public/.
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    Require all denied
+</IfModule>

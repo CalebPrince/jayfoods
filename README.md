@@ -108,7 +108,7 @@ Checkout reserves each selected bottle size for 30 minutes. Successful Paystack 
 On production hosting, add this cPanel cron job to release expired reservations even when the storefront has no visitors:
 
 ```cron
-*/10 * * * * /usr/local/bin/php /home/spribvtm/public_html/jayfoods/database/release-expired-stock.php >/dev/null 2>&1
+*/10 * * * * /usr/local/bin/php /home/spribvtm/jayfoods-app/database/release-expired-stock.php >/dev/null 2>&1
 ```
 
 If cPanel shows a different PHP command, replace `/usr/local/bin/php` with the PHP executable shown by the hosting account.

@@ -1,0 +1,26 @@
+# Jay foods web root (Apache / LiteSpeed on cPanel). The domain's document root
+# should point at this public/ folder, so nothing outside it can be fetched.
+
+Options -Indexes
+DirectoryIndex index.html index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Never serve hidden files (.htaccess, .git and the like), except .well-known for SSL renewal.
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+    # Real files and folders are served as they are; everything else
+    # (the /api/v1/* routes) goes to the PHP front controller.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Baseline CTL-CFG-001: no sniffing, no framing (admin included), no referrer leaks.
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
