@@ -155,7 +155,7 @@ final class AdminAgentController
         $where = "channel!='test'";
         if ($filter === 'attention') $where .= ' AND needs_attention=1';
         if ($filter === 'whatsapp' || $filter === 'web') $where .= " AND channel='" . $filter . "'";
-        $rows = $this->db->query("SELECT c.*, (SELECT body FROM conversation_messages m WHERE m.conversation_id=c.id ORDER BY m.id DESC LIMIT 1) AS last_body FROM conversations c WHERE $where ORDER BY needs_attention DESC, last_message_at DESC LIMIT 200")->fetchAll();
+        $rows = $this->db->query("SELECT c.*, (SELECT body FROM conversation_messages m WHERE m.conversation_id=c.id ORDER BY m.id DESC LIMIT 1) AS last_body FROM conversations c WHERE $where ORDER BY last_message_at DESC, id DESC LIMIT 200")->fetchAll();
         Response::json(['data' => array_map(static fn($c) => [
             'id' => (int) $c['id'], 'channel' => $c['channel'], 'name' => $c['contact_name'], 'phone' => $c['phone'], 'whatsapp_id' => KafuiStore::isWhatsAppId((string) $c['phone']), 'mode' => $c['mode'],
             'needs_attention' => (bool) $c['needs_attention'], 'unread' => (int) $c['unread'], 'last_message_at' => $c['last_message_at'],
