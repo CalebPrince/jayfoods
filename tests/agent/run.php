@@ -484,6 +484,9 @@ ob_start(); (new AdminAgentController())->conversations(); $inbox = json_decode(
 error_reporting($prevLevel);
 $times = array_column($inbox, 'last_message_at'); $sorted = $times; rsort($sorted);
 check(count($inbox) > 1 && $times === $sorted, 'the Kafui inbox lists chats newest first, even when an older one needs a person');
+$testChat = KafuiStore::findOrCreate('test', 'unread-check');
+KafuiStore::add((int) $testChat['id'], 'customer', 'hello from Try Kafui');
+check((int) KafuiStore::get((int) $testChat['id'])['unread'] === 0 && AgentMonitor::counters()['unread'] === (int) $db->query("SELECT COALESCE(SUM(unread),0) FROM conversations WHERE channel!='test'")->fetchColumn(), 'Try Kafui chats never count as unread (they are not in the inbox to be read)');
 check(KafuiText::forChannel("**Order Summary:**
 ## Total
 2 x Orange", 'whatsapp') === "*Order Summary:*
