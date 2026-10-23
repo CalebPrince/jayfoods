@@ -91,7 +91,7 @@ final class WhatsAppWebhookController
             $result = ['reply' => Kafui::FAIL_TEXT, 'document' => null, 'handed_off' => true];
             KafuiStore::setMode((int) $conversation['id'], 'staff', true);
         }
-        $to = (string) $conversation['phone'];
+        $to = KafuiStore::replyAddress(KafuiStore::get((int) $conversation['id']) ?? $conversation);
         if ($result['reply'] !== null) {
             $sent = WhatsAppSender::sendText($to, $result['reply']);
             if (!$sent['ok']) $sent = WhatsAppSender::sendText($to, $result['reply']);

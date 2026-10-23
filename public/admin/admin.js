@@ -413,7 +413,7 @@
       <div style="margin:16px 0 6px;font-weight:700;color:var(--green-dk)">Status history</div>${(o.history||[]).map(h=>`<div class="detail-row"><span>${statusPill(h.status)} ${esc(h.note||'')}</span><span class="sub">${fmtDate(h.created_at)}</span></div>`).join('')}
     `, [
       button('Close', 'btn-ghost', closeModal),
-      button('Print invoice', 'btn-ghost', () => printInvoice(o)),
+      button('Invoice (PDF)', 'btn-ghost', () => window.open('/api/v1/admin/orders/' + o.id + '/invoice', '_blank', 'noopener')),
       button('Save staff notes', 'btn-ghost', async()=>{await api.setOrderNotes(o.id,$('#om-admin-notes').value);const ok=$('#om-ok');ok.textContent='Staff notes saved.';ok.style.display='block'}),
       button('Save status', 'btn-primary', async () => {
         await api.setOrderStatus(o.id, $('#om-status').value);

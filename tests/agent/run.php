@@ -179,6 +179,28 @@ check(isset($r['error']), 'unknown delivery area refused');
 $r = KafuiTools::run('quote_order', ['items' => [['size_id' => $sizeId, 'quantity' => 2]], 'fulfilment' => 'pickup'], $ctx3);
 check(isset($r['error']), 'pickup refused while pickup is off in settings');
 
+section('A "yes" in the next message places the open quote (no re-quote loop)');
+$loop = newWhatsApp('233200000041');
+$steps[] = function ($system, $messages, $tools, $runTool) use ($sizeId) {
+    $q = $runTool('quote_order', ['items' => [['size_id' => $sizeId, 'quantity' => 2]], 'fulfilment' => 'delivery', 'delivery_area' => 'Greater Accra']);
+    return 'Here is your order: ' . ($q['summary'] ?? '') . ' Shall I place it?';
+};
+say($loop, 'I want 2 orange juice to East Legon tomorrow, name Esi, phone 0200000041');
+$seen = null; $placedLoop = null;
+$steps[] = function ($system, $messages, $tools, $runTool) use (&$seen, &$placedLoop) {
+    // The model only knows the quote id from what the server tells it.
+    preg_match('/quote_id: (Q[0-9A-F]+)/', $system, $m);
+    $seen = $m[1] ?? null;
+    $placedLoop = $runTool('place_order', ['quote_id' => $seen, 'customer_name' => 'Esi', 'phone' => '0200000041', 'address' => 'East Legon', 'requested_date' => gmdate('Y-m-d', strtotime('+1 day'))]);
+    return $placedLoop['tell_customer'] ?? 'error';
+};
+$r = say($loop, 'Yes, place it');
+check($seen !== null, 'the open quote is given to the model in the next message');
+check(isset($placedLoop['reference']), 'the order is placed on "yes" instead of re-quoting');
+$steps[] = function ($system) use (&$seen2) { $seen2 = $system; return 'Anything else?'; };
+say($loop, 'thanks');
+check(str_contains((string) $seen2, 'already placed as order ' . ($placedLoop['reference'] ?? 'x')) && !str_contains((string) $seen2, 'OPEN QUOTE'), 'after placing, the model is told the order exists, not offered the quote again');
+
 section('Store closed blocks chat orders');
 $q = KafuiTools::run('quote_order', ['items' => [['size_id' => $sizeId, 'quantity' => 2]], 'fulfilment' => 'delivery', 'delivery_area' => 'Greater Accra'], new KafuiContext(KafuiStore::get((int) $other['id']), 'customer', 1));
 $db->exec("INSERT OR REPLACE INTO site_content(content_key,value) VALUES('store_accepting_orders','0')");
@@ -316,6 +338,17 @@ $twSent = [];
 TwilioWhatsApp::sendDocument('233200000021', 'https://jayfoods.example/api/v1/invoices/abc', 'x.pdf', 'Invoice JF-1');
 check(($twSent[0]['fields']['MediaUrl'] ?? '') === 'https://jayfoods.example/api/v1/invoices/abc', 'invoice PDFs sent as Twilio media');
 check(!TwilioWhatsApp::sendDocument('233200000021', 'http://insecure/x.pdf', 'x.pdf', '')['ok'], 'non-HTTPS document links refused');
+$twSent = [];
+$idMsg = TwilioWebhookController::store(array_merge($tw, ['MessageSid' => 'SM120', 'From' => 'whatsapp:+1641489644274641', 'ProfileName' => 'Rufus']));
+$steps[] = fn() => 'Hello Rufus.';
+WhatsAppWebhookController::answer($idMsg[0]['conversation'], $idMsg[0]['message_id'], $idMsg[0]['text']);
+check(($twSent[0]['fields']['To'] ?? '') === 'whatsapp:+1641489644274641', 'a WhatsApp ID sender (16 digits, not a phone number) gets the reply at the exact address Twilio gave');
+$noteRows = (int) $db->query("SELECT COUNT(*) FROM conversation_messages WHERE body LIKE 'Reply could not be sent%' AND conversation_id=" . (int) $idMsg[0]['conversation']['id'])->fetchColumn();
+check($noteRows === 0, 'no "could not be sent" note for that sender');
+check(KafuiStore::isWhatsAppId('1641489644274641') && !KafuiStore::isWhatsAppId('233246328461'), 'the inbox can tell a WhatsApp ID from a phone number');
+$db->exec("INSERT OR REPLACE INTO agent_owner_numbers(number,label) VALUES('1641489644274641','Owner by WhatsApp ID')");
+check(Kafui::roleFor(KafuiStore::get((int) $idMsg[0]['conversation']['id'])) === 'owner', 'an owner registered by WhatsApp ID is recognised');
+$db->exec("DELETE FROM agent_owner_numbers WHERE number='1641489644274641'");
 AgentSettings::set('whatsapp_provider', 'meta');
 check(WhatsAppSender::provider() === 'meta', 'switching the provider to Meta in settings');
 AgentSettings::set('whatsapp_provider', 'twilio');
@@ -337,6 +370,8 @@ $token = substr($link, strrpos($link, '/') + 1);
 $invId = Signer::verify('invoice', $token);
 check($invId !== null && str_starts_with((string) file_get_contents(Invoices::dir() . '/' . $invId . '.pdf'), '%PDF-1.4'), 'invoice PDF written outside the web root with a signed link');
 check(Signer::verify('invoice', $token . 'x') === null, 'tampered invoice link refused');
+$pdfBytes = (string) file_get_contents(Invoices::dir() . '/' . $invId . '.pdf');
+check(str_contains($pdfBytes, '/Subtype /Image') && str_contains($pdfBytes, '/DCTDecode') && str_contains($pdfBytes, 'INVOICE'), 'invoice PDF carries the Jay foods logo and the invoice template');
 
 // ---------------------------------------------------------------- bookings
 section('Bookings (DEC-001)');

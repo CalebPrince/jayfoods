@@ -20,8 +20,8 @@ final class Invoices
         return $dir;
     }
 
-    /** @return array{id:string,reference:string,url:string,filename:string,total_pesewas:int} */
-    public static function create(int $orderId): array
+    /** The invoice PDF for an order, built from the order and the Site content contact details. @return array{pdf:string,order:array} */
+    public static function render(int $orderId): array
     {
         $db = Database::connection();
         $o = $db->prepare('SELECT * FROM orders WHERE id=:id');
@@ -30,16 +30,38 @@ final class Invoices
         if (!$order) throw new RuntimeException('Order not found.');
         $items = $db->prepare('SELECT product_name,unit_price_pesewas,quantity,is_bulk,line_total_pesewas FROM order_items WHERE order_id=:id ORDER BY id');
         $items->execute([':id' => $orderId]);
+        return ['pdf' => InvoicePdf::render($order, $items->fetchAll(), self::business()), 'order' => $order];
+    }
 
-        $content = [];
-        foreach ($db->query("SELECT content_key,value FROM site_content WHERE content_key IN ('headquarters_name','contact_address','telephone_display')")->fetchAll() as $r) {
-            $content[$r['content_key']] = $r['value'];
+    /** Jay foods contact details for invoices, from Site content (admin), so they stay in one place. @return array<string,string> */
+    public static function business(): array
+    {
+        $c = [];
+        foreach (SiteContentController::definitions() as $fields) foreach ($fields as $k => $meta) $c[$k] = $meta[1];
+        foreach (Database::connection()->query('SELECT content_key,value FROM site_content')->fetchAll() as $r) {
+            if (array_key_exists($r['content_key'], $c)) $c[$r['content_key']] = $r['value'];
         }
-        $pdf = InvoicePdf::render($order, $items->fetchAll(), [
-            'name'    => $content['headquarters_name'] ?? 'Jay foods Ghana',
-            'address' => $content['contact_address'] ?? 'Accra, Ghana',
-            'phone'   => $content['telephone_display'] ?? '',
-        ]);
+        $wa = KafuiText::digits((string) ($c['whatsapp_number'] ?? ''));
+        if (preg_match('/^233(\d{2})(\d{3})(\d{4})$/', $wa, $m)) $wa = '+233 ' . $m[1] . ' ' . $m[2] . ' ' . $m[3];
+        elseif ($wa !== '') $wa = '+' . $wa;
+        $site = AgentSettings::siteUrl();
+        return [
+            'name'         => KafuiText::noDashes((string) ($c['headquarters_name'] ?? 'Jay foods Ghana')),
+            'address'      => KafuiText::noDashes((string) ($c['contact_address'] ?? 'Accra, Ghana')),
+            'phone'        => (string) ($c['telephone_display'] ?? ''),
+            'whatsapp'     => $wa,
+            'email'        => (string) ($c['contact_email'] ?? ''),
+            'website'      => $site !== '' ? (string) preg_replace('#^https?://#', '', $site) : '',
+            'payment_note' => AgentSettings::get('payment_note'),
+            'logo'         => __DIR__ . '/assets/invoice-logo.jpg',
+        ];
+    }
+
+    /** @return array{id:string,reference:string,url:string,filename:string,total_pesewas:int} */
+    public static function create(int $orderId): array
+    {
+        $db = Database::connection();
+        ['pdf' => $pdf, 'order' => $order] = self::render($orderId);
 
         $id = bin2hex(random_bytes(16));
         if (file_put_contents(self::dir() . '/' . $id . '.pdf', $pdf) === false) {

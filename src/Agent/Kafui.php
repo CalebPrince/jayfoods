@@ -74,7 +74,8 @@ final class Kafui
             if ($m['sender'] === 'system') continue;
             $messages[] = ['role' => $m['sender'] === 'customer' ? 'user' : 'assistant', 'content' => ($m['sender'] === 'staff' ? '[Jay foods staff] ' : '') . $m['body']];
         }
-        $system = KafuiPrompt::build($ctx->role, $ctx->channel() === 'whatsapp' ? 'whatsapp' : 'web', $firstReply);
+        $system = KafuiPrompt::build($ctx->role, $ctx->channel() === 'whatsapp' ? 'whatsapp' : 'web', $firstReply)
+            . self::quoteContext((int) $conv['id'], $turnId);
         $tools = KafuiTools::definitions($ctx->role, $ctx->channel());
         $runTool = static fn(string $name, array $args): array => KafuiTools::run($name, $args, $ctx);
 
@@ -163,6 +164,38 @@ final class Kafui
         $s = $db->prepare('SELECT failed_answers FROM conversations WHERE id=:id');
         $s->execute([':id' => $ctx->conversationId()]);
         if ((int) $s->fetchColumn() >= 2) self::handOff($ctx, 'Kafui failed to answer twice in a row');
+    }
+
+    /**
+     * The chat history holds only the messages, not tool results, so without this
+     * the model cannot see the quote it made earlier and re-quotes on every "yes".
+     * Facts come from the database, not from anything the customer typed.
+     */
+    private static function quoteContext(int $conversationId, int $turnId): string
+    {
+        $db = Database::connection();
+        $s = $db->prepare("SELECT q.id, q.payload_json, q.total_pesewas, q.order_id, o.reference FROM agent_quotes q LEFT JOIN orders o ON o.id = q.order_id
+                            WHERE q.conversation_id = :c AND q.created_at >= datetime('now', :w) ORDER BY q.created_at DESC, q.rowid DESC LIMIT 1");
+        $s->execute([':c' => $conversationId, ':w' => '-' . KafuiTools::QUOTE_HOURS . ' hours']);
+        $q = $s->fetch();
+        if (!$q) return '';
+        $p = json_decode((string) $q['payload_json'], true) ?: [];
+        if ((int) ($p['turn_id'] ?? PHP_INT_MAX) >= $turnId) return '';
+        if ($q['order_id'] !== null) {
+            return "
+
+LATEST QUOTE IN THIS CHAT: already placed as order " . $q['reference'] . ". Do not place it again; quote again only if the customer wants a new order.";
+        }
+        $priced = KafuiTools::price($p['items'] ?? [], (string) ($p['fulfilment'] ?? 'delivery'), (string) ($p['area'] ?? ''));
+        $summary = isset($priced['error']) ? 'Total ' . KafuiText::money((int) $q['total_pesewas']) : KafuiTools::summaryText($priced, (string) ($p['fulfilment'] ?? 'delivery'));
+        return "
+
+OPEN QUOTE IN THIS CHAT (made in an earlier message and shown to the customer):
+quote_id: " . $q['id'] . "
+" . $summary
+            . "
+If the customer now confirms it (yes, ok, go ahead, place it), call place_order with quote_id " . $q['id'] . " and the name, phone, address and date they gave. "
+            . "Call quote_order again only if they change the items, quantities, delivery or area.";
     }
 
     /** Totals of quotes made earlier in this chat may be repeated. @return list<int> */
