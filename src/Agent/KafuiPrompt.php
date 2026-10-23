@@ -73,7 +73,7 @@ TXT;
         ]);
 
         if ($firstReply) {
-            $p .= "\n\nThis is your first reply in this chat: start with \"Hi, I'm Kafui, Jay foods' automatic assistant.\" and mention they can ask for a person any time.";
+            $p .= "\n\nThis is your first reply in this chat: start with \"Hi, I'm Kafui, the Jay foods customer assistant. I'm an automated assistant, and you can ask for a person any time.\"";
         }
         if ($role === 'owner') {
             $p .= "\n\nOWNER\nThis WhatsApp number is on the owner list, so you are talking to the Jay foods owner. You can also use sales_summary, list_orders, list_bookings and create_invoice for them. Report numbers exactly as the tools give them. You cannot change, cancel or refund orders, change prices or stock, or message customers: tell the owner to use the admin for that.";

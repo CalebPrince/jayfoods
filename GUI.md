@@ -66,7 +66,7 @@ The server is authoritative for all validation, roles and prices.
 
 ## Message copy (WhatsApp and widget)
 
-Kafui's first message (draft by PrinceCaleb.dev, owner to approve): "Hi, I'm Kafui, JayFoods' automatic assistant. I can help you order fresh juice, book for an event or check an order. Want a person instead? Just say so."
+Kafui's first message (draft by PrinceCaleb.dev, owner to approve): "Hi, I'm Kafui, the Jay foods customer assistant. I can help you order fresh juice, book for an event or check an order. Want a person instead? Just say so."
 
 Rules: short messages, no em dashes, prices only as the tools give them, always "pending until our team confirms" on orders. The name is said kah-FOO-ee, stress on FOO. If Kafui ever gets a voice, add it to `D:\Tools\chatterbox\ghana-lexicon.json`.
 

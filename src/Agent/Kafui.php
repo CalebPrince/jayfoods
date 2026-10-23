@@ -126,7 +126,7 @@ final class Kafui
 
         $reply = KafuiText::noDashes($reply);
         if ($firstReply && stripos($reply, 'Kafui') === false) {
-            $reply = "Hi, I'm Kafui, Jay foods' automatic assistant. You can ask for a person any time.\n\n" . $reply;
+            $reply = "Hi, I'm Kafui, the Jay foods customer assistant. I'm an automated assistant, and you can ask for a person any time.\n\n" . $reply;
         }
         return ['reply' => mb_substr($reply, 0, 3500), 'document' => $ctx->document, 'handed_off' => $ctx->handedOff];
     }

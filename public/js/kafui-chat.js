@@ -49,7 +49,7 @@
   const panel = el('div', 'kf-panel'); panel.hidden = true; panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Chat with Kafui, the Jay foods assistant');
   const top = el('div', 'kf-top');
   top.appendChild(el('div', 'kf-av', 'K'));
-  const who = el('div'); who.appendChild(el('b', null, 'Kafui')); who.appendChild(el('small', null, "Jay foods' automatic assistant")); top.appendChild(who);
+  const who = el('div'); who.appendChild(el('b', null, 'Kafui')); who.appendChild(el('small', null, "Jay foods customer assistant")); top.appendChild(who);
   const close = el('button', 'kf-x', '×'); close.type = 'button'; close.setAttribute('aria-label', 'Close chat'); top.appendChild(close);
   const wa = el('a', 'kf-wa', 'Prefer WhatsApp? Chat with us there'); wa.target = '_blank'; wa.rel = 'noopener'; wa.href = 'https://wa.me/233246328461';
   const log = el('div', 'kf-log'); log.setAttribute('role', 'log'); log.setAttribute('aria-live', 'polite');
@@ -99,7 +99,7 @@
       input.disabled = true; send.disabled = true;
     }
   }
-  const greeting = "Hi, I'm Kafui, Jay foods' automatic assistant. How can I help?";
+  const greeting = "Hi, I'm Kafui, the Jay foods customer assistant. I'm an automated assistant, and you can ask for a person any time. How can I help?";
 
   function watch() {
     clearInterval(poll);
