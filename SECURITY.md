@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Security
 
 Status: APPROVED. Baseline 0.2.0 approved by Prince Caleb on 23 Oct 2026 for development, staging and production (digest `bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb`). 0.1.0 was approved earlier the same day.
@@ -138,3 +139,12 @@ Report security issues privately to Prince Caleb through princecaleb.dev, not in
 5. Review **Kafui, Action log** and the Kafui orders for the period. Cancel fake orders in the admin.
 6. Restore from backup if data was changed. Tell the JayFoods owner what happened.
 7. Write a short root-cause note here and add a test to `tests/agent/run.php` that would have caught it.
+=======
+# Security Policy
+
+## Reporting a vulnerability
+
+Please use GitHub's private vulnerability reporting or open a private security advisory for this repository. Do not include exploit details, credentials, or personal data in a public issue.
+
+Include the affected version, reproduction steps, impact, and any suggested mitigation. The maintainers will acknowledge the report and provide status updates through the private advisory.
+>>>>>>> origin/main
