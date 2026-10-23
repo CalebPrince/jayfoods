@@ -11,7 +11,7 @@ Jay foods is a lightweight juice catalogue, ordering, payment, and administratio
 - Bulk-order enquiries through prefilled WhatsApp messages
 - Server-side price, stock, currency, and payment verification
 - Paystack callback and signed webhook handling
-- Customer and administrator email notifications through Gmail SMTP
+- Customer and administrator email notifications through SMTP (a cPanel mailbox or Gmail)
 - Admin dashboard for products, orders, messages, payments, and account settings
 - Admin order search, status/payment filters, and CSV export
 - Print-ready invoices with customer, payment, delivery, item, discount, and total details
@@ -54,7 +54,7 @@ Where things are:
 - Vanilla HTML, CSS, and JavaScript
 - Python development-server launcher
 - Paystack transaction API
-- Gmail SMTP
+- SMTP email (cPanel mailbox or Gmail)
 
 The application intentionally uses no PHP framework, Composer packages, Node dependencies, or frontend build tooling.
 
@@ -90,7 +90,7 @@ On the first run, the migration prints the seeded administrator email and a rand
 Use the protected admin Settings page to configure:
 
 - Administrator name, email, and password
-- Gmail SMTP address, App Password, and notification recipient
+- SMTP email address, password and notification recipient (a cPanel mailbox or Gmail)
 - Paystack public key, secret key, and webhook URL
 
 Set the Paystack webhook in the Paystack dashboard to:

@@ -526,7 +526,7 @@
           </div>
         </div>
         <div class="panel settings-wide">
-          <div class="panel-head"><h2>Gmail SMTP</h2></div>
+          <div class="panel-head"><h2>Email sending (SMTP)</h2></div>
           <div class="panel-body" style="padding:20px">
             <div class="form-error" id="smtp-error" style="display:none"></div>
             <div class="form-ok" id="smtp-ok" style="display:none">SMTP settings saved.</div>
@@ -536,9 +536,9 @@
                 <div class="field"><label>Port</label><input name="port" type="number" min="1" max="65535" value="${smtp.port}" /></div>
                 <div class="field"><label>Security</label><select name="encryption"><option value="tls" ${smtp.encryption === 'tls' ? 'selected' : ''}>TLS</option><option value="ssl" ${smtp.encryption === 'ssl' ? 'selected' : ''}>SSL</option></select></div>
                 <div class="field"><label>Sender name</label><input name="sender_name" value="${esc(smtp.sender_name)}" /></div>
-                <div class="field"><label>Gmail address</label><input name="username" type="email" value="${esc(smtp.username)}" autocomplete="username" placeholder="youraccount@gmail.com" /></div>
+                <div class="field"><label>Email address (login)</label><input name="username" type="email" value="${esc(smtp.username)}" autocomplete="username" placeholder="orders@yourdomain.com" /></div>
                 <div class="field"><label>Notification email</label><input name="notification_email" type="email" value="${esc(smtp.notification_email)}" placeholder="orders@example.com" /></div>
-                <div class="field full"><label>Google App Password</label><input name="password" type="password" autocomplete="new-password" placeholder="${smtp.has_password ? 'Saved — leave blank to keep it' : '16-character App Password'}" /><div class="hint">Use a Google App Password, not your regular Google password. Spaces are removed automatically.</div></div>
+                <div class="field full"><label>Email password</label><input name="password" type="password" autocomplete="new-password" placeholder="${smtp.has_password ? 'Saved. Leave blank to keep it.' : 'Password for this email address'}" /><div class="hint">cPanel mailbox: host mail.yourdomain.com, port 465 with SSL (or 587 with TLS), the full email address and its password. Gmail: smtp.gmail.com, port 587 with TLS and a 16-character Google App Password.</div></div>
               </div>
               <button class="btn btn-primary" type="submit">Save SMTP settings</button>
               <button class="btn btn-ghost" type="button" id="smtp-test">Send test email</button>
