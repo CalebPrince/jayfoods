@@ -265,6 +265,15 @@ $f = newWhatsApp('233200000007');
 $steps[] = function () { throw new RuntimeException('provider down'); };
 $r = say($f, 'I want juice');
 check($r['reply'] === Kafui::failText() && KafuiStore::get((int) $f['id'])['mode'] === 'staff', 'all providers failing: fixed message and handoff');
+$note = (string) $db->query("SELECT body FROM conversation_messages WHERE sender='system' AND conversation_id=" . (int) $f['id'] . " ORDER BY id DESC LIMIT 1")->fetchColumn();
+check(str_contains($note, 'provider down'), 'the cause is written into the chat in the admin');
+$sentBefore = count($sent);
+$steps[] = function () { throw new RuntimeException('provider down'); };
+$r = say($owner, 'Any orders?');
+check($r['reply'] === Kafui::ownerFailText() && KafuiStore::get((int) $owner['id'])['mode'] === 'kafui', 'an owner is asked to try again, and Kafui keeps answering their chat');
+check(count($sent) === $sentBefore, 'nobody gets a WhatsApp message about the error');
+$defs = json_encode(KafuiTools::definitions('owner', 'whatsapp'));
+check(!str_contains($defs, '"enum":["pending","confirmed","processing"'), 'optional order filters carry no fixed list a provider could reject the whole call over');
 
 section('Limits (CTL-AI-004)');
 $ctxL = new KafuiContext(KafuiStore::get((int) $fresh['id']), 'customer', 1);
