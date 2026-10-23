@@ -71,6 +71,10 @@ final class AdminAgentController
             $owners[$n] = KafuiText::field($o['label'] ?? '', 40);
         }
         if (count($owners) > 5) $errors['owner_numbers'] = 'Add at most five owner numbers.';
+        foreach (['min_days_ahead' => [0, 14], 'handoff_min_bottles' => [0, 100000]] as $k => [$lo, $hi]) {
+            if (array_key_exists($k, $s) && (string) $s[$k] !== '' && (filter_var($s[$k], FILTER_VALIDATE_INT) === false || (int) $s[$k] < $lo || (int) $s[$k] > $hi)) $errors[$k] = 'Enter a whole number from ' . $lo . ' to ' . $hi . '.';
+        }
+        if (mb_strlen((string) ($s['agent_brief'] ?? '')) > 12000) $errors['agent_brief'] = 'Keep the brief under 12,000 characters.';
         if ($errors) { Response::json(['error' => 'Please correct the highlighted fields.', 'fields' => $errors], 422); return; }
 
         foreach (AgentSettings::PLAIN as $k => $default) {
@@ -78,7 +82,7 @@ final class AdminAgentController
             $v = is_bool($s[$k]) ? ($s[$k] ? '1' : '0') : trim((string) $s[$k]);
             if (str_ends_with($k, '_enabled')) $v = $v === '1' ? '1' : '0';
             if ($k === 'site_url') $v = $siteUrl;
-            AgentSettings::set($k, mb_substr($v, 0, 500));
+            AgentSettings::set($k, mb_substr($v, 0, $k === 'agent_brief' ? 12000 : 500));
         }
         $secrets = is_array($in['secrets'] ?? null) ? $in['secrets'] : [];
         foreach (AgentSettings::SECRETS as $k) {

@@ -222,6 +222,10 @@ final class KafuiTools
             $wanted[$sizeId] = ($wanted[$sizeId] ?? 0) + $qty;
         }
 
+        $big = (int) AgentSettings::get('handoff_min_bottles');
+        if ($big > 0 && array_sum($wanted) >= $big) {
+            return ['error' => 'Orders of ' . $big . ' bottles or more are quoted by ' . (AgentSettings::get('handoff_name') ?: 'our team') . '. Take the details (items, date, place) and call handoff.'];
+        }
         $lines = []; $subtotal = 0; $notes = [];
         foreach ($wanted as $sizeId => $qty) {
             if ($qty > self::MAX_QUANTITY) return ['error' => 'Quantities must be between 1 and ' . self::MAX_QUANTITY . '.'];
@@ -256,7 +260,9 @@ final class KafuiTools
         foreach ($priced['lines'] as $l) {
             $out[] = $l['quantity'] . ' x ' . $l['product_name'] . ' at ' . KafuiText::money($l['unit_price_pesewas']) . ($l['is_bulk'] ? ' (bulk price)' : '') . ' = ' . KafuiText::money($l['line_total_pesewas']);
         }
-        $out[] = $fulfilment === 'pickup' ? 'Pickup: no delivery fee' : 'Delivery to ' . $priced['zone']['name'] . ': ' . KafuiText::money($priced['fee']);
+        $out[] = $fulfilment === 'pickup' ? 'Pickup: no delivery fee'
+            : ($priced['fee'] === 0 ? 'Delivery to ' . $priced['zone']['name'] . ': you pay the Uber or Yango rider directly'
+                : 'Delivery to ' . $priced['zone']['name'] . ': ' . KafuiText::money($priced['fee']));
         $out[] = 'Total: ' . KafuiText::money($priced['total']);
         foreach ($priced['notes'] as $n) $out[] = $n;
         return implode("\n", $out);
@@ -309,8 +315,8 @@ final class KafuiTools
         $phone = KafuiText::digits(KafuiText::field($args['phone'] ?? '', 20));
         if ($phone === '' && $ctx->channel() === 'whatsapp') $phone = $ctx->verifiedPhone();
         if (strlen($phone) < 9 || strlen($phone) > 15) return ['error' => 'Ask for a phone number our team can call.'];
-        $date = self::date($args['requested_date'] ?? '');
-        if ($date === null) return ['error' => 'Ask for the date they want it, from today up to ' . self::MAX_DAYS_AHEAD . ' days ahead.'];
+        $date = self::date($args['requested_date'] ?? '', false, true);
+        if ($date === null) return ['error' => 'Ask for the date they want it, from ' . self::earliestText() . ' up to ' . self::MAX_DAYS_AHEAD . ' days ahead.'];
         $fulfilment = (string) $payload['fulfilment'];
         $address = KafuiText::field($args['address'] ?? '', 200);
         if ($fulfilment === 'delivery' && mb_strlen($address) < 3) return ['error' => 'Ask for the delivery address or a landmark.'];
@@ -557,15 +563,22 @@ final class KafuiTools
 
     // ------------------------------------------------------------------ helpers
 
-    /** YYYY-MM-DD from today up to MAX_DAYS_AHEAD (or any past date for owner reports). */
-    private static function date(mixed $value, bool $allowPast = false): ?string
+    private static function earliestText(): string
+    {
+        $days = max(0, (int) AgentSettings::get('min_days_ahead'));
+        return $days === 0 ? 'today' : ($days === 1 ? 'tomorrow' : $days . ' days from today');
+    }
+
+    /** YYYY-MM-DD from the earliest delivery day up to MAX_DAYS_AHEAD (or any past date for owner reports). */
+    private static function date(mixed $value, bool $allowPast = false, bool $orderDate = false): ?string
     {
         $v = trim(is_scalar($value) ? (string) $value : '');
         $d = DateTimeImmutable::createFromFormat('!Y-m-d', $v, new DateTimeZone('UTC'));
         if (!$d || $d->format('Y-m-d') !== $v) return null;
         $today = new DateTimeImmutable('today', new DateTimeZone('UTC'));
         if ($allowPast) return $d <= $today->modify('+1 day') ? $v : null;
-        if ($d < $today || $d > $today->modify('+' . self::MAX_DAYS_AHEAD . ' days')) return null;
+        $earliest = $orderDate ? $today->modify('+' . max(0, (int) AgentSettings::get('min_days_ahead')) . ' days') : $today;
+        if ($d < $earliest || $d > $today->modify('+' . self::MAX_DAYS_AHEAD . ' days')) return null;
         return $v;
     }
 }

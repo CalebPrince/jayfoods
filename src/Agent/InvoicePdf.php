@@ -118,7 +118,8 @@ final class InvoicePdf
         $rows[] = [$pickup ? 'Pickup' : 'Delivery', (int) $order['delivery_fee_pesewas']];
         foreach ($rows as [$label, $amount]) {
             $pdf->text(360, $pdf->y, 9.5, false, $label, self::MUTED);
-            $pdf->right(self::RIGHT - 10, $pdf->y, 9.5, false, ($amount < 0 ? '-' : '') . self::money(abs($amount)), self::INK);
+            $shown = (!$pickup && $label === 'Delivery' && $amount === 0) ? 'Paid to rider' : ($amount < 0 ? '-' : '') . self::money(abs($amount));
+            $pdf->right(self::RIGHT - 10, $pdf->y, 9.5, false, $shown, self::INK);
             $pdf->y -= 16;
         }
         $pdf->y -= 8;
