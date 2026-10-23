@@ -1,6 +1,6 @@
 # Security
 
-Status: SUSPENDED. Baseline 0.1.0 was approved by Caleb on 23 Oct 2026. Version 0.2.0 (CHG-001, the provider chain) is waiting for his approval.
+Status: APPROVED. Baseline 0.2.0 approved by Prince Caleb on 23 Oct 2026 for development, staging and production (digest `bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb`). 0.1.0 was approved earlier the same day.
 Baseline version: 0.2.0
 Canonical record: `security-baseline.yaml`
 Owner: Prince Caleb (PrinceCaleb.dev)
@@ -13,7 +13,7 @@ This file is the readable view. `security-baseline.yaml` is the record for appro
 - **What this covers:** Kafui, the AI ordering agent on the JayFoods WhatsApp number and the website chat (see `ARCHITECTURE.md`).
 - **Risk:** HIGH, full mode. The agent writes orders from public messages, owner tools expose all orders and sales, and customer data goes to Meta and AI providers.
 - **Approval:** scope is development, staging (a test number and a local copy) and production (the live site and the business number).
-- **Why it is suspended:** CHG-001 changed the AI providers to Lisa's chain (Anthropic, OpenAI, OpenRouter, Groq), each with a backup model and its own time limit. The code for it is built and tested on branch `claude/whatsapp-agent`. Nothing is merged or deployed. The pull-request check fails until Caleb approves 0.2.0 and its digest is stored in the repository variable `APPROVED_BASELINE_DIGEST`.
+- **Latest change:** CHG-001 moved the AI providers to Lisa's chain (Anthropic, OpenAI, OpenRouter, Groq), each with a backup model and its own time limit. It was approved with 0.2.0. The pull-request check needs this digest stored in the repository variable `APPROVED_BASELINE_DIGEST`.
 - **Out of scope:** payments in the chat, business-initiated messages, the old customer list import, voice.
 
 ## Assurance targets and standards
@@ -101,14 +101,14 @@ None of it ran on the live site or on GitHub.
 
 | Gate | Stage | Blocking | Status |
 |---|---|---|---|
-| GATE-001 Baseline approval | Before implementation | Yes | CONFIGURED: 0.1.0 approved (EVD-001); 0.2.0 waiting |
+| GATE-001 Baseline approval | Before implementation | Yes | CONFIGURED: 0.2.0 approved (EVD-001) |
 | GATE-002 PR checks: lint, agent tests, secret scan, digest | Pull request | Yes | NOT_YET_BUILT on GitHub (workflow written, branch protection off) |
 | GATE-003 Go-live checklist on the live number | Before deploy | Yes | NOT_YET_BUILT (checklist in docs/kafui-setup.md) |
 | GATE-004 Runtime limits and kill switch | Runtime | Yes | NOT_YET_BUILT on the live site (built and tested locally) |
 
 ## Known risks and open decisions
 
-- **Blocking:** Caleb's approval of baseline 0.2.0 (CHG-001).
+- **Blocking:** none.
 - **Open, not blocking:**
   - **DEC-005:** payment for chat orders. The default sentence is a placeholder.
   - **DEC-006:** deploy method and live domain.

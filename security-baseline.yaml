@@ -1,6 +1,6 @@
 schema_version: "2.3"
 baseline_version: "0.2.0"
-record_digest: "f08aa843f2b4e39274d74f1d62f874bd12b8f16e86a4a3a8364b336a69d19fe7"
+record_digest: "bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb"
 project:
   id: "PRJ-JAYFOODS-AGENT-001"
   name: "Kafui, the JayFoods ordering agent (WhatsApp and website live chat)"
@@ -65,11 +65,11 @@ risk:
     slsa_build_level: 2
     slsa_source_level: 3
 lifecycle:
-  status: "SUSPENDED"
+  status: "APPROVED"
   production_posture: "ELIGIBLE_WHEN_APPROVED"
   spike_expires_at: null
-  development_lock: "LOCKED"
-  deployment_lock: "LOCKED"
+  development_lock: "UNLOCKED"
+  deployment_lock: "UNLOCKED"
 classification_levels: [PUBLIC, INTERNAL, CONFIDENTIAL, SENSITIVE, RESTRICTED]
 assets:
   - {id: "AST-001", name: "Customer personal data (name, phone, delivery address)", classification: "CONFIDENTIAL", owner: "JayFoods owner", retention: "Kept with the order record; deleted on request"}
@@ -233,21 +233,21 @@ decisions:
   - {id: "DEC-006", question: "How is the site deployed to cPanel, and what is the live HTTPS domain for the webhook?", owner: "Prince Caleb", required_decision: "Deploy method (cPanel Git pull of main, or upload of the tagged release) and the domain", blocks_approval: false, status: "OPEN"}
   - {id: "DEC-007", question: "Is the client's existing customer list imported?", owner: "JayFoods owner", required_decision: "Proposed: not in this change. If later, import only name, phone, area and usual order, with a marketing-consent flag, and never message customers first without consent", blocks_approval: false, status: "OPEN"}
 evidence:
-  - {id: "EVD-001", type: "OWNER_APPROVAL", status: "PASSED", observed_at: "2026-10-23T12:33:39Z", observer: "Prince Caleb", location: "Claude Code session, Kafui build (approval message of 23 Oct 2026)"}
+  - {id: "EVD-001", type: "OWNER_APPROVAL", status: "PASSED", observed_at: "2026-10-23T13:08:35Z", observer: "Prince Caleb", location: "Kafui build session: 0.1.0 approved 2026-10-23T12:33:39Z (digest f08aa843...), 0.2.0 approved 2026-10-23T13:08:35Z (digest bf6e6f80...)"}
   - {id: "EVD-002", type: "CI_RUN", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-003", type: "CONFIG_INSPECTION", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-004", type: "TEST_RESULT", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-005", type: "TEST_RESULT", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
-  - {id: "EVD-006", type: "TEST_RESULT", status: "PASSED", observed_at: "2026-10-23T14:10:00Z", observer: "tests/agent/run.php (80 passed, 0 failed), branch claude/whatsapp-agent", location: "tests/agent/run.php"}
-  - {id: "EVD-007", type: "MANUAL_REVIEW", status: "PASSED", observed_at: "2026-10-23T13:30:00Z", observer: "Browser check on a local throwaway copy, branch claude/whatsapp-agent", location: "docs/kafui-setup.md (local testing); signed and forged webhooks via tests/agent/send-test-webhook.php (200 and 401), cross-site admin request refused (403), chat HTML shown as text, staff reply reached the widget"}
-  - {id: "EVD-008", type: "SCAN_REPORT", status: "PASSED", observed_at: "2026-10-23T13:55:00Z", observer: "tests/ci/secret-scan.sh run locally, branch claude/whatsapp-agent", location: "tests/ci/secret-scan.sh"}
+  - {id: "EVD-006", type: "TEST_RESULT", status: "PASSED", observed_at: "2026-10-23T13:05:00Z", observer: "tests/agent/run.php (80 passed, 0 failed), branch claude/whatsapp-agent", location: "tests/agent/run.php"}
+  - {id: "EVD-007", type: "MANUAL_REVIEW", status: "PASSED", observed_at: "2026-10-23T12:55:00Z", observer: "Browser check on a local throwaway copy, branch claude/whatsapp-agent", location: "docs/kafui-setup.md (local testing); signed and forged webhooks via tests/agent/send-test-webhook.php (200 and 401), cross-site admin request refused (403), chat HTML shown as text, staff reply reached the widget"}
+  - {id: "EVD-008", type: "SCAN_REPORT", status: "PASSED", observed_at: "2026-10-23T12:58:00Z", observer: "tests/ci/secret-scan.sh run locally, branch claude/whatsapp-agent", location: "tests/ci/secret-scan.sh"}
 monitoring:
   handoff:
     provider: "NONE"
     owner: "Prince Caleb"
     configuration_status: "NOT_CONFIGURED"
     baseline_version: "0.2.0"
-    record_digest: "f08aa843f2b4e39274d74f1d62f874bd12b8f16e86a4a3a8364b336a69d19fe7"
+    record_digest: "bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb"
     environments: ["production"]
     handed_off_at: null
     acknowledged_at: null
@@ -310,11 +310,11 @@ ai_profile:
   human_trust: {status: "PLANNED", practice: "Agent discloses it is automatic, offers a person, states orders are pending until staff confirm, and shows a server-made summary before placing"}
   rogue_agent_controls: {status: "PLANNED", practice: "Admin kill switch for both channels, action log, counters and alert emails (CTL-AI-007, CTL-LOG-002)"}
 approval:
-  decision: "SUSPENDED"
+  decision: "APPROVED"
   approver: "Prince Caleb"
-  approved_at: "2026-10-23T12:33:39Z"
-  baseline_version: "0.1.0"
-  record_digest: "f08aa843f2b4e39274d74f1d62f874bd12b8f16e86a4a3a8364b336a69d19fe7"
+  approved_at: "2026-10-23T13:08:35Z"
+  baseline_version: "0.2.0"
+  record_digest: "bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb"
   scope: ["development", "staging:test number and local copy", "production:jayfoods live site and business WhatsApp number"]
   expires_at: null
 changes:

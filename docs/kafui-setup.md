@@ -76,7 +76,7 @@ Sign in to the JayFoods admin and open **Kafui**, then **Settings**.
 
 - [ ] The admin password on the live site is not the old first-run password (it used to be published in this public repository). Change it under Settings if in doubt.
 - [ ] `main` is protected on GitHub: pull request required, and the `kafui-checks` jobs (`php-lint`, `agent-tests`, `secret-scan`, `baseline-digest`) are required checks. Turn on "Require review from Code Owners".
-- [ ] The repository variable `APPROVED_BASELINE_DIGEST` is set to the `record_digest` in `security-baseline.yaml` once Caleb has approved the current version (Settings, Secrets and variables, Actions, Variables).
+- [ ] The repository variable `APPROVED_BASELINE_DIGEST` is set to `bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb`, the approved baseline 0.2.0 (Settings, Secrets and variables, Actions, Variables). After any later approved change, update it to the new `record_digest`.
 - [ ] The Meta token has only the two WhatsApp permissions, on this one account.
 - [ ] Every AI provider has a spend limit.
 - [ ] The privacy page shows the "WhatsApp and website chat with Kafui" section.

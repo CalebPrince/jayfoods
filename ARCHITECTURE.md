@@ -1,6 +1,6 @@
 # Architecture: Kafui, the JayFoods ordering agent
 
-Status: built on branch `claude/whatsapp-agent`, not merged or deployed. Baseline 0.2.0 waits for Caleb's approval (CHG-001)
+Status: built on branch `claude/whatsapp-agent`, not merged or deployed. Baseline 0.2.0 approved by Caleb (23 Oct 2026)
 Owner: Prince Caleb (PrinceCaleb.dev)
 Version: 0.2.0, matches `security-baseline.yaml` baseline_version
 Last reviewed: 2026-10-23
@@ -109,7 +109,7 @@ Deployment: the existing cPanel PHP host. The method (cPanel Git pull or uploadi
 | ARCH-1 | One agent engine and one tool set for WhatsApp and the website chat | Caleb's rule: the live chat is the same agent; one place to fix | Separate bots per channel | Role is set per channel; the website never gets owner tools | DECIDED (Caleb, 23 Oct 2026) |
 | ARCH-2 | WhatsApp through Meta Cloud API directly, our server runs the brain (Lisa's Twilio pattern, Meta transport) | The number is already on Meta; no extra fee or account | Twilio, ElevenLabs | Meta app secret and token to guard | DECIDED (Caleb, 23 Oct 2026) |
 | ARCH-3 | Prices only from the admin catalogue through tools | No invented prices; one price list | A separate WhatsApp price list | Money never comes from model output | DECIDED (Caleb, 23 Oct 2026) |
-| ARCH-4 | Lisa's provider chain with a backup model per provider (CHG-001) | One slow or failing provider never stops a reply | One shared time budget; Gemini and DeepSeek | Up to five attempts per message; spend caps per provider | WAITING for approval of 0.2.0 |
+| ARCH-4 | Lisa's provider chain with a backup model per provider (CHG-001) | One slow or failing provider never stops a reply | One shared time budget; Gemini and DeepSeek | Up to five attempts per message; spend caps per provider | DECIDED (Caleb, 23 Oct 2026, baseline 0.2.0) |
 | DEC-001 to DEC-007 | See `security-baseline.yaml` | | | | OPEN |
 
 Reassess this document and the baseline before changing: the tool list or roles, the owner rule, the providers, the WhatsApp provider, what goes into prompts, retention, or adding payments to the chat.
