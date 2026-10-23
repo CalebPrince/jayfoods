@@ -246,6 +246,9 @@ KafuiStore::setMode((int) $h['id'], 'kafui', false);
 $r = say($h, 'thanks');
 check($r['reply'] !== null, 'hand back restores replies');
 check(!Kafui::wantsPerson("I'm the office manager, I need 50 bottles"), '"office manager" does not end the chat');
+AgentSettings::set('handoff_name', 'Ellen');
+check(str_contains(Kafui::handoffText(), 'asked Ellen') && !str_contains(Kafui::handoffText(), 'soon'), 'handover names the person and promises no reply time');
+AgentSettings::set('handoff_name', '');
 
 section('Kill switch (CTL-AI-007)');
 AgentSettings::set('agent_enabled', '0');
@@ -261,7 +264,7 @@ section('Provider failure (CTL-ERR-001)');
 $f = newWhatsApp('233200000007');
 $steps[] = function () { throw new RuntimeException('provider down'); };
 $r = say($f, 'I want juice');
-check($r['reply'] === Kafui::FAIL_TEXT && KafuiStore::get((int) $f['id'])['mode'] === 'staff', 'all providers failing: fixed message and handoff');
+check($r['reply'] === Kafui::failText() && KafuiStore::get((int) $f['id'])['mode'] === 'staff', 'all providers failing: fixed message and handoff');
 
 section('Limits (CTL-AI-004)');
 $ctxL = new KafuiContext(KafuiStore::get((int) $fresh['id']), 'customer', 1);
@@ -474,7 +477,7 @@ check($tried === ['anthropic:main-anthropic', 'openai:main-openai', 'openai:back
 $tried = [];
 Kafui::$modelOverride = function (array $p) use (&$tried) { $tried[] = $p['name']; throw new RuntimeException('down'); };
 $r = say(newWhatsApp('233200000013'), 'hello');
-check(count($tried) === 5 && $r['reply'] === Kafui::FAIL_TEXT, 'when every provider fails: all five attempts made, then the fixed reply and a handoff');
+check(count($tried) === 5 && $r['reply'] === Kafui::failText(), 'when every provider fails: all five attempts made, then the fixed reply and a handoff');
 $tried = [];
 Kafui::$modelOverride = function (array $p, $system, $messages, $tools, $runTool) use (&$tried, $sizeId) {
     $tried[] = $p['name'];

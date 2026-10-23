@@ -28,8 +28,22 @@ final class Kafui
 
     public const AWAY_TEXT = 'Hi, thanks for your message. Our assistant is resting right now, and a member of the Jay foods team will reply as soon as they can.';
     public const LIMIT_TEXT = 'Thanks for all your messages! Let me pause here for a little while. A member of our team will look at this chat.';
-    public const FAIL_TEXT = 'Sorry, I could not answer that just now. I have asked a member of our team to reply to you here.';
-    public const HANDOFF_TEXT = 'No problem. I have asked a member of our team to take over this chat, and they will reply here soon.';
+    /** Who takes over, by name when the admin sets one. No promise of how soon (the business asked for that). */
+    public static function handoffText(): string
+    {
+        return 'No problem. I have asked ' . self::handoffWho() . ' to take over this chat, and they will reply to you here.';
+    }
+
+    public static function failText(): string
+    {
+        return 'Sorry, I could not answer that just now. I have asked ' . self::handoffWho() . ' to reply to you here.';
+    }
+
+    private static function handoffWho(): string
+    {
+        $name = trim(AgentSettings::get('handoff_name'));
+        return $name !== '' ? $name : 'a member of our team';
+    }
 
     /**
      * @param array<string,mixed> $conversation row from conversations
@@ -109,8 +123,8 @@ final class Kafui
 
         if (($reply === null || $reply === '') && $ctx->customerText === null) {
             AgentMonitor::event('provider_failed', (string) $conv['channel']);
-            self::handOff($ctx, 'Kafui could not get an answer from any AI provider', self::FAIL_TEXT);
-            return ['reply' => self::FAIL_TEXT, 'document' => null, 'handed_off' => true];
+            self::handOff($ctx, 'Kafui could not get an answer from any AI provider', self::failText());
+            return ['reply' => self::failText(), 'document' => null, 'handed_off' => true];
         }
         if ($reply === null || $reply === '') $reply = (string) $ctx->customerText;
 
@@ -150,7 +164,7 @@ final class Kafui
     {
         KafuiStore::setMode($ctx->conversationId(), 'staff', true);
         $ctx->handedOff = true;
-        $ctx->customerText = $text ?? self::HANDOFF_TEXT;
+        $ctx->customerText = $text ?? self::handoffText();
         if (!$ctx->isTest()) {
             KafuiNotify::handoff(KafuiStore::get($ctx->conversationId()) ?? $ctx->conversation, $reason);
         }

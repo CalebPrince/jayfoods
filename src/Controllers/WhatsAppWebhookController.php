@@ -88,7 +88,7 @@ final class WhatsAppWebhookController
             $result = Kafui::respond($conversation, $messageId, $text);
         } catch (Throwable $e) {
             error_log('[kafui] respond failed: ' . $e->getMessage());
-            $result = ['reply' => Kafui::FAIL_TEXT, 'document' => null, 'handed_off' => true];
+            $result = ['reply' => Kafui::failText(), 'document' => null, 'handed_off' => true];
             KafuiStore::setMode((int) $conversation['id'], 'staff', true);
         }
         $to = KafuiStore::replyAddress(KafuiStore::get((int) $conversation['id']) ?? $conversation);
