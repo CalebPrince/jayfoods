@@ -142,6 +142,7 @@ final class AdminAgentController
             'counters' => AgentMonitor::counters(),
             'missing' => self::missingForLaunch(),
             'owner_numbers' => count(AgentSettings::ownerNumbers()),
+            'provider_errors' => AgentMonitor::recentProviderErrors(),
         ]]);
     }
 

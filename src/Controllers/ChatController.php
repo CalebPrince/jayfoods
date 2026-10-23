@@ -48,7 +48,7 @@ final class ChatController
         } catch (Throwable $e) {
             error_log('[kafui] web respond failed: ' . $e->getMessage());
             KafuiStore::setMode((int) $conv['id'], 'staff', true);
-            $result = ['reply' => Kafui::FAIL_TEXT, 'handed_off' => true];
+            $result = ['reply' => Kafui::failText(), 'handed_off' => true];
         }
         if ($result['reply'] !== null) KafuiStore::add((int) $conv['id'], $result['sender'] ?? 'kafui', $result['reply']);
         if (random_int(1, 50) === 1) AgentMonitor::housekeeping();
