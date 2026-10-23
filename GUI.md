@@ -35,7 +35,7 @@ Applies to: the website chat widget on the JayFoods storefront, and the new Kafu
 | Chat widget | Ask, order, book | Button bottom right, "Chat with Kafui" | Visitor | type, send, open WhatsApp | messages | Full screen under 480px; focus moves into the panel on open and back to the button on close; Esc closes; new replies announced politely to screen readers | No uploads, no emoji pickers |
 | `#/kafui` inbox | See all chats | New nav item "Kafui" with unread badge | Admin | open, filter (needs a person, WhatsApp, website) | conversation list | Table becomes cards under 720px | No delete from the list |
 | `#/kafui/c/{id}` | Read a chat, reply, take over, hand back | Inbox row | Admin | reply, take over, hand back | thread, linked orders and bookings | Reply box stays visible; send by button or Ctrl+Enter | No editing of past messages |
-| `#/kafui/settings` | Connect Meta and AI providers, owner numbers, limits | Kafui sub-nav | Admin | save, generate verify token, copy webhook URL | settings with has_* flags | Single column on mobile | Secrets never displayed |
+| `#/kafui/settings` | Connect Twilio (or Meta) and AI providers, owner numbers, limits | Kafui sub-nav | Admin | save, generate verify token, copy webhook URL | settings with has_* flags | Single column on mobile | Secrets never displayed |
 | `#/kafui/log` | Audit what Kafui did | Kafui sub-nav | Admin | filter by tool and role | action rows | Horizontal scroll inside the table only | No export in this change |
 | `#/kafui/test` | Try Kafui safely | Kafui sub-nav | Admin | chat as a customer or as the owner | test conversation | As the widget | Never sends WhatsApp messages |
 | `#/kafui/bookings` | Confirm or decline bookings | Kafui sub-nav | Admin | confirm, decline, add note | bookings | Cards under 720px | |
@@ -49,7 +49,7 @@ Unauthorized behaviour: every admin route already sends a signed-out admin to th
 | Start chat | none | `{session, greeting}` | 429, 503 (Kafui off) | Off: show "Kafui is resting. Chat with us on WhatsApp" with the link |
 | Send message | `{session, text <= 1000}` | `{reply, handed_off}` | 400 too long, 401 bad session (start a new one), 429 limit, 503 off | Keep the typed text on error; show a retry button |
 | Inbox | filter, page | `{items, next}` | 401 | Login redirect |
-| Reply | `{text}` | `{sent}` | 409 window closed, 502 Meta failed | Window closed: explain the 24-hour rule and offer to call the customer |
+| Reply | `{text}` | `{sent}` | 409 window closed, 502 Twilio or Meta refused the message | Window closed: explain the 24-hour rule and offer to call the customer |
 | Settings save | fields; blank secret keeps the old one | settings with has_* flags | 422 field errors | Show errors next to fields |
 
 The server is authoritative for all validation, roles and prices.

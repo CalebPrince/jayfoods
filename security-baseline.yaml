@@ -1,5 +1,5 @@
 schema_version: "2.3"
-baseline_version: "0.2.0"
+baseline_version: "0.3.0"
 record_digest: "bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb"
 project:
   id: "PRJ-JAYFOODS-AGENT-001"
@@ -35,13 +35,16 @@ project:
     rejected_options:
       - {option: "Gemini and DeepSeek in the provider chain", reason: "Caleb chose Lisa's four providers (CHG-001)"}
       - {option: "ElevenLabs Agents hosting the conversation (Lisa's WhatsApp voice setup)", reason: "Caleb chose against it; the model would run outside our server and prices would depend on tool wiring in a third-party dashboard"}
-      - {option: "Twilio as the WhatsApp provider (Lisa's original transport)", reason: "The number is already registered directly with Meta; Twilio adds a per-message fee, a second account and a sender migration for no new capability. The sender sits behind one class so Twilio can replace it later"}
+      - {option: "Meta Cloud API directly as the default WhatsApp transport", reason: "Caleb chose Twilio (CHG-002): it is how Lisa runs, Twilio's sign-up does the Meta side, and creating a Meta app was blocked until the business is registered. Meta direct stays in the code as an alternative provider"}
       - {option: "Free-form model replies with prices written by the model", reason: "Prices could be invented; all money figures come from server-side tools instead"}
       - {option: "A separate WhatsApp-only price list", reason: "Two price lists drift; the admin catalogue stays the single source"}
   regulatory_context:
     - regime: "Ghana Data Protection Act, 2012 (Act 843): names, phone numbers, addresses and chat transcripts of customers; processing by AI providers and Meta outside Ghana"
       status: "APPLICABLE"
       notes: "Treated as applicable (Caleb for the JayFoods owner, 23 Oct 2026, DEC-004): 90-day transcript retention, privacy notice update, deletion on request; Data Protection Commission registration is the owner's action. Not legal advice"
+    - regime: "Twilio terms of service and acceptable use policy (WhatsApp messages pass through Twilio)"
+      status: "APPLICABLE"
+      notes: "Twilio processes message content and phone numbers as a processor (CHG-002). Addressed by CTL-DATA-002 and the privacy notice"
     - regime: "WhatsApp Business Terms, Business Messaging Policy and Commerce Policy (Meta)"
       status: "APPLICABLE"
       notes: "Opt-in for business-initiated messages, 24-hour customer service window, human escalation path, allowed goods. Addressed by CTL-API-003 and CTL-AI-006"
@@ -65,11 +68,11 @@ risk:
     slsa_build_level: 2
     slsa_source_level: 3
 lifecycle:
-  status: "APPROVED"
+  status: "SUSPENDED"
   production_posture: "ELIGIBLE_WHEN_APPROVED"
   spike_expires_at: null
-  development_lock: "UNLOCKED"
-  deployment_lock: "UNLOCKED"
+  development_lock: "LOCKED"
+  deployment_lock: "LOCKED"
 classification_levels: [PUBLIC, INTERNAL, CONFIDENTIAL, SENSITIVE, RESTRICTED]
 assets:
   - {id: "AST-001", name: "Customer personal data (name, phone, delivery address)", classification: "CONFIDENTIAL", owner: "JayFoods owner", retention: "Kept with the order record; deleted on request"}
@@ -86,19 +89,19 @@ components:
   - {id: "CMP-004", name: "Website live chat widget and endpoint (/api/v1/chat)", exposure: "INTERNET", provider: "cPanel PHP hosting"}
   - {id: "CMP-005", name: "Agent engine and tool layer (one brain for both channels)", exposure: "PRIVATE", provider: "cPanel PHP hosting", ai_capability: true}
   - {id: "CMP-006", name: "AI model providers in a failover chain: Anthropic, OpenAI, OpenRouter, Groq, each with an optional backup model", exposure: "THIRD_PARTY", provider: "Anthropic, OpenAI, OpenRouter, Groq (DEC-003, CHG-001)", ai_capability: true}
-  - {id: "CMP-007", name: "Meta WhatsApp Cloud API (Graph API)", exposure: "THIRD_PARTY", provider: "Meta"}
+  - {id: "CMP-007", name: "WhatsApp provider: Twilio WhatsApp sender (default) or Meta Cloud API, one active at a time", exposure: "THIRD_PARTY", provider: "Twilio, with Meta behind it (CHG-002)"}
   - {id: "CMP-008", name: "SQLite database and invoice file store (outside the web root)", exposure: "PRIVATE", provider: "cPanel PHP hosting"}
   - {id: "CMP-009", name: "Staff email over Gmail SMTP (existing)", exposure: "THIRD_PARTY", provider: "Google"}
   - {id: "CMP-010", name: "GitHub repository, CI and deployment to cPanel", exposure: "THIRD_PARTY", provider: "GitHub; cPanel (deploy method in DEC-006)"}
 trust_boundaries:
   - {id: "TB-001", name: "Internet to the JayFoods site", from: "PUBLIC_INTERNET", to: ["CMP-001", "CMP-002", "CMP-004"]}
-  - {id: "TB-002", name: "Meta to the WhatsApp webhook", from: "CMP-007", to: ["CMP-003"]}
+  - {id: "TB-002", name: "Twilio (or Meta) to the WhatsApp webhook", from: "CMP-007", to: ["CMP-003"]}
   - {id: "TB-003", name: "Server to AI providers", from: "CMP-005", to: ["CMP-006"]}
   - {id: "TB-004", name: "Model output to tools and database", from: "CMP-006", to: ["CMP-005", "CMP-008"]}
-  - {id: "TB-005", name: "Server to Meta and SMTP (outbound)", from: "CMP-005", to: ["CMP-007", "CMP-009"]}
+  - {id: "TB-005", name: "Server to Twilio (or Meta) and SMTP (outbound)", from: "CMP-005", to: ["CMP-007", "CMP-009"]}
   - {id: "TB-006", name: "Repository and CI to hosting", from: "CMP-010", to: ["CMP-001", "CMP-002", "CMP-003", "CMP-004", "CMP-005"]}
 data_flows:
-  - {id: "FLW-001", name: "WhatsApp message in and reply out", origin: "Customer or owner on WhatsApp", processing: "Meta signs and posts the message; webhook verifies the signature, drops duplicates, rate-limits the number, runs the agent, sends the reply through the Graph API", destination: "Transcript in SQLite; reply to the sender", classification: "CONFIDENTIAL", retention: "90 days (AST-002)", boundaries: ["TB-002", "TB-003", "TB-005"]}
+  - {id: "FLW-001", name: "WhatsApp message in and reply out", origin: "Customer or owner on WhatsApp", processing: "Twilio signs and posts the message (X-Twilio-Signature); the webhook verifies the signature, drops duplicates, rate-limits the number, runs the agent, sends the reply through Twilio's Messages API (Meta Cloud API when Meta is the chosen provider)", destination: "Transcript in SQLite; reply to the sender", classification: "CONFIDENTIAL", retention: "90 days (AST-002)", boundaries: ["TB-002", "TB-003", "TB-005"]}
   - {id: "FLW-002", name: "Website live chat", origin: "Anonymous site visitor", processing: "Chat endpoint issues a signed session, rate-limits per session and IP, runs the same agent with customer tools only", destination: "Transcript in SQLite; reply in the widget", classification: "CONFIDENTIAL", retention: "90 days (AST-002)", boundaries: ["TB-001", "TB-003"]}
   - {id: "FLW-003", name: "Order or booking written by the agent", origin: "Agent tool call after the customer confirms a server-made summary", processing: "Tool re-prices from the database, checks the confirmed quote id, writes a pending, unpaid order or booking marked as from the agent", destination: "orders, order_items, bookings tables; staff email", classification: "CONFIDENTIAL", retention: "As AST-003", boundaries: ["TB-004", "TB-005"]}
   - {id: "FLW-004", name: "Prompt to AI provider", origin: "Agent engine", processing: "System prompt with public business facts and the tool list, plus the last 20 turns of this conversation only; no secrets, no other customers' data", destination: "AI provider (CMP-006)", classification: "CONFIDENTIAL", retention: "Provider retention per DEC-003", boundaries: ["TB-003"]}
@@ -146,21 +149,21 @@ identities:
     forbidden_actions: ["raw SQL, shell, file or arbitrary HTTP access", "see secrets, other conversations or other customers' data", "write prices or totals", "act after the kill switch is off", "more than 6 tool calls per turn"]
     human_approval: "Orders and bookings land as pending for staff; owner tools need the owner's number"
   - id: "ID-006"
-    name: "Meta webhook sender"
+    name: "WhatsApp webhook sender (Twilio, or Meta when chosen)"
     type: "WORKLOAD"
-    authentication: "X-Hub-Signature-256 HMAC-SHA256 over the raw body with the app secret; GET handshake with the verify token"
+    authentication: "Twilio: X-Twilio-Signature, HMAC-SHA1 with the auth token over the exact webhook URL and the sorted POST fields. Meta: X-Hub-Signature-256 HMAC-SHA256 over the raw body with the app secret, and the verify-token handshake. Only the chosen provider's webhook accepts messages"
     resources: ["CMP-003"]
     permissions: ["deliver message and status events"]
     forbidden_actions: ["anything else; unsigned or badly signed requests get 401 and no processing"]
     human_approval: "Not applicable"
   - id: "ID-007"
-    name: "Server sending to Meta"
+    name: "Server sending WhatsApp messages"
     type: "WORKLOAD"
-    authentication: "System-user access token with whatsapp_business_messaging only, assigned to this one WhatsApp account"
+    authentication: "Twilio: Account SID and auth token over HTTP Basic (account-wide; Twilio offers no per-sender scope). Meta: system-user token with whatsapp_business_messaging on this one WhatsApp account"
     resources: ["CMP-007"]
     permissions: ["send messages and documents from the JayFoods number"]
-    forbidden_actions: ["manage the Business portfolio, apps, payment methods or other numbers"]
-    human_approval: "Token issued by Caleb in Meta Business settings"
+    forbidden_actions: ["anything beyond sending WhatsApp messages from the JayFoods sender; the code calls only the Messages API"]
+    human_approval: "Credentials entered by Caleb in the admin; Twilio account owned and billed as decided in DEC-008"
   - id: "ID-008"
     name: "Deployment"
     type: "WORKLOAD"
@@ -200,7 +203,7 @@ controls:
   - {id: "CTL-AUTHZ-003", domain: "AUTHZ", requirement: "Owner-tool use notifies the owner's email with what was asked (time, tool), so use from a lost or borrowed phone is visible; removing a number from the owner list takes effect on the next message", status: "IMPLEMENTED", owner: "JayFoods owner", acceptance: "Test: an owner tool call sends the notice; a removed number loses owner tools immediately", refs: ["OWASP-ASI-2026:ASI03"], evidence_ids: []}
   - {id: "CTL-AUTH-001", domain: "AUTH", requirement: "Before go-live, the first-run admin password is changed on the live site and the migration stops printing or seeding a fixed password (it generates a random one shown once on the server console)", status: "PLANNED", owner: "Prince Caleb", acceptance: "Login with the published password fails on the live site; the migration seeds a random password", refs: ["OWASP-T10-2025:A07", "ASVS-5.0:V6"], evidence_ids: []}
   - {id: "CTL-SES-001", domain: "SESSION", requirement: "Admin keeps the existing HttpOnly JWT cookie; new state-changing admin routes (reply, take over, settings) reject cross-site requests by requiring JSON content type and a same-origin Origin header. Website chat sessions are random ids signed with the app key, expire after 24 hours, and carry no privilege", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests: a cross-origin form post to the reply route is refused; a tampered chat session id is refused", refs: ["ASVS-5.0:V7", "OWASP-T10-2025:A07"], evidence_ids: ["EVD-006", "EVD-007"]}
-  - {id: "CTL-API-001", domain: "API", requirement: "Webhook authentication: POST requests must carry X-Hub-Signature-256 equal to HMAC-SHA256 of the raw body with the app secret (constant-time compare), otherwise 401 and nothing is processed; the GET handshake answers only when hub.verify_token matches the saved random token", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests: missing, wrong and body-tampered signatures get 401; a correct one is processed", refs: ["ASVS-5.0:V4", "OWASP-T10-2025:A08"], evidence_ids: ["EVD-006", "EVD-007"]}
+  - {id: "CTL-API-001", domain: "API", requirement: "Webhook authentication: Twilio requests must carry X-Twilio-Signature equal to HMAC-SHA1, with the auth token, of the configured webhook URL plus the sorted POST fields (constant-time compare), otherwise 403 and nothing is stored. Meta requests (when Meta is chosen) must carry X-Hub-Signature-256 over the raw body with the app secret, and the GET handshake answers only to the saved verify token. The provider not chosen accepts nothing", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests for both providers: missing, wrong, tampered and wrong-URL signatures are refused; a correct one is processed; the provider not chosen ignores requests", refs: ["ASVS-5.0:V4", "OWASP-T10-2025:A08"], evidence_ids: ["EVD-006", "EVD-007"]}
   - {id: "CTL-API-002", domain: "API", requirement: "Idempotency: each WhatsApp message id is processed once (unique key); Meta gets 200 as soon as the event is stored, and the agent work runs after the response is flushed; status events are stored, not acted on", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Test: the same signed payload posted twice gives one reply and one order", refs: ["ASVS-5.0:V4"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-API-003", domain: "API", requirement: "WhatsApp policy: free-form replies only inside 24 hours of the customer's last message; the agent never starts conversations; staff replies after 24 hours are blocked with a clear message (templates out of scope); chat endpoint limits per session and per IP; payloads over 4 KB and texts over 1,000 characters are refused", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Tests for the 24-hour block and the size and rate limits", refs: ["ASVS-5.0:V4", "OWASP-LLM-2025:LLM10"], evidence_ids: []}
   - {id: "CTL-INP-001", domain: "INPUT", requirement: "All SQL through prepared statements; message text stored as plain text and HTML-escaped everywhere it is shown; tool arguments type-checked and length-capped; text sent to WhatsApp stripped of control characters", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests: script and SQL strings in messages are stored and shown inert", refs: ["ASVS-5.0:V1", "OWASP-T10-2025:A05"], evidence_ids: ["EVD-006", "EVD-007"]}
@@ -208,7 +211,7 @@ controls:
   - {id: "CTL-FILE-001", domain: "FILE", requirement: "Invoice PDFs are generated server-side by built-in code into database/invoices (outside the web root) with random 32-hex names, served only through a link signed with the app key that expires after 72 hours, and deleted after 30 days. No uploads are accepted from chat; inbound WhatsApp media is not downloaded (the agent asks for text)", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests: an unsigned, tampered or expired link gets 403; files are not reachable by path", refs: ["ASVS-5.0:V5"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-CRY-001", domain: "CRYPTO", requirement: "Signing uses HMAC-SHA256 with keys derived per purpose from the app key (chat session, invoice link); secrets at rest use the existing AES-256-GCM SecretBox; random values from random_bytes; HTTPS only on the live site", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Code review; tests for signature checks; TLS check on the live domain", refs: ["ASVS-5.0:V11", "ASVS-5.0:V12"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-SEC-001", domain: "SECRETS", requirement: "Meta token, app secret, verify token and AI keys are entered in the admin, stored encrypted, never returned to the browser (shown as saved or not), never put in prompts or logs, and never committed. The public repository holds no secrets, databases or app key", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Secret scan on the pull request passes; the settings API returns has_* flags only", refs: ["OWASP-T10-2025:A02", "OWASP-LLM-2025:LLM07"], evidence_ids: ["EVD-006", "EVD-008"]}
-  - {id: "CTL-SEC-002", domain: "SECRETS", requirement: "Least privilege and rotation: the Meta token is a system-user token with whatsapp_business_messaging on this one WhatsApp account only; AI keys are per-client keys with spend limits set at the provider; the setup notes give the rotation steps for each secret", status: "PLANNED", owner: "Prince Caleb", acceptance: "Config inspection of the token's permissions and provider spend limits", refs: ["OWASP-T10-2025:A02"], evidence_ids: []}
+  - {id: "CTL-SEC-002", domain: "SECRETS", requirement: "Least privilege and rotation: the Twilio auth token is account-wide, so JayFoods uses its own Twilio account (or a subaccount) holding only this sender, and the token is rotated if exposed; the Meta token, when Meta is chosen, is a system-user token with whatsapp_business_messaging on this one WhatsApp account only; AI keys are per-client keys with spend limits set at the provider; the setup notes give the rotation steps for each secret", status: "PLANNED", owner: "Prince Caleb", acceptance: "Config inspection of the token's permissions and provider spend limits", refs: ["OWASP-T10-2025:A02"], evidence_ids: []}
   - {id: "CTL-CFG-001", domain: "CONFIG", requirement: "Agent is off by default until the settings are complete; the live site sends security headers on the new pages (CSP for the widget, frame-ancestors none for admin, nosniff); PHP errors are logged, not displayed", status: "PLANNED", owner: "Prince Caleb", acceptance: "Header check on the live site; a fresh install shows the agent off", refs: ["CISA-SBD:SECURE-DEFAULTS", "SSDF-1.1:PW.9"], evidence_ids: []}
   - {id: "CTL-DATA-001", domain: "DATA", requirement: "Minimise what reaches providers: prompts carry only public business facts and this conversation's last 20 turns; no other customers' data, no secrets, no admin notes. Transcripts deleted 90 days after the last message, invoice files after 30 days, by a daily job", status: "VERIFIED", owner: "JayFoods owner", acceptance: "Prompt-building test shows the allowed fields only; the cleanup job deletes old rows in a test", refs: ["OWASP-LLM-2025:LLM02", "ASVS-5.0:V14"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-DATA-002", domain: "DATA", requirement: "Privacy notice on the site updated to name WhatsApp and the AI providers as processors and the retention periods; providers configured not to train on API data where they offer it; a customer can ask staff to delete their chat and data", status: "PLANNED", owner: "JayFoods owner", acceptance: "Updated privacy page reviewed by the owner; provider settings inspected", refs: ["ASVS-5.0:V14"], evidence_ids: []}
@@ -231,6 +234,7 @@ decisions:
   - {id: "DEC-004", question: "Data protection: does the owner treat Act 843 as applicable, will they register with the Data Protection Commission, and do they accept 90-day transcript retention and the privacy notice changes?", owner: "JayFoods owner", required_decision: "Decided (Caleb, 23 Oct 2026): Act 843 treated as APPLICABLE; 90-day transcript retention; privacy notice updated; not legal advice", blocks_approval: true, status: "DECIDED"}
   - {id: "DEC-005", question: "How do agent-taken orders get paid?", owner: "JayFoods owner", required_decision: "Proposed: orders land unpaid and pending; staff confirm and arrange MoMo or cash on delivery. A Paystack link from the chat is a later change", blocks_approval: false, status: "OPEN"}
   - {id: "DEC-006", question: "How is the site deployed to cPanel, and what is the live HTTPS domain for the webhook?", owner: "Prince Caleb", required_decision: "Deploy method (cPanel Git pull of main, or upload of the tagged release) and the domain", blocks_approval: false, status: "OPEN"}
+  - {id: "DEC-008", question: "Whose Twilio account holds the JayFoods WhatsApp sender, and who pays the Twilio fees?", owner: "Prince Caleb", required_decision: "Proposed: a separate Twilio subaccount for JayFoods under Caleb's account (so its auth token cannot touch Lisa's numbers), billed to JayFoods through Opskeep", blocks_approval: false, status: "OPEN"}
   - {id: "DEC-007", question: "Is the client's existing customer list imported?", owner: "JayFoods owner", required_decision: "Proposed: not in this change. If later, import only name, phone, area and usual order, with a marketing-consent flag, and never message customers first without consent", blocks_approval: false, status: "OPEN"}
 evidence:
   - {id: "EVD-001", type: "OWNER_APPROVAL", status: "PASSED", observed_at: "2026-10-23T13:08:35Z", observer: "Prince Caleb", location: "Kafui build session: 0.1.0 approved 2026-10-23T12:33:39Z (digest f08aa843...), 0.2.0 approved 2026-10-23T13:08:35Z (digest bf6e6f80...)"}
@@ -238,7 +242,7 @@ evidence:
   - {id: "EVD-003", type: "CONFIG_INSPECTION", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-004", type: "TEST_RESULT", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-005", type: "TEST_RESULT", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
-  - {id: "EVD-006", type: "TEST_RESULT", status: "PASSED", observed_at: "2026-10-23T13:05:00Z", observer: "tests/agent/run.php (80 passed, 0 failed), branch claude/whatsapp-agent", location: "tests/agent/run.php"}
+  - {id: "EVD-006", type: "TEST_RESULT", status: "PASSED", observed_at: "2026-10-23T14:22:34Z", observer: "tests/agent/run.php (97 passed, 0 failed, including the Twilio tests), branch claude/kafui-twilio", location: "tests/agent/run.php"}
   - {id: "EVD-007", type: "MANUAL_REVIEW", status: "PASSED", observed_at: "2026-10-23T12:55:00Z", observer: "Browser check on a local throwaway copy, branch claude/whatsapp-agent", location: "docs/kafui-setup.md (local testing); signed and forged webhooks via tests/agent/send-test-webhook.php (200 and 401), cross-site admin request refused (403), chat HTML shown as text, staff reply reached the widget"}
   - {id: "EVD-008", type: "SCAN_REPORT", status: "PASSED", observed_at: "2026-10-23T12:58:00Z", observer: "tests/ci/secret-scan.sh run locally, branch claude/whatsapp-agent", location: "tests/ci/secret-scan.sh"}
 monitoring:
@@ -246,7 +250,7 @@ monitoring:
     provider: "NONE"
     owner: "Prince Caleb"
     configuration_status: "NOT_CONFIGURED"
-    baseline_version: "0.2.0"
+    baseline_version: "0.3.0"
     record_digest: "bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb"
     environments: ["production"]
     handed_off_at: null
@@ -310,7 +314,7 @@ ai_profile:
   human_trust: {status: "PLANNED", practice: "Agent discloses it is automatic, offers a person, states orders are pending until staff confirm, and shows a server-made summary before placing"}
   rogue_agent_controls: {status: "PLANNED", practice: "Admin kill switch for both channels, action log, counters and alert emails (CTL-AI-007, CTL-LOG-002)"}
 approval:
-  decision: "APPROVED"
+  decision: "SUSPENDED"
   approver: "Prince Caleb"
   approved_at: "2026-10-23T13:08:35Z"
   baseline_version: "0.2.0"
@@ -329,4 +333,16 @@ changes:
     affected: ["CMP-006", "CTL-AI-004", "DEC-003", "THR-005", "THR-011"]
     impact: "Two fewer processors receive chat text. A message can now cost up to five model attempts and take up to 90 s before the fixed reply, so the cost cap per message is higher; per-sender message caps, spend limits at each provider and the no-retry-after-a-tool-acted rule are unchanged"
     compensating_controls: ["CTL-AI-004", "CTL-SEC-002", "CTL-LOG-002"]
+    status: "PROPOSED"
+  - id: "CHG-002"
+    type: "MODIFIED"
+    material: true
+    summary: "WhatsApp transport changed to Twilio, as Lisa: the JayFoods number becomes a Twilio WhatsApp sender, messages arrive at /api/v1/whatsapp/twilio signed with X-Twilio-Signature, replies and invoice PDFs go out through Twilio's Messages API. Meta Cloud API stays as an alternative provider; only the chosen one's webhook accepts messages."
+    old_rule: "Meta Cloud API directly: app secret signature in, system-user token out"
+    new_rule: "Twilio by default: auth-token signature over the exact webhook URL in, Account SID and auth token out; provider switch in the admin"
+    reason: "Caleb (23 Oct 2026): follow the Twilio WhatsApp sender steps used for Lisa; creating a Meta app was blocked because the business is not registered"
+    security_impact: "MEDIUM"
+    affected: ["CMP-007", "TB-002", "TB-005", "FLW-001", "ID-006", "ID-007", "CTL-API-001", "CTL-SEC-002", "THR-003", "THR-006", "THR-012"]
+    impact: "Twilio becomes a processor of message content and phone numbers. Its auth token is account-wide (it can send from any number on the account), so it must live in a JayFoods-only account or subaccount (DEC-008). The webhook signature depends on the Live site address matching Twilio's configured URL exactly. Twilio adds a per-message fee."
+    compensating_controls: ["CTL-API-001", "CTL-SEC-001", "CTL-SEC-002", "CTL-DATA-002"]
     status: "PROPOSED"

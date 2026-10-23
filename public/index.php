@@ -87,6 +87,7 @@ $backups       = new BackupController();
 $adminUsers    = new AdminUserController();
 $activity      = new AdminActivityController();
 $whatsapp      = new WhatsAppWebhookController();
+$twilio        = new TwilioWebhookController();
 $chat          = new ChatController();
 $kafui         = new AdminAgentController();
 
@@ -105,6 +106,7 @@ $router->post('/api/v1/promo-codes/validate', static fn(array $p) => $promos->va
 // ---- Kafui (WhatsApp webhook, website chat, signed invoice links) -------
 $router->get('/api/v1/whatsapp/webhook', static fn(array $p) => $whatsapp->verify());
 $router->post('/api/v1/whatsapp/webhook', static fn(array $p) => $whatsapp->receive());
+$router->post('/api/v1/whatsapp/twilio', static fn(array $p) => $twilio->receive());
 $router->post('/api/v1/chat/session', static fn(array $p) => $chat->session());
 $router->post('/api/v1/chat/message', static fn(array $p) => $chat->message());
 $router->get('/api/v1/chat/history', static fn(array $p) => $chat->history());

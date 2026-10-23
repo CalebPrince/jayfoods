@@ -471,7 +471,7 @@ final class KafuiTools
             $invoice = Invoices::create((int) $o['id']);
             KafuiNotify::invoice($invoice, 'A customer asked Kafui for an invoice for order ' . $o['reference'] . ' (' . $o['customer_name'] . '). Check it and send it to them.');
             foreach (AgentSettings::ownerNumbers() as $owner) {
-                WhatsAppCloud::sendDocument($owner['number'], $invoice['url'], $invoice['filename'], 'Invoice requested by ' . $o['customer_name'] . ' for ' . $o['reference'] . '. Please check and send it on.');
+                WhatsAppSender::sendDocument($owner['number'], $invoice['url'], $invoice['filename'], 'Invoice requested by ' . $o['customer_name'] . ' for ' . $o['reference'] . '. Please check and send it on.');
             }
         }
         $ctx->customerText = 'I have sent your invoice request for ' . $o['reference'] . ' to the owner. They will check it and send it to you.';

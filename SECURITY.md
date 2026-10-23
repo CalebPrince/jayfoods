@@ -1,7 +1,7 @@
 # Security
 
-Status: APPROVED. Baseline 0.2.0 approved by Prince Caleb on 23 Oct 2026 for development, staging and production (digest `bf6e6f806b72a527ee1b64355c04b06a80cb50d83a4f370e64bd2bff45c451eb`). 0.1.0 was approved earlier the same day.
-Baseline version: 0.2.0
+Status: SUSPENDED. Baseline 0.2.0 was approved by Prince Caleb on 23 Oct 2026. Version 0.3.0 (CHG-002, WhatsApp through Twilio) waits for his approval.
+Baseline version: 0.3.0
 Canonical record: `security-baseline.yaml`
 Owner: Prince Caleb (PrinceCaleb.dev)
 Last reviewed: 2026-10-23
@@ -11,7 +11,7 @@ This file is the readable view. `security-baseline.yaml` is the record for appro
 ## Posture and scope
 
 - **What this covers:** Kafui, the AI ordering agent on the JayFoods WhatsApp number and the website chat (see `ARCHITECTURE.md`).
-- **Risk:** HIGH, full mode. The agent writes orders from public messages, owner tools expose all orders and sales, and customer data goes to Meta and AI providers.
+- **Risk:** HIGH, full mode. The agent writes orders from public messages, owner tools expose all orders and sales, and customer data goes to Twilio, Meta and AI providers.
 - **Approval:** scope is development, staging (a test number and a local copy) and production (the live site and the business number).
 - **Latest change:** CHG-001 moved the AI providers to Lisa's chain (Anthropic, OpenAI, OpenRouter, Groq), each with a backup model and its own time limit. It was approved with 0.2.0. The pull-request check needs this digest stored in the repository variable `APPROVED_BASELINE_DIGEST`.
 - **Out of scope:** payments in the chat, business-initiated messages, the old customer list import, voice.
@@ -65,15 +65,15 @@ None of it ran on the live site or on GitHub.
 | CTL-AUTHZ-003 | Owner-tool use emails the owner | IMPLEMENTED | | Needs working SMTP to observe |
 | CTL-AUTH-001 | Random first-run admin password; old published password changed on the live site | PLANNED | | Seeding fixed; Caleb must check the live admin password |
 | CTL-SES-001 | Admin routes refuse cross-site requests; signed, expiring chat sessions | VERIFIED | EVD-006, EVD-007 | |
-| CTL-API-001 | Webhook signature check and verify-token handshake | VERIFIED | EVD-006, EVD-007 | |
-| CTL-API-002 | Each message processed once; fast 200 to Meta | VERIFIED | EVD-006 | |
+| CTL-API-001 | Webhook signature check: X-Twilio-Signature (default) or Meta's app-secret signature and verify token | VERIFIED | EVD-006, EVD-007 | |
+| CTL-API-002 | Each message processed once; fast 200 to Twilio or Meta | VERIFIED | EVD-006 | |
 | CTL-API-003 | 24-hour window, no first contact, size and rate limits | IMPLEMENTED | | |
 | CTL-INP-001 | Prepared statements, escaping, argument checks | VERIFIED | EVD-006, EVD-007 | |
 | CTL-FE-001 | Chat text rendered as text only; no third-party scripts | VERIFIED | EVD-007 | |
 | CTL-FILE-001 | Invoice PDFs outside the web root, signed 72-hour links, deleted after 30 days | VERIFIED | EVD-006 | |
 | CTL-CRY-001 | Per-purpose HMAC keys, AES-256-GCM at rest, HTTPS | VERIFIED | EVD-006 | HTTPS checked at go-live |
 | CTL-SEC-001 | Secrets typed into the admin, encrypted, never returned, logged or committed | VERIFIED | EVD-006, EVD-008 | |
-| CTL-SEC-002 | Meta token limited to WhatsApp on one account; AI spend caps; rotation steps | PLANNED | | Caleb, in Meta and at each provider (docs/kafui-setup.md) |
+| CTL-SEC-002 | Twilio auth token in a JayFoods-only subaccount (or a scoped Meta token); AI spend caps; rotation steps | PLANNED | | Caleb, in Twilio and at each provider (docs/kafui-setup.md, DEC-008) |
 | CTL-CFG-001 | Kafui off by default; security headers; errors not displayed | PLANNED | | Off by default, API headers, error hiding, and site-wide nosniff, frame-blocking and referrer headers (`public/.htaccess`) are built. A storefront content policy is still to do; check the headers on the live site |
 | CTL-DATA-001 | Prompts carry public facts and this chat only; 90-day and 30-day deletion | VERIFIED | EVD-006 | Add the cleanup cron on cPanel |
 | CTL-DATA-002 | Privacy notice updated; providers set not to train; deletion on request | PLANNED | | Privacy page section written; provider settings at go-live |
@@ -87,28 +87,28 @@ None of it ran on the live site or on GitHub.
 
 ## Identity, data and boundaries
 
-- **Customers on WhatsApp** are identified by the sender number inside Meta's signed webhook.
+- **Customers on WhatsApp** are identified by the sender number inside Twilio's signed webhook (or Meta's, if Meta is the chosen provider).
 - **Website visitors** are anonymous, with a signed 24-hour session. To look up an order they need its reference and phone number.
 - **The owner** is a listed number on WhatsApp only. Owner tools are read-only plus invoices.
 - **Staff** use the existing admin login.
 - **Kafui** holds no credentials. It can call only the tools its caller's role allows, and the server prices everything.
-- **Secrets** (Meta token, app secret, verify token, AI keys) are typed into the admin and stored encrypted with the app key.
+- **Secrets** (Twilio auth token, the Meta token, app secret and verify token if Meta is used, AI keys) are typed into the admin and stored encrypted with the app key.
 - **Data minimisation:** prompts hold public business facts and the last 20 turns of one conversation.
 - **Retention:** transcripts are deleted after 90 days and invoice files after 30.
-- **Processors:** Meta, and the AI providers Caleb turns on (Anthropic, OpenAI, OpenRouter, Groq).
+- **Processors:** Twilio, Meta (behind Twilio), and the AI providers Caleb turns on (Anthropic, OpenAI, OpenRouter, Groq).
 
 ## Gates and evidence
 
 | Gate | Stage | Blocking | Status |
 |---|---|---|---|
-| GATE-001 Baseline approval | Before implementation | Yes | CONFIGURED: 0.2.0 approved (EVD-001) |
+| GATE-001 Baseline approval | Before implementation | Yes | CONFIGURED: 0.2.0 approved (EVD-001); 0.3.0 waiting |
 | GATE-002 PR checks: lint, agent tests, secret scan, digest | Pull request | Yes | NOT_YET_BUILT on GitHub (workflow written, branch protection off) |
 | GATE-003 Go-live checklist on the live number | Before deploy | Yes | NOT_YET_BUILT (checklist in docs/kafui-setup.md) |
 | GATE-004 Runtime limits and kill switch | Runtime | Yes | NOT_YET_BUILT on the live site (built and tested locally) |
 
 ## Known risks and open decisions
 
-- **Blocking:** none.
+- **Blocking:** Caleb's approval of baseline 0.3.0 (CHG-002, WhatsApp through Twilio).
 - **Open, not blocking:**
   - **DEC-005:** payment for chat orders. The default sentence is a placeholder.
   - **DEC-006:** deploy method and live domain.
@@ -136,7 +136,7 @@ Include the affected version, reproduction steps, impact, and any suggested miti
 ### Incident steps
 
 1. In the admin (Kafui), click **Turn Kafui off**. Both channels stop. Messages are still stored for staff.
-2. In Meta, rotate the system-user token, and the app secret if the webhook may have been forged. Enter the new values in Kafui, Settings.
+2. In Twilio, rotate the JayFoods subaccount's auth token (secondary token, then promote it). If Meta is the chosen provider, rotate the system-user token and the app secret instead. Enter the new values in Kafui, Settings.
 3. Rotate the AI provider keys at each provider and enter them again.
 4. If the server itself is compromised, replace `database/app.key`. Every stored secret must then be entered again, and admins must sign in again.
 5. Review **Kafui, Action log** and the Kafui orders for the period. Cancel fake orders in the admin.
