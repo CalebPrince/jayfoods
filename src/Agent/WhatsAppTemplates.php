@@ -31,7 +31,7 @@ final class WhatsAppTemplates
             'owner_alert' => [
                 'name' => 'jf_owner_alert', 'category' => 'UTILITY',
                 'title' => 'Owner alert',
-                'use' => 'Sent by Kafui to the owner numbers when it hands a chat over, so Ellen and Rufus are told on their own WhatsApp.',
+                'use' => 'Sent by Kafui to the owner numbers when it hands a chat over, so every number on the owner list is told on its own WhatsApp.',
                 'body' => "Kafui update for Jay foods: {{1}}. Customer: {{2}}. Details: {{3}} Open the Kafui inbox in the admin to reply.",
                 'vars' => ['1' => 'What happened', '2' => 'Customer', '3' => 'Details'],
                 'samples' => ['1' => 'A customer asked for a person', '2' => 'Ama, +233 20 000 0000', '3' => 'Wants 150 bottles of orange juice for a church event on Saturday.'],
@@ -51,7 +51,7 @@ final class WhatsAppTemplates
                 'use' => 'Staff send it from a chat when an order is waiting for payment.',
                 'body' => "Hi {{1}}, your Jay foods order {{2}} for {{3}} is waiting for payment. Please pay by MoMo to {{4}}, then reply here so we can start on it.",
                 'vars' => ['1' => 'Customer name', '2' => 'Order reference', '3' => 'Amount', '4' => 'MoMo number and name'],
-                'samples' => ['1' => 'Ama', '2' => 'JF-20261024-A1B2C3', '3' => 'GHS 50.00', '4' => '0592813813 (Ellen Ayertey)'],
+                'samples' => ['1' => 'Ama', '2' => 'JF-20261024-A1B2C3', '3' => 'GHS 50.00', '4' => '0590000000 (Jay foods)'],
             ],
             'payment_received' => [
                 'name' => 'jf_payment_received', 'category' => 'UTILITY',
@@ -97,7 +97,7 @@ final class WhatsAppTemplates
             'bulk_quote' => [
                 'name' => 'jf_bulk_quote', 'category' => 'UTILITY',
                 'title' => 'Bulk quote',
-                'use' => 'Ellen sends it from a chat with her quote for 100 bottles or more.',
+                'use' => 'Staff send it from a chat with the quote for 100 bottles or more.',
                 'body' => "Hi {{1}}, here is your Jay foods bulk quote: {{2}}, total {{3}}. To confirm, please pay the 50% deposit of {{4}} by MoMo and reply here.",
                 'vars' => ['1' => 'Customer name', '2' => 'Items', '3' => 'Total', '4' => 'Deposit'],
                 'samples' => ['1' => 'Ama', '2' => '120 bottles of Orange 350ml', '3' => 'GHS 1,200.00', '4' => 'GHS 600.00'],

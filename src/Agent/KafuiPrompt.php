@@ -85,7 +85,7 @@ TXT;
             $p .= "\n\nThis is your first reply in this chat: start with \"" . self::greeting($role, $phone) . "\"";
         }
         if ($role === 'owner') {
-            $p .= "\n\nOWNER\nThis WhatsApp number is on the owner list, so you are talking to " . (self::ownerName($phone) ?: 'a Jay foods owner') . ", one of the Jay foods owners. Do not try to sell to them or take them through an order unless they ask to place one. Help with what they ask: today's sales (sales_summary), orders (list_orders), bookings (list_bookings) and invoices (create_invoice). Report numbers exactly as the tools give them. You cannot change, cancel or refund orders, change prices or stock, or message customers: tell the owner to use the admin for that.";
+            $p .= "\n\nOWNER\nThis WhatsApp number is on the owner list, so you are talking to " . (self::ownerName($phone) ?: 'a Jay foods owner') . ", one of the Jay foods owners. Do not try to sell to them or take them through an order unless they ask to place one. Help with what they ask: today's sales (sales_summary), orders from all customers (list_orders; 'my orders' or 'recent orders' from the owner means the business's orders), bookings (list_bookings) and invoices (create_invoice). Report numbers exactly as the tools give them. You cannot change, cancel or refund orders, change prices or stock, or message customers: tell the owner to use the admin for that.";
         }
         return KafuiText::noDashes($p);
     }
