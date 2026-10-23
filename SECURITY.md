@@ -1,7 +1,7 @@
 # Security
 
-Status: APPROVED. Baseline 0.5.0 (CHG-004, deploys update the database by themselves) approved by Prince Caleb on 23 Oct 2026 for development, staging and production (digest `363effad56c4b35ccf546984df38ed82f90981046f85dcfeec6f89c49602ccd0`).
-Baseline version: 0.5.0
+Status: SUSPENDED for review. Baseline 0.6.0 (CHG-005, a higher reply limit for free OpenRouter models) waits for Prince Caleb's approval (digest `8507124c93d941c49e198618de8dbdeafb0bad1770f7cbcfd1f5e9e53a2c4b5d`). Baseline 0.5.0 (CHG-004) was approved on 23 Oct 2026 (digest `363effad56c4b35ccf546984df38ed82f90981046f85dcfeec6f89c49602ccd0`).
+Baseline version: 0.6.0
 Canonical record: `security-baseline.yaml`
 Owner: Prince Caleb (PrinceCaleb.dev)
 Last reviewed: 2026-10-23
