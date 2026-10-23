@@ -477,6 +477,21 @@ check(($f['ContentSid'] ?? '') === 'HX' . str_repeat('c', 32), 'using the order_
 $db->exec("UPDATE orders SET source='website' WHERE id=" . $orderId);
 check(KafuiNotify::orderConfirmed($orderId) === '', 'website orders are left to the email the site already sends');
 
+$db->exec("UPDATE conversations SET needs_attention=1, last_message_at=datetime('now','-3 hours') WHERE id=(SELECT MIN(id) FROM conversations WHERE channel!='test')");
+$db->exec("UPDATE conversations SET needs_attention=0, last_message_at=datetime('now') WHERE id=(SELECT MAX(id) FROM conversations WHERE channel!='test')");
+$prevLevel = error_reporting(E_ALL & ~E_WARNING); // Response::json sets headers, already sent in a CLI run
+ob_start(); (new AdminAgentController())->conversations(); $inbox = json_decode((string) ob_get_clean(), true)['data'] ?? [];
+error_reporting($prevLevel);
+$times = array_column($inbox, 'last_message_at'); $sorted = $times; rsort($sorted);
+check(count($inbox) > 1 && $times === $sorted, 'the Kafui inbox lists chats newest first, even when an older one needs a person');
+check(KafuiText::forChannel("**Order Summary:**
+## Total
+2 x Orange", 'whatsapp') === "*Order Summary:*
+Total
+2 x Orange", 'WhatsApp replies use WhatsApp bold, never ** or headings');
+check(KafuiText::forChannel("**Total:** GHS 30.00", 'web') === 'Total: GHS 30.00', 'website chat replies are plain text');
+$ownerPrompt = KafuiPrompt::build('customer', 'whatsapp', false);
+check(str_contains($ownerPrompt, 'Never choose a juice for the customer') && str_contains($ownerPrompt, 'never that it is confirmed'), 'Kafui asks which juice when a name fits several, and never calls a new order confirmed');
 check(KafuiText::spaceSentences('Is that for pick up.Sure thing, see you.') === 'Is that for pick up. Sure thing, see you.', 'two sentences that ran together get their space back');
 check(KafuiText::spaceSentences('Total GHS 25.00 at jayfoods.princecaleb.dev. Thanks') === 'Total GHS 25.00 at jayfoods.princecaleb.dev. Thanks', 'amounts and web addresses are left alone');
 
