@@ -116,7 +116,8 @@ final class AgentMonitor
         if ($today > 3 && $today > 3 * ($week / 7)) {
             self::alertOnce('orders_spike', '-1 day', 'Unusually many Kafui orders today', "Kafui has taken $today orders today, more than three times the daily average of the last week. Check them in the admin for fake orders.");
         }
-        return ['conversations_deleted' => count($ids), 'invoices_deleted' => $files];
+        $errors = class_exists('ErrorLog', false) ? ErrorLog::prune() : 0;
+        return ['conversations_deleted' => count($ids), 'invoices_deleted' => $files, 'error_log_deleted' => $errors];
     }
 
     /** Sliding-window limit. Returns true when the call is allowed (and records it). */

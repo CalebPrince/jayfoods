@@ -39,8 +39,11 @@ $src = dirname(__DIR__) . '/src';
 require $src . '/Support/Response.php';
 require $src . '/Support/Config.php';
 require $src . '/Support/Database.php';
+require $src . '/Support/ErrorLog.php';
+ErrorLog::install();
 require $src . '/Support/Jwt.php';
 require $src . '/Support/Auth.php';
+require $src . '/Support/Roles.php';
 require $src . '/Support/SmtpMailer.php';
 require $src . '/Support/EmailNotifications.php';
 require $src . '/Support/SecretBox.php';
@@ -67,6 +70,7 @@ require $src . '/Agent/bootstrap.php';
 // Guard: every /api/v1/admin/* route requires a valid admin session.
 if (str_starts_with($requestPath, '/api/v1/admin')) {
     Auth::requireAdmin();
+    Roles::guard($_SERVER['REQUEST_METHOD'], $requestPath);
 }
 
 $router        = new Router();
@@ -111,6 +115,7 @@ $router->post('/api/v1/chat/session', static fn(array $p) => $chat->session());
 $router->post('/api/v1/chat/message', static fn(array $p) => $chat->message());
 $router->get('/api/v1/chat/history', static fn(array $p) => $chat->history());
 $router->get('/api/v1/invoices/{token}', static fn(array $p) => Invoices::serve($p['token']));
+$router->post('/api/v1/client-errors', static fn(array $p) => ErrorLog::fromBrowser());
 
 // ---- Auth -----------------------------------------------------------------
 $router->post('/api/v1/auth/login', static fn(array $p) => $auth->login());
@@ -138,6 +143,8 @@ $router->get('/api/v1/admin/users', static fn(array $p) => $adminUsers->index())
 $router->post('/api/v1/admin/users', static fn(array $p) => $adminUsers->save());
 $router->delete('/api/v1/admin/users/{id}', static fn(array $p) => $adminUsers->destroy((int)$p['id']));
 $router->get('/api/v1/admin/activity', static fn(array $p) => $activity->index());
+$router->get('/api/v1/admin/errors', static fn(array $p) => ErrorLog::index());
+$router->delete('/api/v1/admin/errors', static fn(array $p) => ErrorLog::clear());
 
 $router->get('/api/v1/admin/messages', static fn(array $p) => $messages->index());
 $router->patch('/api/v1/admin/messages/{id}', static fn(array $p) => $messages->markRead((int) $p['id']));

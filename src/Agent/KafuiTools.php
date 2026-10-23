@@ -78,11 +78,12 @@ final class KafuiTools
             ], ['reason']],
             'sales_summary' => ['Owner only: orders and sales between two dates.', ['from' => $date, 'to' => $date], ['from', 'to']],
             'list_orders' => ['Owner only: recent orders for the whole business from all customers (newest first), optionally by status or day. Use this whenever the owner asks about orders.', [
-                'status' => ['type' => 'string', 'enum' => ['pending', 'confirmed', 'processing', 'delivered', 'cancelled']],
-                'date' => $date,
+                // Optional filters carry no enum: some providers reject the whole call when a model sends "all" or "".
+                'status' => ['type' => 'string', 'description' => 'Optional: pending, confirmed, processing, delivered or cancelled. Leave out for all orders.'],
+                'date' => ['type' => 'string', 'description' => 'Optional: only orders placed on this day, as YYYY-MM-DD. Leave out for the latest orders.'],
             ], []],
             'list_bookings' => ['Owner only: bookings and call-back requests.', [
-                'status' => ['type' => 'string', 'enum' => ['pending', 'confirmed', 'declined', 'done']],
+                'status' => ['type' => 'string', 'description' => 'Optional: pending, confirmed, declined or done. Leave out for all bookings.'],
             ], []],
             'create_invoice' => ['Owner only: make an invoice PDF for any order and send it to the owner.', ['reference' => ['type' => 'string']], ['reference']],
         ];

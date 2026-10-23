@@ -119,6 +119,10 @@ $pdo->exec(
 );
 $adminCols=array_column($pdo->query('PRAGMA table_info(admins)')->fetchAll(PDO::FETCH_ASSOC),'name');if(!in_array('is_active',$adminCols,true)){$pdo->exec('ALTER TABLE admins ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1');echo "[migrate] Added admins.is_active\n";}
 
+// Roles: super_admin, admin, staff. Accounts that existed before roles become admins.
+$adminCols=array_column($pdo->query('PRAGMA table_info(admins)')->fetchAll(PDO::FETCH_ASSOC),'name');
+if(!in_array('role',$adminCols,true)){$pdo->exec("ALTER TABLE admins ADD COLUMN role TEXT NOT NULL DEFAULT 'admin' CHECK(role IN ('super_admin','admin','staff'))");echo "[migrate] Added admins.role\n";}
+
 // ---------------------------------------------------------------------------
 // Ensure a signing key exists for JWT (HS256). Generated once, kept out of VCS.
 // ---------------------------------------------------------------------------
@@ -145,7 +149,16 @@ if ($adminCount === 0) {
         ':name'  => 'Jay fooDs Admin',
         ':hash'  => password_hash($password, PASSWORD_DEFAULT),
     ]);
-    echo "[migrate] Seeded default admin:\n";
+    echo "[migrate] Seeded default admin (super admin):\n";
     echo "[migrate]   email:    $email\n";
     echo "[migrate]   password: $password   <-- CHANGE THIS after first login (Settings)\n";
+}
+
+// With no active super admin, the first account (the one the site was set up with) becomes it.
+if ((int) $pdo->query("SELECT COUNT(*) FROM admins WHERE role='super_admin' AND is_active=1")->fetchColumn() === 0) {
+    $first = $pdo->query('SELECT id,email FROM admins WHERE is_active=1 ORDER BY id LIMIT 1')->fetch(PDO::FETCH_ASSOC);
+    if ($first) {
+        $pdo->prepare("UPDATE admins SET role='super_admin' WHERE id=:id")->execute([':id' => $first['id']]);
+        echo "[migrate] Made {$first['email']} the super admin\n";
+    }
 }

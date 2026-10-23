@@ -14,9 +14,16 @@ final class AgentHttp
     /** @return array{status:int,body:string,error:string} */
     public static function request(string $method, string $url, array $headers, ?string $body, int $timeoutSeconds): array
     {
-        if (self::$transport !== null) {
-            return (self::$transport)($method, $url, $headers, $body, $timeoutSeconds);
+        $res = self::$transport !== null ? (self::$transport)($method, $url, $headers, $body, $timeoutSeconds) : self::send($method, $url, $headers, $body, $timeoutSeconds);
+        if ($res['status'] < 200 || $res['status'] >= 400 || $res['error'] !== '') {
+            if (class_exists('ErrorLog', false)) ErrorLog::outgoing($method, $url, (int) $res['status'], (string) $res['error'], (string) $res['body']);
         }
+        return $res;
+    }
+
+    /** @return array{status:int,body:string,error:string} */
+    private static function send(string $method, string $url, array $headers, ?string $body, int $timeoutSeconds): array
+    {
         if (!function_exists('curl_init')) {
             return ['status' => 0, 'body' => '', 'error' => 'PHP cURL is not available on this server.'];
         }

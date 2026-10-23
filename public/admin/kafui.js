@@ -23,8 +23,8 @@
     if (page === 'bookings') return renderBookings(body);
     if (page === 'test') return renderTest(body);
     if (page === 'log') return renderLog(body);
-    if (page === 'settings') return renderSettings(body);
-    if (page === 'templates') return renderTemplates(body);
+    if (page === 'settings' && h.role === 'super_admin') return renderSettings(body);
+    if (page === 'templates' && h.role === 'super_admin') return renderTemplates(body);
     return renderInbox(body);
   }
 
@@ -44,7 +44,7 @@
         call('/admin/agent/enabled', 'PUT', { enabled: true }).then(() => h.router()).catch((e) => alertBox(wrap, e.message));
       }
     });
-    status.appendChild(toggle);
+    if (h.role === 'admin' || h.role === 'super_admin') status.appendChild(toggle);
     wrap.appendChild(status);
 
     if (ov.missing && ov.missing.length) {
@@ -53,7 +53,7 @@
       m.appendChild(el('span', null, ov.missing.join('; ') + '.'));
       wrap.appendChild(m);
     }
-    if (!ov.owner_numbers) wrap.appendChild(el('div', 'kf-missing soft', 'No owner number yet. Add it in Settings so Kafui recognises the owner on WhatsApp.'));
+    if (!ov.owner_numbers && h.role === 'super_admin') wrap.appendChild(el('div', 'kf-missing soft', 'No owner number yet. Add it in Settings so Kafui recognises the owner on WhatsApp.'));
 
     const c = ov.counters || {};
     const stats = el('div', 'kf-stats');
@@ -70,7 +70,7 @@
     }
 
     const tabs = el('nav', 'kf-tabs');
-    [['inbox', 'Inbox'], ['bookings', 'Bookings'], ['test', 'Try Kafui'], ['log', 'Action log'], ['settings', 'Settings'], ['templates', 'Templates']].forEach(([key, label]) => {
+    [['inbox', 'Inbox'], ['bookings', 'Bookings'], ['test', 'Try Kafui'], ['log', 'Action log'], ['settings', 'Settings'], ['templates', 'Templates']].filter(([key]) => (key !== 'settings' && key !== 'templates') || h.role === 'super_admin').filter(([key]) => key !== 'log' || h.role !== 'staff').forEach(([key, label]) => {
       const a = el('a', page === key || (key === 'inbox' && page === 'c') ? 'active' : '', label);
       a.href = '#/kafui/' + key;
       tabs.appendChild(a);

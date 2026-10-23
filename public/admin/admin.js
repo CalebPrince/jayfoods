@@ -60,6 +60,8 @@
     saveAdminUser: body => apiFetch('/admin/users',{method:'POST',body:JSON.stringify(body)}),
     deleteAdminUser: id => apiFetch('/admin/users/'+id,{method:'DELETE'}),
     activity: () => apiFetch('/admin/activity'),
+    errors: (source) => apiFetch('/admin/errors' + (source ? '?source=' + encodeURIComponent(source) : '')),
+    clearErrors: (id) => apiFetch('/admin/errors' + (id ? '?id=' + id : ''), { method: 'DELETE' }),
     kafuiOverview: () => apiFetch('/admin/agent/overview'),
   };
 
@@ -109,19 +111,28 @@
     orders:    { title: 'Orders',    render: renderOrders },
     customers: { title: 'Customers', render: renderCustomers },
     backups:   { title: 'Backups', render: renderBackups },
-    users:     { title: 'Admin users', render: renderAdminUsers },
+    users:     { title: 'Accounts and roles', render: renderAdminUsers },
     activity:  { title: 'Activity log', render: renderActivity },
+    errors:    { title: 'Error log', render: renderErrors },
     messages:  { title: 'Messages',  render: renderMessages },
     content:   { title: 'Site content', render: renderContent },
     delivery:  { title: 'Delivery zones', render: renderDeliveryZones },
     promos:    { title: 'Promo codes', render: renderPromos },
     settings:  { title: 'Settings',  render: renderSettings },
-    kafui:     { title: 'Kafui', render: () => window.KafuiAdmin.render({ apiFetch, view, esc, cedis, fmtDateText, openModal, closeModal, button, router }) },
+    kafui:     { title: 'Kafui', render: () => window.KafuiAdmin.render({ apiFetch, view, esc, cedis, fmtDateText, openModal, closeModal, button, router, role: currentAdmin.role }) },
   };
 
+  // Which role each page needs. The server enforces the same rules (src/Support/Roles.php); this only tidies the menu.
+  const RANK = { staff: 1, admin: 2, super_admin: 3 };
+  const PAGE_ROLE = { dashboard: 'staff', orders: 'staff', kafui: 'staff', messages: 'staff', customers: 'staff', settings: 'staff',
+    products: 'admin', content: 'admin', delivery: 'admin', promos: 'admin', activity: 'admin',
+    backups: 'super_admin', users: 'super_admin', errors: 'super_admin' };
+  const canSee = (key) => !!currentAdmin && (RANK[currentAdmin.role] || 0) >= (RANK[PAGE_ROLE[key] || 'super_admin'] || 3);
+  const isSuper = () => !!currentAdmin && currentAdmin.role === 'super_admin';
+
   function currentRoute() {
-    const key = (location.hash.replace(/^#\//, '') || 'dashboard').split('/')[0];
-    return routes[key] ? key : 'dashboard';
+    const key = (location.hash.replace(/^#\//, '') || 'dashboard').split(/[/?]/)[0];
+    return routes[key] && canSee(key) ? key : 'dashboard';
   }
 
   async function router() {
@@ -429,7 +440,44 @@
 
   function renderBackups(){view.innerHTML=`<div class="panel"><div class="panel-head"><h2>Database backup</h2></div><div class="panel-body" style="padding:24px"><div class="form-ok" id="backup-ok" style="display:none">Backup download started.</div><p style="margin:0 0 12px">Download a complete copy of orders, customers, products, settings and website content.</p><p class="sub" style="margin-bottom:20px">Store backups securely. The database contains customer details and encrypted service credentials. Create a backup before migrations or major changes.</p><button class="btn btn-primary" id="download-backup">Download database backup</button></div></div>`;$('#download-backup').addEventListener('click',async()=>{const b=$('#download-backup');b.disabled=true;b.textContent='Preparing backup…';try{const res=await fetch('/api/v1/admin/backups/database',{credentials:'same-origin'});if(res.status===401){location.replace('login.html');return}if(!res.ok)throw new Error('Could not create the backup.');const blob=await res.blob(),disposition=res.headers.get('Content-Disposition')||'',match=disposition.match(/filename="?([^";]+)"?/),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=match?match[1]:'jayfoods-backup.sqlite';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);$('#backup-ok').style.display='block'}catch(err){alert(err.message)}finally{b.disabled=false;b.textContent='Download database backup'}})}
 
-  async function renderAdminUsers(){const response=await api.adminUsers(),data=response.data,current=response.current_admin_id;const rows=data.map(u=>`<tr><td class="prod-name">${esc(u.name)}${u.id===current?' <span class="pill on">You</span>':''}</td><td>${esc(u.email)}</td><td>${u.is_active?'<span class="pill on">Active</span>':'<span class="pill off">Inactive</span>'}</td><td class="sub">${fmtDate(u.created_at)}</td><td><div class="row-actions"><button class="btn btn-ghost btn-sm" data-edit-user="${u.id}">Edit</button>${u.id!==current?`<button class="btn btn-danger btn-sm" data-delete-user="${u.id}">Delete</button>`:''}</div></td></tr>`).join('');view.innerHTML=`<div class="panel"><div class="panel-head"><h2>${data.length} administrator${data.length===1?'':'s'}</h2><button class="btn btn-primary btn-sm" id="add-admin">+ Add administrator</button></div><div class="panel-body table-scroll"><table class="data"><thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Created</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;const open=u=>openModal(u?'Edit administrator':'Add administrator',`<div class="form-error" id="user-error" style="display:none"></div><form id="admin-user-form"><div class="field"><label>Name</label><input name="name" required value="${esc(u?.name||'')}"></div><div class="field"><label>Email</label><input name="email" type="email" required value="${esc(u?.email||'')}"></div><div class="field"><label>${u?'New password (leave blank to keep current)':'Temporary password'}</label><input name="password" type="password" ${u?'':'required'} minlength="8"></div><div class="field"><label class="checkline"><input name="active" type="checkbox" ${!u||u.is_active?'checked':''} ${u?.id===current?'disabled':''}> Active account</label></div></form>`,[button('Cancel','btn-ghost',closeModal),button(u?'Save changes':'Create administrator','btn-primary',async()=>{const f=new FormData($('#admin-user-form'));try{await api.saveAdminUser({id:u?.id||0,name:f.get('name'),email:f.get('email'),password:f.get('password'),is_active:u?.id===current?true:f.get('active')==='on'});closeModal();renderAdminUsers()}catch(err){const b=$('#user-error');b.textContent=err.message;b.style.display='block'}})]);$('#add-admin').addEventListener('click',()=>open(null));view.querySelectorAll('[data-edit-user]').forEach(b=>b.addEventListener('click',()=>open(data.find(u=>u.id===+b.dataset.editUser))));view.querySelectorAll('[data-delete-user]').forEach(b=>b.addEventListener('click',async()=>{if(confirm('Delete this administrator permanently?')){await api.deleteAdminUser(+b.dataset.deleteUser);renderAdminUsers()}}))}
+  async function renderAdminUsers() {
+    const response = await api.adminUsers(), data = response.data, current = response.current_admin_id, roles = response.roles;
+    const roleNote = { super_admin: 'Everything, including Kafui settings, AI providers, templates, email and Paystack settings, backups, admin users and the error log.', admin: 'Runs the shop: products and prices, site content, delivery zones, promo codes, orders, customers, messages and the Kafui inbox.', staff: 'Day to day: orders, customers, messages, the Kafui inbox and bookings.' };
+    const rows = data.map((u) => `<tr><td class="prod-name">${esc(u.name)}${u.id === current ? ' <span class="pill on">You</span>' : ''}</td><td>${esc(u.email)}</td><td><span class="pill ${u.role === 'super_admin' ? 'type-bulk' : u.role === 'admin' ? 'type-single' : 'off'}">${esc(roles[u.role] || u.role)}</span></td><td>${u.is_active ? '<span class="pill on">Active</span>' : '<span class="pill off">Inactive</span>'}</td><td class="sub">${fmtDate(u.created_at)}</td><td><div class="row-actions"><button class="btn btn-ghost btn-sm" data-edit-user="${u.id}">Edit</button>${u.id !== current ? `<button class="btn btn-danger btn-sm" data-delete-user="${u.id}">Delete</button>` : ''}</div></td></tr>`).join('');
+    view.innerHTML = `<div class="panel"><div class="panel-head"><h2>${data.length} account${data.length === 1 ? '' : 's'}</h2><button class="btn btn-primary btn-sm" id="add-admin">+ Add account</button></div><div class="panel-body table-scroll"><table class="data"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th></th></tr></thead><tbody>${rows}</tbody></table></div><div class="panel-body" style="padding:16px 20px"><p class="sub"><b>Super admin:</b> ${roleNote.super_admin}<br><b>Admin:</b> ${roleNote.admin}<br><b>Staff:</b> ${roleNote.staff}</p></div></div>`;
+    const open = (u) => {
+      const self = u && u.id === current;
+      const options = Object.entries(roles).map(([k, label]) => `<option value="${k}" ${(u ? u.role : 'staff') === k ? 'selected' : ''}>${esc(label)}</option>`).join('');
+      openModal(u ? 'Edit account' : 'Add account', `<div class="form-error" id="user-error" style="display:none"></div><form id="admin-user-form"><div class="field"><label for="au-name">Name</label><input id="au-name" name="name" required value="${esc(u?.name || '')}"></div><div class="field"><label for="au-email">Email</label><input id="au-email" name="email" type="email" required value="${esc(u?.email || '')}"></div><div class="field"><label for="au-role">Role</label><select id="au-role" name="role" ${self ? 'disabled' : ''}>${options}</select><div class="hint" id="au-role-note"></div>${self ? '<div class="hint">You cannot change your own role.</div>' : ''}</div><div class="field"><label for="au-pass">${u ? 'New password (leave blank to keep current)' : 'Temporary password'}</label><input id="au-pass" name="password" type="password" ${u ? '' : 'required'} minlength="8" autocomplete="new-password"></div><div class="field"><label class="checkline"><input name="active" type="checkbox" ${!u || u.is_active ? 'checked' : ''} ${self ? 'disabled' : ''}> Active account</label></div></form>`,
+        [button('Cancel', 'btn-ghost', closeModal), button(u ? 'Save changes' : 'Create account', 'btn-primary', async () => {
+          const f = new FormData($('#admin-user-form'));
+          try {
+            await api.saveAdminUser({ id: u?.id || 0, name: f.get('name'), email: f.get('email'), password: f.get('password'), role: self ? u.role : f.get('role'), is_active: self ? true : f.get('active') === 'on' });
+            closeModal(); renderAdminUsers();
+          } catch (err) { const b = $('#user-error'); b.textContent = err.message; b.style.display = 'block'; }
+        })]);
+      const sel = $('#au-role'), note = () => { $('#au-role-note').textContent = roleNote[sel.value] || ''; };
+      sel.addEventListener('change', note); note();
+    };
+    $('#add-admin').addEventListener('click', () => open(null));
+    view.querySelectorAll('[data-edit-user]').forEach((b) => b.addEventListener('click', () => open(data.find((u) => u.id === +b.dataset.editUser))));
+    view.querySelectorAll('[data-delete-user]').forEach((b) => b.addEventListener('click', async () => {
+      if (!confirm('Delete this account permanently?')) return;
+      try { await api.deleteAdminUser(+b.dataset.deleteUser); renderAdminUsers(); } catch (err) { alert(err.message); }
+    }));
+  }
+
+  async function renderErrors() {
+    const source = new URLSearchParams(location.hash.split('?')[1] || '').get('source') || '';
+    const { data, last_24h } = await api.errors(source);
+    const names = { server: 'Server', api: 'API responses', outgoing: 'Outgoing calls', email: 'Email', browser: 'Visitors\' browsers' };
+    const tabs = [['', 'All']].concat(Object.entries(names)).map(([k, label]) => `<a class="btn btn-sm ${k === source ? 'btn-primary' : 'btn-ghost'}" href="#/errors${k ? '?source=' + k : ''}">${esc(label)}${k && last_24h[k] ? ' (' + last_24h[k] + ')' : ''}</a>`).join(' ');
+    const rows = data.length ? data.map((e) => `<tr><td><span class="pill ${e.source === 'browser' ? 'off' : e.source === 'outgoing' ? 'type-bulk' : 'st-cancelled'}">${esc(names[e.source] || e.source)}</span></td><td><div class="prod-name" style="white-space:normal;overflow-wrap:anywhere;min-width:260px">${esc(e.message)}</div>${e.detail ? `<div class="sub" style="white-space:normal;overflow-wrap:anywhere;min-width:260px">${esc(e.detail)}</div>` : ''}</td><td><code style="overflow-wrap:anywhere;display:inline-block;min-width:140px">${esc(e.path)}</code></td><td>${e.count}</td><td class="sub">${fmtDate(e.last_seen)}${e.count > 1 ? '<br>first ' + fmtDate(e.first_seen) : ''}</td><td><button class="btn btn-ghost btn-sm" data-clear-error="${e.id}">Clear</button></td></tr>`).join('') : '<tr><td colspan="6" class="empty">No errors recorded. Good.</td></tr>';
+    view.innerHTML = `<div class="panel"><div class="panel-head"><h2>Error log</h2>${data.length ? '<button class="btn btn-danger btn-sm" id="clear-errors">Clear all</button>' : ''}</div><div class="panel-body" style="padding:12px 20px;display:flex;flex-wrap:wrap;gap:6px">${tabs}</div><div class="panel-body" style="padding:0 20px 8px"><p class="sub">Errors from anywhere on the site: the server, failed API responses, calls to Twilio, the AI providers and Paystack, email, and visitors' browsers. The same error within an hour is counted on one row. Keys, emails and phone numbers are hidden. Kept 30 days. Counts in brackets are for the last 24 hours.</p></div><div class="panel-body table-scroll"><table class="data"><thead><tr><th>Where</th><th>Error</th><th>Page or address</th><th>Times</th><th>Last seen</th><th></th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+    const all = $('#clear-errors');
+    if (all) all.addEventListener('click', async () => { if (confirm('Clear the whole error log?')) { await api.clearErrors(); renderErrors(); } });
+    view.querySelectorAll('[data-clear-error]').forEach((b) => b.addEventListener('click', async () => { await api.clearErrors(+b.dataset.clearError); renderErrors(); }));
+  }
 
   async function renderActivity(){const {data}=await api.activity(),labels={POST:'Created or submitted',PUT:'Updated',PATCH:'Changed',DELETE:'Deleted'};const rows=data.length?data.map(a=>`<tr><td class="prod-name">${esc(a.admin_name||'Former administrator')}</td><td><span class="pill ${a.method==='DELETE'?'st-cancelled':'on'}">${esc(labels[a.method]||a.method)}</span></td><td><code>${esc(a.path.replace('/api/v1/admin/',''))}</code></td><td>${esc(a.ip_address||'Unknown')}</td><td class="sub">${fmtDate(a.created_at)}</td></tr>`).join(''):'<tr><td colspan="5" class="empty">No administrator changes recorded yet.</td></tr>';view.innerHTML=`<div class="panel"><div class="panel-head"><h2>Latest administrator activity</h2><span class="sub">Most recent 250 successful changes</span></div><div class="panel-body table-scroll"><table class="data"><thead><tr><th>Administrator</th><th>Action</th><th>Area</th><th>IP address</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table></div></div>`}
 
@@ -498,7 +546,8 @@
   // Settings
   // ---------------------------------------------------------------------------
   async function renderSettings() {
-    const [{ data: smtp }, { data: paystack }] = await Promise.all([api.smtpSettings(), api.paystackSettings()]);
+    // Email and Paystack settings hold keys: super admin only (the panels are removed below for everyone else).
+    const [{ data: smtp }, { data: paystack }] = isSuper() ? await Promise.all([api.smtpSettings(), api.paystackSettings()]) : [{ data: {} }, { data: {} }];
     view.innerHTML = `
       <div class="settings-grid">
         <div class="panel">
@@ -637,7 +686,8 @@
         button.disabled = false; button.textContent = 'Send test email';
       }
     });
-    $('#paystack-form').addEventListener('submit', async (e) => {
+    if (!isSuper()) ['#smtp-form', '#paystack-form'].forEach((sel) => $(sel).closest('.panel').remove());
+    $('#paystack-form')?.addEventListener('submit', async (e) => {
       e.preventDefault(); const f = new FormData(e.target), errBox=$('#paystack-error'), okBox=$('#paystack-ok');
       errBox.style.display='none'; okBox.style.display='none'; e.target.querySelectorAll('.field').forEach(x=>x.classList.remove('err'));
       try { await api.updatePaystack({public_key:f.get('public_key').trim(),secret_key:f.get('secret_key'),webhook_url:f.get('webhook_url').trim()}); e.target.elements.secret_key.value=''; e.target.elements.secret_key.placeholder='Saved — leave blank to keep it'; okBox.style.display='block'; }
@@ -671,7 +721,8 @@
       const { data } = await api.me();
       currentAdmin = data;
       $('#admin-name').textContent = data.name;
-      $('#admin-email').textContent = data.email;
+      $('#admin-email').textContent = data.email + (data.role ? ' (' + ({ super_admin: 'Super admin', admin: 'Admin', staff: 'Staff' }[data.role] || data.role) + ')' : '');
+      document.querySelectorAll('#nav a').forEach((a) => { a.hidden = !canSee(a.dataset.route); });
       if (!location.hash) location.hash = '#/dashboard';
       router();
     } catch (err) {

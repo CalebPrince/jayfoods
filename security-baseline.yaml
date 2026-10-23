@@ -1,6 +1,6 @@
 schema_version: "2.3"
-baseline_version: "0.3.0"
-record_digest: "600e78131a5a40078d90f85952c2590a2f3ea08ef5bf9cab30148f2a22024b31"
+baseline_version: "0.4.0"
+record_digest: "9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf"
 project:
   id: "PRJ-JAYFOODS-AGENT-001"
   name: "Kafui, the JayFoods ordering agent (WhatsApp and website live chat)"
@@ -133,12 +133,12 @@ identities:
     forbidden_actions: ["cancel, refund or change orders", "change prices, stock or settings", "send messages to customers through the agent", "export the customer list"]
     human_approval: "Changes to orders and prices stay in the admin, behind admin login"
   - id: "ID-004"
-    name: "Staff admin"
+    name: "Admin accounts with a role: super admin, admin or staff (CHG-003)"
     type: "HUMAN"
-    authentication: "Existing admin login, HttpOnly JWT cookie"
+    authentication: "Existing admin login, HttpOnly JWT cookie; the role is read from the database on every request"
     resources: ["CMP-002"]
-    permissions: ["WhatsApp and AI settings", "inbox: read, reply, take over, hand back", "kill switch", "owner list", "agent action log"]
-    forbidden_actions: ["read stored secrets back (write-only fields)"]
+    permissions: ["super admin: everything, including WhatsApp and AI provider settings, the owner list, WhatsApp templates, email and Paystack settings, backups, accounts and roles, and the error log", "admin: products and prices, site content, delivery zones, promo codes, the Kafui on/off switch, the agent action log and the admin activity log, plus everything staff can do", "staff: orders, customers, messages, the Kafui inbox (read, reply, take over, hand back, send an approved template), bookings and the test chat"]
+    forbidden_actions: ["read stored secrets back (write-only fields)", "admin and staff: any AI provider, WhatsApp or Kafui setting, provider error details, templates management, accounts, backups or the error log", "anyone: change their own role, switch off or delete their own account, or remove the last active super admin"]
     human_approval: "Not applicable"
   - id: "ID-005"
     name: "Agent (model plus tool layer)"
@@ -189,6 +189,7 @@ threats:
   - {id: "THR-014", component_ids: ["CMP-005"], scenario: "The agent misbehaves after a provider model change (wrong tool calls, loops, odd replies) and nobody notices", likelihood: "MEDIUM", impact: "MEDIUM", control_ids: ["CTL-AI-007", "CTL-LOG-002", "CTL-REC-001"], refs: ["OWASP-ASI-2026:ASI10", "OWASP-LLM-2025:LLM03"], residual_risk: "LOW", owner: "Prince Caleb", status: "OPEN"}
   - {id: "THR-015", component_ids: ["CMP-002"], scenario: "The admin is taken over through the first-run password published in the public repository or a stolen session, giving access to the inbox, settings and kill switch", likelihood: "MEDIUM", impact: "HIGH", control_ids: ["CTL-AUTH-001", "CTL-SES-001", "CTL-CFG-001"], refs: ["OWASP-T10-2025:A07"], residual_risk: "MEDIUM", owner: "Prince Caleb", status: "OPEN"}
   - {id: "THR-016", component_ids: ["CMP-008"], scenario: "The database or invoice store is lost or corrupted and orders taken by the agent are gone", likelihood: "LOW", impact: "HIGH", control_ids: ["CTL-REC-001", "CTL-REC-002"], refs: ["SSDF-1.1:PS.3"], residual_risk: "LOW", owner: "Prince Caleb", status: "OPEN"}
+  - {id: "THR-017", component_ids: ["CMP-002", "CMP-008"], scenario: "A staff or admin login is shared, phished or left signed in, and is used to read provider keys, WhatsApp settings, backups or other accounts, or to give itself more access", likelihood: "MEDIUM", impact: "HIGH", control_ids: ["CTL-AUTHZ-004", "CTL-LOG-003"], refs: ["OWASP-T10-2025:A01"], residual_risk: "LOW", owner: "Prince Caleb", status: "OPEN"}
 controls:
   - {id: "CTL-GOV-001", domain: "GOVERNANCE", requirement: "No agent code is written, committed or deployed until Caleb explicitly approves this baseline version; any change to tools, roles, providers or data flows goes through a CHG record and reapproval", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Approval recorded with digest; the PR check fails when the baseline is not APPROVED with the protected digest", refs: ["SSDF-1.1:PO.1", "CISA-SBD:OWNERSHIP"], evidence_ids: []}
   - {id: "CTL-AI-001", domain: "AI_AGENT", requirement: "Tool allow-list per role, decided in code from the authenticated channel identity, never from anything the model or the customer says. Customer role: get_menu, quote_order, place_order, create_booking, my_orders, request_invoice, handoff. Owner role adds sales_summary, list_orders, list_bookings, create_invoice. Unknown tool names and extra arguments are rejected; every argument is validated (ids exist and are active, quantities 1 to 5000, dates in the next 60 days, text fields length-capped)", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests: a customer-role turn that asks for list_orders gets a refusal from the tool layer; unknown tool and out-of-range arguments are rejected; seeded injection messages produce no privileged tool call", refs: ["OWASP-LLM-2025:LLM06", "OWASP-ASI-2026:ASI02", "OWASP-LLM-2025:LLM01"], evidence_ids: ["EVD-006"]}
@@ -198,6 +199,7 @@ controls:
   - {id: "CTL-AI-005", domain: "AI_AGENT", requirement: "Handoff: the handoff tool, the words agent/person/human/manager, or two failed answers switch the conversation to staff mode; the agent then sends one fixed message and stays silent until staff hand it back in the admin. Staff are emailed with the conversation link", status: "VERIFIED", owner: "JayFoods owner", acceptance: "Test: after handoff an inbound message gets no model call and no reply; hand-back restores replies", refs: ["OWASP-ASI-2026:ASI09"], evidence_ids: ["EVD-006", "EVD-007"]}
   - {id: "CTL-AI-006", domain: "AI_AGENT", requirement: "Disclosure and trust: the first reply in a conversation introduces Kafui as JayFoods' automatic assistant and that a person is available on request; every order reply states the order is pending until staff confirm; the agent states facts only from the admin data and says it does not know otherwise", status: "IMPLEMENTED", owner: "JayFoods owner", acceptance: "Transcript review of the test scenarios shows the disclosure and pending wording", refs: ["OWASP-ASI-2026:ASI09", "OWASP-LLM-2025:LLM09"], evidence_ids: []}
   - {id: "CTL-AI-007", domain: "AI_AGENT", requirement: "Kill switch and action log: an admin switch turns the agent off on both channels at once (messages are still stored for staff); every tool call is logged with conversation, role, tool, arguments, result status and time, and shown in the admin", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Test: with the switch off no model or tool runs and the fixed away message is sent; log rows appear for every tool call", refs: ["OWASP-ASI-2026:ASI10"], evidence_ids: ["EVD-006"]}
+  - {id: "CTL-AUTHZ-004", domain: "AUTHZ", requirement: "Admin roles (CHG-003): every /api/v1/admin route is checked on the server against one rule table (src/Support/Roles.php) after sign-in; a route not in the table is for the super admin only. AI provider and Kafui settings, the owner list, WhatsApp template management, email and Paystack settings, backups, accounts and roles, and the error log are super admin only. Only the super admin manages accounts; nobody can change their own role or switch off their own account, and the last active super admin cannot be demoted, switched off or deleted. The menu hides what a role cannot open, but the server check is the control", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Tests: each super-admin-only route refused for admin and staff, admin routes refused for staff, staff routes open to all three, unknown roles refused; the last-super-admin and own-role rules hold. Browser check on a local copy as each role", refs: ["OWASP-T10-2025:A01", "ASVS-5.0:V8"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-AUTHZ-001", domain: "AUTHZ", requirement: "Customer tools are scoped to the caller: on WhatsApp my_orders matches the Meta-delivered sender number; on the website it needs the order reference plus the phone on the order (as the existing tracker). No tool takes a customer phone or id as a free argument to read data", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests: customer A cannot read customer B's orders by any argument or message", refs: ["OWASP-T10-2025:A01", "ASVS-5.0:V8"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-AUTHZ-002", domain: "AUTHZ", requirement: "Owner role is granted only on the WhatsApp channel when the signed webhook's sender number exactly equals a number on the owner list (E.164, saved in the admin). The website chat never grants it. Owner tools are read-only plus invoice creation", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Tests: website chat saying it is the owner gets customer tools only; a non-listed number gets customer tools only; the listed number gets owner tools", refs: ["OWASP-T10-2025:A01", "OWASP-ASI-2026:ASI03"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-AUTHZ-003", domain: "AUTHZ", requirement: "Owner-tool use notifies the owner's email with what was asked (time, tool), so use from a lost or borrowed phone is visible; removing a number from the owner list takes effect on the next message", status: "IMPLEMENTED", owner: "JayFoods owner", acceptance: "Test: an owner tool call sends the notice; a removed number loses owner tools immediately", refs: ["OWASP-ASI-2026:ASI03"], evidence_ids: []}
@@ -217,6 +219,7 @@ controls:
   - {id: "CTL-DATA-002", domain: "DATA", requirement: "Privacy notice on the site updated to name WhatsApp and the AI providers as processors and the retention periods; providers configured not to train on API data where they offer it; a customer can ask staff to delete their chat and data", status: "PLANNED", owner: "JayFoods owner", acceptance: "Updated privacy page reviewed by the owner; provider settings inspected", refs: ["ASVS-5.0:V14"], evidence_ids: []}
   - {id: "CTL-ERR-001", domain: "ERROR_HANDLING", requirement: "If every provider fails or the budget runs out, the customer gets a fixed message that a person will reply, the conversation is flagged for staff, and no tool runs; tool errors return a safe message to the model, never stack traces; send failures are logged and retried once", status: "VERIFIED", owner: "Prince Caleb", acceptance: "Test with all providers failing shows the fixed message, the handoff flag and no order", refs: ["OWASP-T10-2025:A10"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-LOG-001", domain: "LOGGING", requirement: "Logs record event types, ids, outcomes and signature failures, never tokens, keys or full message bodies; server error_log lines mask phone numbers to the last 4 digits", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Review of sample logs from the test run", refs: ["OWASP-T10-2025:A09", "ASVS-5.0:V16"], evidence_ids: []}
+  - {id: "CTL-LOG-003", domain: "LOGGING", requirement: "Site-wide error log for the super admin only (CHG-003): PHP warnings, uncaught exceptions and fatal errors, 5xx API responses, failed calls to AI providers, Twilio, Meta and Paystack, failed email, and script errors reported by visitors' browsers (public endpoint, at most 20 reports per IP per hour, 4 KB). Query strings are dropped from logged addresses; keys, tokens, emails and phone numbers are masked before saving; repeats within an hour are counted on one row; kept 30 days and capped at 5,000 rows", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Tests: repeats counted on one row; a failed provider call is logged with its reason and without the key from its address or headers; masking of keys, tokens, emails and numbers; entries older than 30 days cleared; admin and staff refused the error log", refs: ["OWASP-T10-2025:A09", "ASVS-5.0:V16"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-LOG-002", domain: "LOGGING", requirement: "Agent action log (CTL-AI-007) plus counters on the admin dashboard: signature failures, provider failures, handoffs, replaced replies, owner-tool uses, agent orders per day; staff email when signature failures or provider failures exceed the thresholds in monitoring", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Seeded failures raise the counters and send the email", refs: ["OWASP-T10-2025:A09", "OWASP-ASI-2026:ASI10"], evidence_ids: []}
   - {id: "CTL-SC-001", domain: "SUPPLY_CHAIN", requirement: "No new third-party packages (plain PHP, as the project rule); a pull-request workflow runs PHP lint, the agent test suite and a secret scan; a minimal CycloneDX SBOM lists the PHP runtime and extensions", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Workflow run on the pull request passes and fails on a seeded secret", refs: ["OWASP-T10-2025:A03", "SLSA-1.2:BUILD-L2"], evidence_ids: []}
   - {id: "CTL-DEP-001", domain: "DEPLOY", requirement: "main is protected (pull request required, the CI check required, no force push); deploys come only from main after Caleb merges; the release is a tagged archive with a build provenance attestation from GitHub Actions", status: "PLANNED", owner: "Prince Caleb", acceptance: "Branch protection inspected; a push straight to main is refused; the release shows an attestation", refs: ["SSDF-1.1:PS.1", "SLSA-1.2:SOURCE-L3"], evidence_ids: []}
@@ -224,7 +227,7 @@ controls:
   - {id: "CTL-REC-002", domain: "RECOVERY", requirement: "Daily database backup kept off the server for 30 days (cPanel backup or the admin backup downloaded by a scheduled job), and one restore rehearsed before go-live", status: "PLANNED", owner: "Prince Caleb", acceptance: "A restore of a backup on staging shows agent orders intact", refs: ["SSDF-1.1:PS.3"], evidence_ids: []}
 gates:
   - {id: "GATE-001", name: "Baseline approval", stage: "PRE_IMPLEMENTATION", blocking: true, control_ids: ["CTL-GOV-001"], required_evidence: ["EVD-001"], status: "CONFIGURED", evidence_ids: ["EVD-001"]}
-  - {id: "GATE-002", name: "Pull request checks: lint, agent tests (roles, prices, injection, signatures, limits), secret scan, baseline digest", stage: "PULL_REQUEST", blocking: true, control_ids: ["CTL-SC-001", "CTL-AI-001", "CTL-AI-002", "CTL-AI-003", "CTL-AI-004", "CTL-AUTHZ-001", "CTL-AUTHZ-002", "CTL-API-001", "CTL-API-002", "CTL-SEC-001", "CTL-GOV-001"], required_evidence: ["EVD-002"], status: "NOT_YET_BUILT", evidence_ids: []}
+  - {id: "GATE-002", name: "Pull request checks: lint, agent tests (roles, prices, injection, signatures, limits), secret scan, baseline digest", stage: "PULL_REQUEST", blocking: true, control_ids: ["CTL-SC-001", "CTL-AI-001", "CTL-AI-002", "CTL-AI-003", "CTL-AI-004", "CTL-AUTHZ-001", "CTL-AUTHZ-002", "CTL-API-001", "CTL-API-002", "CTL-SEC-001", "CTL-GOV-001", "CTL-AUTHZ-004", "CTL-LOG-003"], required_evidence: ["EVD-002"], status: "NOT_YET_BUILT", evidence_ids: []}
   - {id: "GATE-003", name: "Go-live check on the live number: owner list set, admin password changed, token permissions, spend limits, headers, privacy notice, restore rehearsed, scenario script passed", stage: "PRE_DEPLOY", blocking: true, control_ids: ["CTL-DEP-001", "CTL-AUTH-001", "CTL-SEC-002", "CTL-CFG-001", "CTL-DATA-002", "CTL-REC-002", "CTL-AI-006"], required_evidence: ["EVD-003", "EVD-004"], status: "NOT_YET_BUILT", evidence_ids: []}
   - {id: "GATE-004", name: "Runtime limits and kill switch", stage: "RUNTIME", blocking: true, control_ids: ["CTL-AI-004", "CTL-AI-005", "CTL-AI-007", "CTL-API-003", "CTL-ERR-001", "CTL-LOG-001", "CTL-LOG-002", "CTL-AUTHZ-003", "CTL-REC-001"], required_evidence: ["EVD-005"], status: "NOT_YET_BUILT", evidence_ids: []}
 decisions:
@@ -237,7 +240,7 @@ decisions:
   - {id: "DEC-008", question: "Whose Twilio account holds the JayFoods WhatsApp sender, and who pays the Twilio fees?", owner: "Prince Caleb", required_decision: "Proposed: a separate Twilio subaccount for JayFoods under Caleb's account (so its auth token cannot touch Lisa's numbers), billed to JayFoods through Opskeep", blocks_approval: false, status: "OPEN"}
   - {id: "DEC-007", question: "Is the client's existing customer list imported?", owner: "JayFoods owner", required_decision: "Proposed: not in this change. If later, import only name, phone, area and usual order, with a marketing-consent flag, and never message customers first without consent", blocks_approval: false, status: "OPEN"}
 evidence:
-  - {id: "EVD-001", type: "OWNER_APPROVAL", status: "PASSED", observed_at: "2026-10-23T14:25:08Z", observer: "Prince Caleb", location: "Kafui build session: 0.1.0 approved 2026-10-23T12:33:39Z (digest f08aa843...), 0.2.0 approved 2026-10-23T13:08:35Z (digest bf6e6f80...), 0.3.0 approved 2026-10-23T14:25:08Z (digest 600e7813...)"}
+  - {id: "EVD-001", type: "OWNER_APPROVAL", status: "PASSED", observed_at: "2026-10-23T17:07:24Z", observer: "Prince Caleb", location: "Kafui build session: 0.1.0 approved 2026-10-23T12:33:39Z (digest f08aa843...), 0.2.0 approved 2026-10-23T13:08:35Z (digest bf6e6f80...), 0.3.0 approved 2026-10-23T14:25:08Z (digest 600e7813...), 0.4.0 approved 2026-10-23T17:07:24Z (digest 9a7910f4...)"}
   - {id: "EVD-002", type: "CI_RUN", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-003", type: "CONFIG_INSPECTION", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-004", type: "TEST_RESULT", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
@@ -250,8 +253,8 @@ monitoring:
     provider: "NONE"
     owner: "Prince Caleb"
     configuration_status: "NOT_CONFIGURED"
-    baseline_version: "0.3.0"
-    record_digest: "600e78131a5a40078d90f85952c2590a2f3ea08ef5bf9cab30148f2a22024b31"
+    baseline_version: "0.4.0"
+    record_digest: "9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf"
     environments: ["production"]
     handed_off_at: null
     acknowledged_at: null
@@ -316,9 +319,9 @@ ai_profile:
 approval:
   decision: "APPROVED"
   approver: "Prince Caleb"
-  approved_at: "2026-10-23T14:25:08Z"
-  baseline_version: "0.3.0"
-  record_digest: "600e78131a5a40078d90f85952c2590a2f3ea08ef5bf9cab30148f2a22024b31"
+  approved_at: "2026-10-23T17:07:24Z"
+  baseline_version: "0.4.0"
+  record_digest: "9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf"
   scope: ["development", "staging:test number and local copy", "production:jayfoods live site and business WhatsApp number"]
   expires_at: null
 changes:
@@ -345,4 +348,16 @@ changes:
     affected: ["CMP-007", "TB-002", "TB-005", "FLW-001", "ID-006", "ID-007", "CTL-API-001", "CTL-SEC-002", "THR-003", "THR-006", "THR-012"]
     impact: "Twilio becomes a processor of message content and phone numbers. Its auth token is account-wide (it can send from any number on the account), so it must live in a JayFoods-only account or subaccount (DEC-008). The webhook signature depends on the Live site address matching Twilio's configured URL exactly. Twilio adds a per-message fee."
     compensating_controls: ["CTL-API-001", "CTL-SEC-001", "CTL-SEC-002", "CTL-DATA-002"]
+    status: "PROPOSED"
+  - id: "CHG-003"
+    type: "ADDED"
+    material: true
+    summary: "Admin roles and a site-wide error log. Accounts get one of three roles: super admin (everything), admin (running the shop) and staff (day to day). AI provider and Kafui settings, templates, email and Paystack settings, backups, accounts and the error log become super admin only. The error log collects server errors, 5xx API responses, failed outgoing calls, failed email and visitors' browser script errors."
+    old_rule: "Every admin account could do everything in the admin, including AI provider keys, WhatsApp settings, the owner list, backups and other accounts"
+    new_rule: "Server-side role check on every admin route (CTL-AUTHZ-004), deny by default to the super admin; the first account becomes the super admin; error log for the super admin only (CTL-LOG-003)"
+    reason: "Caleb (23 Oct 2026): make his account the super admin, let him add admin and staff accounts, keep AI providers and Kafui settings from everyone else, and give the super admin one place to see any error on the site"
+    security_impact: "MEDIUM"
+    affected: ["ID-004", "CMP-002", "CMP-008", "CTL-AUTHZ-004", "CTL-LOG-001", "CTL-LOG-003", "THR-006"]
+    impact: "Narrows what most admin accounts can reach, so a staff login that leaks no longer exposes provider keys, WhatsApp settings or backups. Adds a public endpoint that accepts browser error reports (rate-limited, size-capped, write-only, never shown back to the public) and a new store of error text, masked before saving and kept 30 days. The provider details that used to appear in a chat note now show only in the super admin's views."
+    compensating_controls: ["CTL-AUTHZ-004", "CTL-LOG-003", "CTL-LOG-001", "CTL-SEC-001"]
     status: "PROPOSED"

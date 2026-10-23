@@ -37,7 +37,8 @@ final class KafuiNotify
             trim(($b['event_date'] !== '' ? 'Date ' . $b['event_date'] . '. ' : '') . ($b['guests'] > 0 ? (int) $b['guests'] . ' guests. ' : '') . ($b['juices'] !== '' ? $b['juices'] . '.' : '')) ?: 'See the admin.');
     }
 
-    public static function handoff(array $conversation, string $reason): void
+    /** $alertOwners false: a system failure, which shows in the admin only (no WhatsApp alert). */
+    public static function handoff(array $conversation, string $reason, bool $alertOwners = true): void
     {
         self::staff('A customer is waiting for a person',
             '<p>Kafui handed a ' . self::e($conversation['channel'] === 'web' ? 'website chat' : 'WhatsApp chat') . ' to staff.</p>'
@@ -45,6 +46,7 @@ final class KafuiNotify
             . '<p>Reason: ' . self::e($reason) . '</p>'
             . '<p>Reply from the admin under Kafui. Kafui stays quiet in this chat until you hand it back.'
             . ($conversation['channel'] === 'whatsapp' ? ' WhatsApp lets you reply for 24 hours after the customer\'s last message.' : '') . '</p>');
+        if (!$alertOwners || AgentSettings::isOwnerNumber((string) $conversation['phone'])) return; // system errors and an owner's own chat stay in the admin
         self::owners('A customer is waiting for a person',
             ($conversation['contact_name'] ?: 'Name not given') . ($conversation['phone'] !== '' && !KafuiStore::isWhatsAppId((string) $conversation['phone']) ? ', +' . $conversation['phone'] : '') . ($conversation['channel'] === 'web' ? ' (website chat)' : ''),
             rtrim($reason, '.') . '.');
@@ -147,6 +149,7 @@ final class KafuiNotify
             $mailer->send($to, $subject, '<!doctype html><html><body style="font-family:Arial,sans-serif;color:#173c25"><div style="max-width:600px;margin:auto"><h2 style="color:#176b3a">' . self::e($subject) . '</h2>' . $html . '<p style="color:#68756d;font-size:13px">Kafui, Jay foods</p></div></body></html>');
         } catch (Throwable $e) {
             error_log('[kafui email] ' . $e->getMessage());
+            if (class_exists('ErrorLog', false)) ErrorLog::record('email', 'Kafui email "' . $subject . '" not sent: ' . $e->getMessage());
         }
     }
 

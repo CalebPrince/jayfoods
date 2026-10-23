@@ -127,6 +127,7 @@ CREATE TABLE IF NOT EXISTS admins (
     name          TEXT    NOT NULL DEFAULT 'Administrator',
     password_hash TEXT    NOT NULL,
     is_active     INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
+    role          TEXT    NOT NULL DEFAULT 'staff' CHECK(role IN ('super_admin','admin','staff')),
     created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -326,3 +327,16 @@ CREATE TABLE IF NOT EXISTS agent_templates (
     rejection_reason TEXT NOT NULL DEFAULT '',
     updated_at       TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- Site-wide error log (src/Support/ErrorLog.php), super admin only. Kept 30 days.
+CREATE TABLE IF NOT EXISTS error_log (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    source     TEXT NOT NULL CHECK (source IN ('server', 'api', 'outgoing', 'email', 'browser')),
+    message    TEXT NOT NULL,
+    detail     TEXT NOT NULL DEFAULT '',
+    path       TEXT NOT NULL DEFAULT '',
+    count      INTEGER NOT NULL DEFAULT 1,
+    first_seen TEXT NOT NULL DEFAULT (datetime('now')),
+    last_seen  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_error_log_seen ON error_log (last_seen);

@@ -67,7 +67,7 @@ final class EmailNotifications
 
     private static function quietly(callable $send): void
     {
-        try { $send(); } catch (Throwable $e) { error_log('[jayfoods email] ' . $e->getMessage()); }
+        try { $send(); } catch (Throwable $e) { error_log('[jayfoods email] ' . $e->getMessage()); if (class_exists('ErrorLog', false)) ErrorLog::record('email', 'Email not sent: ' . $e->getMessage()); }
     }
 
     private static function itemRows(array $items): string

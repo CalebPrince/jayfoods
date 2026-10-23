@@ -11,7 +11,7 @@ declare(strict_types=1);
  */
 
 $root = dirname(__DIR__);
-foreach (['Response', 'Config', 'Database', 'SecretBox', 'SmtpMailer', 'EmailNotifications', 'Inventory'] as $class) {
+foreach (['Response', 'Config', 'Database', 'ErrorLog', 'SecretBox', 'SmtpMailer', 'EmailNotifications', 'Inventory'] as $class) {
     require $root . '/src/Support/' . $class . '.php';
 }
 require $root . '/src/Controllers/SiteContentController.php';

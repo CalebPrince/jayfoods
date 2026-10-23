@@ -140,9 +140,10 @@ final class AdminAgentController
         Response::json(['data' => [
             'enabled' => AgentSettings::enabled(),
             'counters' => AgentMonitor::counters(),
-            'missing' => self::missingForLaunch(),
+            // Setup gaps and provider errors name the AI providers: super admin only.
+            'missing' => Auth::role() === 'super_admin' ? self::missingForLaunch() : [],
             'owner_numbers' => count(AgentSettings::ownerNumbers()),
-            'provider_errors' => AgentMonitor::recentProviderErrors(),
+            'provider_errors' => Auth::role() === 'super_admin' ? AgentMonitor::recentProviderErrors() : [],
         ]]);
     }
 
