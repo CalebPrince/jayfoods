@@ -12,7 +12,7 @@ final class Database
     public static function connection(): PDO
     {
         if (self::$instance === null) {
-            $path = dirname(__DIR__, 2) . '/database/jayfoods.sqlite';
+            $path = getenv('JAYFOODS_DB') ?: dirname(__DIR__, 2) . '/database/jayfoods.sqlite';
 
             self::$instance = new PDO('sqlite:' . $path, null, null, [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,

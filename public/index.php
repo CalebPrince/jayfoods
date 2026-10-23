@@ -14,6 +14,14 @@ declare(strict_types=1);
 
 $requestPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
 
+// Errors go to the log, never to the browser; API responses are never sniffed or framed (CTL-CFG-001).
+ini_set('display_errors', '0');
+if (str_starts_with($requestPath, '/api/')) {
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: same-origin');
+    if (!str_starts_with($requestPath, '/api/v1/invoices/')) header("Content-Security-Policy: default-src 'none'; frame-ancestors 'none'");
+}
+
 // Let the built-in server serve real files directly.
 if (PHP_SAPI === 'cli-server' && $requestPath !== '/' && is_file(__DIR__ . $requestPath)) {
     return false;
@@ -54,6 +62,7 @@ require $src . '/Controllers/CustomerController.php';
 require $src . '/Controllers/BackupController.php';
 require $src . '/Controllers/AdminUserController.php';
 require $src . '/Controllers/AdminActivityController.php';
+require $src . '/Agent/bootstrap.php';
 
 // Guard: every /api/v1/admin/* route requires a valid admin session.
 if (str_starts_with($requestPath, '/api/v1/admin')) {
@@ -77,6 +86,9 @@ $customers     = new CustomerController();
 $backups       = new BackupController();
 $adminUsers    = new AdminUserController();
 $activity      = new AdminActivityController();
+$whatsapp      = new WhatsAppWebhookController();
+$chat          = new ChatController();
+$kafui         = new AdminAgentController();
 
 // ---- Public API -----------------------------------------------------------
 $router->get('/api/v1/products', static fn(array $p) => $orders->listProducts());
@@ -89,6 +101,14 @@ $router->post('/api/v1/messages', static fn(array $p) => $messages->create());
 $router->get('/api/v1/site-content', static fn(array $p) => $content->publicContent());
 $router->get('/api/v1/delivery-zones', static fn(array $p) => $deliveryZones->publicIndex());
 $router->post('/api/v1/promo-codes/validate', static fn(array $p) => $promos->validate());
+
+// ---- Kafui (WhatsApp webhook, website chat, signed invoice links) -------
+$router->get('/api/v1/whatsapp/webhook', static fn(array $p) => $whatsapp->verify());
+$router->post('/api/v1/whatsapp/webhook', static fn(array $p) => $whatsapp->receive());
+$router->post('/api/v1/chat/session', static fn(array $p) => $chat->session());
+$router->post('/api/v1/chat/message', static fn(array $p) => $chat->message());
+$router->get('/api/v1/chat/history', static fn(array $p) => $chat->history());
+$router->get('/api/v1/invoices/{token}', static fn(array $p) => Invoices::serve($p['token']));
 
 // ---- Auth -----------------------------------------------------------------
 $router->post('/api/v1/auth/login', static fn(array $p) => $auth->login());
@@ -134,6 +154,22 @@ $router->put('/api/v1/admin/delivery-zones', static fn(array $p) => $deliveryZon
 $router->get('/api/v1/admin/promo-codes', static fn(array $p) => $promos->adminIndex());
 $router->post('/api/v1/admin/promo-codes', static fn(array $p) => $promos->save());
 $router->delete('/api/v1/admin/promo-codes/{id}', static fn(array $p) => $promos->destroy((int)$p['id']));
+
+// ---- Kafui admin ------------------------------------------------------------
+$router->get('/api/v1/admin/agent/overview', static fn(array $p) => $kafui->overview());
+$router->get('/api/v1/admin/agent/settings', static fn(array $p) => $kafui->settings());
+$router->put('/api/v1/admin/agent/settings', static fn(array $p) => $kafui->saveSettings());
+$router->post('/api/v1/admin/agent/verify-token', static fn(array $p) => $kafui->newVerifyToken());
+$router->put('/api/v1/admin/agent/enabled', static fn(array $p) => $kafui->setEnabled());
+$router->get('/api/v1/admin/agent/conversations', static fn(array $p) => $kafui->conversations());
+$router->get('/api/v1/admin/agent/conversations/{id}', static fn(array $p) => $kafui->conversation((int)$p['id']));
+$router->post('/api/v1/admin/agent/conversations/{id}/reply', static fn(array $p) => $kafui->reply((int)$p['id']));
+$router->post('/api/v1/admin/agent/conversations/{id}/take-over', static fn(array $p) => $kafui->takeOver((int)$p['id']));
+$router->post('/api/v1/admin/agent/conversations/{id}/hand-back', static fn(array $p) => $kafui->handBack((int)$p['id']));
+$router->get('/api/v1/admin/agent/actions', static fn(array $p) => $kafui->actions());
+$router->post('/api/v1/admin/agent/test', static fn(array $p) => $kafui->test());
+$router->get('/api/v1/admin/bookings', static fn(array $p) => $kafui->bookings());
+$router->patch('/api/v1/admin/bookings/{id}', static fn(array $p) => $kafui->updateBooking((int)$p['id']));
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
 if(str_starts_with($requestPath,'/api/v1/admin')&&!in_array($_SERVER['REQUEST_METHOD'],['GET','HEAD','OPTIONS'],true)&&http_response_code()<400)AdminActivityController::record($_SERVER['REQUEST_METHOD'],$requestPath);

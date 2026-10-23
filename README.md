@@ -1,6 +1,6 @@
-# Jay fooDs
+# Jay foods
 
-Jay fooDs is a lightweight juice catalogue, ordering, payment, and administration website built for a Ghanaian fruit-juice business.
+Jay foods is a lightweight juice catalogue, ordering, payment, and administration website built for a Ghanaian fruit-juice business.
 
 ## Features
 
@@ -28,6 +28,24 @@ Jay fooDs is a lightweight juice catalogue, ordering, payment, and administratio
 - Product image uploads and bulk-availability controls
 - Searchable product inventory with low-stock, out-of-stock, active, and hidden filters
 - Privacy, cookie, and terms-of-use pages
+
+## Kafui, the ordering agent
+
+Kafui (said kah-FOO-ee) is the AI assistant on the JayFoods WhatsApp number and in the live chat on this site: one agent with the same tools on both channels, set up like Lisa on princecaleb.dev.
+
+- Answers customers, takes orders and event bookings, and prices them only from the admin catalogue, bulk prices and delivery zones.
+- Records orders as pending and unpaid, marked "Kafui", for staff to confirm.
+- Hands a chat to staff when asked or when unsure. Staff reply from **Kafui, Inbox** in the admin.
+- Recognises the owner's WhatsApp number, and gives the owner sales summaries, order and booking lists, and invoice PDFs.
+- Runs on Lisa's provider chain (Anthropic, OpenAI, OpenRouter, Groq), with a backup model per provider and a fixed "a person will reply" message if all of them fail.
+
+Where things are:
+
+- [docs/kafui-setup.md](docs/kafui-setup.md): every step to connect the number in Meta and go live, plus what is still a placeholder.
+- Code: `src/Agent/` (engine, tools, prompt, providers, WhatsApp sender, invoices), `src/Controllers/WhatsAppWebhookController.php`, `ChatController.php`, `AdminAgentController.php`, `public/js/kafui-chat.js`, `public/admin/kafui.js`.
+- Tests: `php tests/agent/run.php` (fake model and fake WhatsApp, no network). `php tests/agent/send-test-webhook.php` posts a signed test message to a running site.
+- Security: [SECURITY.md](SECURITY.md) and [security-baseline.yaml](security-baseline.yaml). Design: [ARCHITECTURE.md](ARCHITECTURE.md) and [GUI.md](GUI.md).
+- Daily clean-up cron: `database/kafui-cleanup.php` (chats deleted after 90 days, invoices after 30).
 
 ## Technology
 
@@ -65,7 +83,7 @@ The administration area is available at:
 http://localhost:8010/admin/login.html
 ```
 
-On the first run, the migration prints the seeded administrator credentials. Change the password immediately from the admin Settings page.
+On the first run, the migration prints the seeded administrator email and a random password, once. Sign in and change the password from the admin Settings page.
 
 ## Configuration
 
@@ -115,4 +133,4 @@ server.py       Migration and local-server entry point
 
 ## License
 
-All rights reserved. This repository contains proprietary Jay fooDs project code and brand assets unless otherwise stated.
+All rights reserved. This repository contains proprietary Jay foods project code and brand assets unless otherwise stated.

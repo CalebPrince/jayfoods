@@ -14,7 +14,7 @@ final class Config
 
     public static function jwtSecret(): string
     {
-        $path = dirname(__DIR__, 2) . '/database/app.key';
+        $path = getenv('JAYFOODS_KEY') ?: dirname(__DIR__, 2) . '/database/app.key';
 
         if (!is_file($path)) {
             file_put_contents($path, bin2hex(random_bytes(32)));

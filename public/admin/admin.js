@@ -60,6 +60,7 @@
     saveAdminUser: body => apiFetch('/admin/users',{method:'POST',body:JSON.stringify(body)}),
     deleteAdminUser: id => apiFetch('/admin/users/'+id,{method:'DELETE'}),
     activity: () => apiFetch('/admin/activity'),
+    kafuiOverview: () => apiFetch('/admin/agent/overview'),
   };
 
   // ---------------------------------------------------------------------------
@@ -70,6 +71,7 @@
   const cedis = (p) => 'GH₵' + (p / 100).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const toPesewas = (v) => Math.round(parseFloat(v || 0) * 100);
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  const fmtDateText = (s) => { const d = new Date((s || '').replace(' ', 'T') + 'Z'); return isNaN(d) ? String(s || '') : d.toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }); };
   const fmtDate = (s) => { const d = new Date((s || '').replace(' ', 'T') + 'Z'); return isNaN(d) ? esc(s) : d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }); };
   const statusPill = (s) => `<span class="pill st-${esc(s)}">${esc(s)}</span>`;
   const typePill = (t) => `<span class="pill type-${esc(t)}">${esc(t)}</span>`;
@@ -114,6 +116,7 @@
     delivery:  { title: 'Delivery zones', render: renderDeliveryZones },
     promos:    { title: 'Promo codes', render: renderPromos },
     settings:  { title: 'Settings',  render: renderSettings },
+    kafui:     { title: 'Kafui', render: () => window.KafuiAdmin.render({ apiFetch, view, esc, cedis, fmtDateText, openModal, closeModal, button, router }) },
   };
 
   function currentRoute() {
@@ -165,7 +168,7 @@
           <tr>
             <td class="prod-name">${esc(o.reference)}</td>
             <td>${esc(o.customer_name)}</td>
-            <td>${typePill(o.order_type)}</td>
+            <td>${typePill(o.order_type)}${String(o.source||'').startsWith('kafui')?' <span class="pill kf-src">Kafui</span>':''}</td>
             <td>${cedis(o.total_pesewas)}</td>
             <td>${paymentPill(o.payment_status)}</td>
             <td>${statusPill(o.status)}</td>
@@ -335,7 +338,7 @@
       <tr class="clickable" data-order="${o.id}">
         <td class="prod-name">${esc(o.reference)}</td>
         <td>${esc(o.customer_name)}<div class="sub">${esc(o.customer_phone)}</div></td>
-        <td>${typePill(o.order_type)}</td>
+        <td>${typePill(o.order_type)}${String(o.source||'').startsWith('kafui')?' <span class="pill kf-src">Kafui</span>':''}</td>
         <td>${o.unit_count} <span class="sub">unit(s)</span></td>
         <td>${cedis(o.total_pesewas)}</td>
         <td>${paymentPill(o.payment_status)}</td>
@@ -394,6 +397,8 @@
       <div class="detail-row"><span>Deliver to</span><span style="text-align:right">${esc(o.delivery_address)}, ${esc(o.region)}</span></div>
       ${o.notes ? `<div class="detail-row"><span>Notes</span><span style="text-align:right">${esc(o.notes)}</span></div>` : ''}
       <div class="detail-row"><span>Placed</span><span>${fmtDate(o.created_at)}</span></div>
+      ${String(o.source||'').startsWith('kafui')?`<div class="detail-row"><span>Taken by</span><span>Kafui (${o.source==='kafui-web'?'website chat':'WhatsApp'}), confirm with the customer</span></div>`:''}
+      ${o.requested_date?`<div class="detail-row"><span>Wanted on</span><span>${esc(o.requested_date)}${o.fulfilment==='pickup'?' (pickup)':''}</span></div>`:''}
       <div class="detail-row"><span>Payment</span><span>${paymentPill(o.payment_status)}</span></div>
       <div class="detail-row"><span>Inventory</span><span>${esc(o.stock_state === 'reserved' ? 'Reserved until ' + fmtDate(o.reservation_expires_at) : o.stock_state)}</span></div>
       ${o.payment_reference ? `<div class="detail-row"><span>Paystack reference</span><span style="text-align:right;font-family:monospace">${esc(o.payment_reference)}</span></div>` : ''}
@@ -417,7 +422,7 @@
     ]);
   }
 
-  function printInvoice(o){const win=window.open('','_blank','width=820,height=900');if(!win)return alert('Allow pop-ups to print the invoice.');const itemRows=o.items.map(i=>`<tr><td>${esc(i.product_name)}</td><td>${i.quantity}</td><td>${cedis(i.unit_price_pesewas)}</td><td>${cedis(i.line_total_pesewas)}</td></tr>`).join('');win.document.write(`<!doctype html><html><head><title>Invoice ${esc(o.reference)}</title><style>body{font:14px Arial,sans-serif;color:#17251c;max-width:760px;margin:35px auto;padding:0 20px}header{display:flex;justify-content:space-between;align-items:start;border-bottom:3px solid #1f7a3d;padding-bottom:18px}img{height:58px}h1{margin:0;color:#155c2d}h2{font-size:16px;margin-top:28px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 30px;margin-top:22px}.meta div{padding:6px 0;border-bottom:1px solid #ddd}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd}th{background:#edf7f0}.totals{width:320px;margin:20px 0 0 auto}.line{display:flex;justify-content:space-between;padding:7px}.grand{font-size:18px;font-weight:bold;border-top:2px solid #1f7a3d}.paid{text-transform:uppercase;font-weight:bold;color:#1f7a3d}footer{margin-top:50px;border-top:1px solid #ddd;padding-top:12px;color:#66776d;text-align:center}@media print{body{margin:0}.no-print{display:none}}</style></head><body><header><img src="${location.origin}/img/logo-color.png"><div><h1>Order invoice</h1><div>${esc(o.reference)}</div></div></header><div class="meta"><div><b>Customer</b><br>${esc(o.customer_name)}</div><div><b>Phone</b><br>${esc(o.customer_phone)}</div><div><b>Delivery</b><br>${esc(o.delivery_address)}, ${esc(o.region)}</div><div><b>Order date</b><br>${fmtDate(o.created_at)}</div><div><b>Order status</b><br>${esc(o.status)}</div><div><b>Payment</b><br><span class="paid">${esc(o.payment_status)}</span></div></div><h2>Items</h2><table><thead><tr><th>Product</th><th>Qty</th><th>Unit price</th><th>Total</th></tr></thead><tbody>${itemRows}</tbody></table><div class="totals"><div class="line"><span>Subtotal</span><span>${cedis(o.subtotal_pesewas)}</span></div>${o.discount_pesewas>0?`<div class="line"><span>Discount (${esc(o.promo_code)})</span><span>−${cedis(o.discount_pesewas)}</span></div>`:''}<div class="line"><span>Delivery</span><span>${cedis(o.delivery_fee_pesewas)}</span></div><div class="line grand"><span>Grand total</span><span>${cedis(o.total_pesewas)}</span></div></div>${o.notes?`<h2>Order notes</h2><p>${esc(o.notes)}</p>`:''}<footer>Jay fooDs Ghana · Accra, Ghana · ${esc(o.reference)}</footer><script>window.onload=()=>window.print()<\/script></body></html>`);win.document.close()}
+  function printInvoice(o){const win=window.open('','_blank','width=820,height=900');if(!win)return alert('Allow pop-ups to print the invoice.');const itemRows=o.items.map(i=>`<tr><td>${esc(i.product_name)}</td><td>${i.quantity}</td><td>${cedis(i.unit_price_pesewas)}</td><td>${cedis(i.line_total_pesewas)}</td></tr>`).join('');win.document.write(`<!doctype html><html><head><title>Invoice ${esc(o.reference)}</title><style>body{font:14px Arial,sans-serif;color:#17251c;max-width:760px;margin:35px auto;padding:0 20px}header{display:flex;justify-content:space-between;align-items:start;border-bottom:3px solid #1f7a3d;padding-bottom:18px}img{height:58px}h1{margin:0;color:#155c2d}h2{font-size:16px;margin-top:28px}.meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 30px;margin-top:22px}.meta div{padding:6px 0;border-bottom:1px solid #ddd}table{width:100%;border-collapse:collapse;margin-top:12px}th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd}th{background:#edf7f0}.totals{width:320px;margin:20px 0 0 auto}.line{display:flex;justify-content:space-between;padding:7px}.grand{font-size:18px;font-weight:bold;border-top:2px solid #1f7a3d}.paid{text-transform:uppercase;font-weight:bold;color:#1f7a3d}footer{margin-top:50px;border-top:1px solid #ddd;padding-top:12px;color:#66776d;text-align:center}@media print{body{margin:0}.no-print{display:none}}</style></head><body><header><img src="${location.origin}/img/logo-color.png"><div><h1>Order invoice</h1><div>${esc(o.reference)}</div></div></header><div class="meta"><div><b>Customer</b><br>${esc(o.customer_name)}</div><div><b>Phone</b><br>${esc(o.customer_phone)}</div><div><b>Delivery</b><br>${esc(o.delivery_address)}, ${esc(o.region)}</div><div><b>Order date</b><br>${fmtDate(o.created_at)}</div><div><b>Order status</b><br>${esc(o.status)}</div><div><b>Payment</b><br><span class="paid">${esc(o.payment_status)}</span></div></div><h2>Items</h2><table><thead><tr><th>Product</th><th>Qty</th><th>Unit price</th><th>Total</th></tr></thead><tbody>${itemRows}</tbody></table><div class="totals"><div class="line"><span>Subtotal</span><span>${cedis(o.subtotal_pesewas)}</span></div>${o.discount_pesewas>0?`<div class="line"><span>Discount (${esc(o.promo_code)})</span><span>−${cedis(o.discount_pesewas)}</span></div>`:''}<div class="line"><span>Delivery</span><span>${cedis(o.delivery_fee_pesewas)}</span></div><div class="line grand"><span>Grand total</span><span>${cedis(o.total_pesewas)}</span></div></div>${o.notes?`<h2>Order notes</h2><p>${esc(o.notes)}</p>`:''}<footer>Jay foods Ghana · Accra, Ghana · ${esc(o.reference)}</footer><script>window.onload=()=>window.print()<\/script></body></html>`);win.document.close()}
 
   // ---------------------------------------------------------------------------
   async function renderCustomers(){const {data}=await api.customers();const draw=()=>{const q=$('#customer-search').value.trim().toLowerCase(),filtered=data.filter(c=>!q||[c.customer_name,c.customer_phone,c.customer_email,c.region].some(v=>String(v||'').toLowerCase().includes(q)));$('#customer-count').textContent=`${filtered.length} customer${filtered.length===1?'':'s'}`;$('#customer-body').innerHTML=filtered.length?filtered.map(c=>{const digits=String(c.customer_phone).replace(/\D/g,'').replace(/^0/,'233');return `<tr><td><div class="prod-name">${esc(c.customer_name)}</div><div class="sub">${esc(c.customer_email||'No email')}</div></td><td>${esc(c.customer_phone)}</td><td>${esc(c.region)}</td><td>${c.order_count}</td><td>${cedis(c.lifetime_value_pesewas)}</td><td class="sub">${fmtDate(c.last_order_at)}</td><td><div class="row-actions"><a class="btn btn-ghost btn-sm" href="tel:${esc(c.customer_phone)}">Call</a><a class="btn btn-primary btn-sm" target="_blank" rel="noopener" href="https://wa.me/${digits}">WhatsApp</a></div></td></tr>`}).join(''):'<tr><td colspan="7" class="empty">No customers match your search.</td></tr>'};view.innerHTML=`<div class="panel"><div class="panel-head"><h2 id="customer-count">${data.length} customers</h2></div><div class="product-tools"><input id="customer-search" type="search" placeholder="Search name, phone, email or area"></div><div class="panel-body table-scroll"><table class="data"><thead><tr><th>Customer</th><th>Phone</th><th>Area</th><th>Orders</th><th>Paid value</th><th>Last order</th><th></th></tr></thead><tbody id="customer-body"></tbody></table></div></div>`;$('#customer-search').addEventListener('input',draw);draw()}
@@ -649,6 +654,8 @@
       const badge = $('#nav-msg-badge');
       if (data.messages_unread > 0) { badge.textContent = data.messages_unread; badge.style.display = 'inline-block'; }
       else badge.style.display = 'none';
+      const kf = await api.kafuiOverview(); const kb = $('#nav-kafui-badge'); const n = kf.data.counters.needs_attention || kf.data.counters.unread;
+      if (n > 0) { kb.textContent = n; kb.style.display = 'inline-block'; } else kb.style.display = 'none';
     } catch (_) {}
   }
 
