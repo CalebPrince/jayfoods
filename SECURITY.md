@@ -1,7 +1,7 @@
 # Security
 
-Status: APPROVED. Baseline 0.4.0 (CHG-003, admin roles and the error log) approved by Prince Caleb on 23 Oct 2026 for development, staging and production (digest `9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf`).
-Baseline version: 0.4.0
+Status: APPROVED. Baseline 0.5.0 (CHG-004, deploys update the database by themselves) approved by Prince Caleb on 23 Oct 2026 for development, staging and production (digest `363effad56c4b35ccf546984df38ed82f90981046f85dcfeec6f89c49602ccd0`).
+Baseline version: 0.5.0
 Canonical record: `security-baseline.yaml`
 Owner: Prince Caleb (PrinceCaleb.dev)
 Last reviewed: 2026-10-23
@@ -105,7 +105,7 @@ None of it ran on the live site or on GitHub.
 
 | Gate | Stage | Blocking | Status |
 |---|---|---|---|
-| GATE-001 Baseline approval | Before implementation | Yes | CONFIGURED: 0.4.0 approved (EVD-001) |
+| GATE-001 Baseline approval | Before implementation | Yes | CONFIGURED: 0.5.0 approved (EVD-001) |
 | GATE-002 PR checks: lint, agent tests, secret scan, digest | Pull request | Yes | NOT_YET_BUILT on GitHub (workflow written, branch protection off) |
 | GATE-003 Go-live checklist on the live number | Before deploy | Yes | NOT_YET_BUILT (checklist in docs/kafui-setup.md) |
 | GATE-004 Runtime limits and kill switch | Runtime | Yes | NOT_YET_BUILT on the live site (built and tested locally) |

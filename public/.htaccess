@@ -18,6 +18,12 @@ DirectoryIndex index.html index.php
 </IfModule>
 
 <IfModule mod_headers.c>
+    # After a deploy, browsers must pick up the new pages, scripts and styles:
+    # they may keep a copy, but must check with the server before using it.
+    <FilesMatch "\.(html|js|css)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+
     # Baseline CTL-CFG-001: no sniffing, no framing (admin included), no referrer leaks.
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "SAMEORIGIN"

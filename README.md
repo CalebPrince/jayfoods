@@ -130,7 +130,8 @@ server.py       Migration and local-server entry point
 - Payment success is verified server-side for status, GHS currency, and exact amount.
 - Webhook requests are authenticated with Paystack's HMAC-SHA512 signature.
 - Admin authentication uses an HttpOnly JWT cookie. Each account's role is read from the database on every request, so a change applies at once.
-- After deploying the roles change, run `php database/migrate.php`: it adds the role column, makes existing accounts admins, and makes the first account the super admin.
+- Database changes apply by themselves after a deploy: the first request after a pull runs the same migration as `php database/migrate.php` (under a lock, see `src/Support/AutoMigrate.php`). Running it by hand is still safe. A failed run shows in the Error log and is retried after five minutes.
+- Pages, scripts and styles are sent with `Cache-Control: no-cache`, so browsers check for a new version before using a saved copy.
 - Runtime databases, application keys, and uploaded files are excluded from Git.
 
 ## License

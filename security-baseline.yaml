@@ -1,6 +1,6 @@
 schema_version: "2.3"
-baseline_version: "0.4.0"
-record_digest: "9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf"
+baseline_version: "0.5.0"
+record_digest: "363effad56c4b35ccf546984df38ed82f90981046f85dcfeec6f89c49602ccd0"
 project:
   id: "PRJ-JAYFOODS-AGENT-001"
   name: "Kafui, the JayFoods ordering agent (WhatsApp and website live chat)"
@@ -188,7 +188,7 @@ threats:
   - {id: "THR-013", component_ids: ["CMP-010"], scenario: "An unreviewed change or a compromised account deploys a weakened agent (for example tools without role checks) to the live site", likelihood: "MEDIUM", impact: "HIGH", control_ids: ["CTL-DEP-001", "CTL-SC-001", "CTL-GOV-001"], refs: ["OWASP-T10-2025:A03", "SSDF-1.1:PS.1"], residual_risk: "MEDIUM", owner: "Prince Caleb", status: "OPEN"}
   - {id: "THR-014", component_ids: ["CMP-005"], scenario: "The agent misbehaves after a provider model change (wrong tool calls, loops, odd replies) and nobody notices", likelihood: "MEDIUM", impact: "MEDIUM", control_ids: ["CTL-AI-007", "CTL-LOG-002", "CTL-REC-001"], refs: ["OWASP-ASI-2026:ASI10", "OWASP-LLM-2025:LLM03"], residual_risk: "LOW", owner: "Prince Caleb", status: "OPEN"}
   - {id: "THR-015", component_ids: ["CMP-002"], scenario: "The admin is taken over through the first-run password published in the public repository or a stolen session, giving access to the inbox, settings and kill switch", likelihood: "MEDIUM", impact: "HIGH", control_ids: ["CTL-AUTH-001", "CTL-SES-001", "CTL-CFG-001"], refs: ["OWASP-T10-2025:A07"], residual_risk: "MEDIUM", owner: "Prince Caleb", status: "OPEN"}
-  - {id: "THR-016", component_ids: ["CMP-008"], scenario: "The database or invoice store is lost or corrupted and orders taken by the agent are gone", likelihood: "LOW", impact: "HIGH", control_ids: ["CTL-REC-001", "CTL-REC-002"], refs: ["SSDF-1.1:PS.3"], residual_risk: "LOW", owner: "Prince Caleb", status: "OPEN"}
+  - {id: "THR-016", component_ids: ["CMP-008"], scenario: "The database or invoice store is lost or corrupted and orders taken by the agent are gone", likelihood: "LOW", impact: "HIGH", control_ids: ["CTL-REC-003", "CTL-REC-001", "CTL-REC-002"], refs: ["SSDF-1.1:PS.3"], residual_risk: "LOW", owner: "Prince Caleb", status: "OPEN"}
   - {id: "THR-017", component_ids: ["CMP-002", "CMP-008"], scenario: "A staff or admin login is shared, phished or left signed in, and is used to read provider keys, WhatsApp settings, backups or other accounts, or to give itself more access", likelihood: "MEDIUM", impact: "HIGH", control_ids: ["CTL-AUTHZ-004", "CTL-LOG-003"], refs: ["OWASP-T10-2025:A01"], residual_risk: "LOW", owner: "Prince Caleb", status: "OPEN"}
 controls:
   - {id: "CTL-GOV-001", domain: "GOVERNANCE", requirement: "No agent code is written, committed or deployed until Caleb explicitly approves this baseline version; any change to tools, roles, providers or data flows goes through a CHG record and reapproval", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Approval recorded with digest; the PR check fails when the baseline is not APPROVED with the protected digest", refs: ["SSDF-1.1:PO.1", "CISA-SBD:OWNERSHIP"], evidence_ids: []}
@@ -223,6 +223,7 @@ controls:
   - {id: "CTL-LOG-002", domain: "LOGGING", requirement: "Agent action log (CTL-AI-007) plus counters on the admin dashboard: signature failures, provider failures, handoffs, replaced replies, owner-tool uses, agent orders per day; staff email when signature failures or provider failures exceed the thresholds in monitoring", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Seeded failures raise the counters and send the email", refs: ["OWASP-T10-2025:A09", "OWASP-ASI-2026:ASI10"], evidence_ids: []}
   - {id: "CTL-SC-001", domain: "SUPPLY_CHAIN", requirement: "No new third-party packages (plain PHP, as the project rule); a pull-request workflow runs PHP lint, the agent test suite and a secret scan; a minimal CycloneDX SBOM lists the PHP runtime and extensions", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Workflow run on the pull request passes and fails on a seeded secret", refs: ["OWASP-T10-2025:A03", "SLSA-1.2:BUILD-L2"], evidence_ids: []}
   - {id: "CTL-DEP-001", domain: "DEPLOY", requirement: "main is protected (pull request required, the CI check required, no force push); deploys come only from main after Caleb merges; the release is a tagged archive with a build provenance attestation from GitHub Actions", status: "PLANNED", owner: "Prince Caleb", acceptance: "Branch protection inspected; a push straight to main is refused; the release shows an attestation", refs: ["SSDF-1.1:PS.1", "SLSA-1.2:SOURCE-L3"], evidence_ids: []}
+  - {id: "CTL-REC-003", domain: "RECOVERY", requirement: "Deploys cannot leave new code on an old database (CHG-004): the first request after a pull runs the same idempotent migration as php database/migrate.php, once, under a file lock, keyed on a fingerprint of schema.sql and migrate.php saved outside the web root; a failed run is written to the error log and retried after five minutes. A brand-new database's first-admin password is saved only to database/first-run-admin.txt (0600, outside the web root, git-ignored). Pages, scripts and styles are sent with Cache-Control: no-cache so browsers use the deployed files", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Tests: a migrated database is left alone; a database behind the code is brought up to date by the first request, once; a brand-new database gets its first admin with the password kept on the server; a failed run waits before retrying. Local web check: the first request ran the migration and wrote the stamp", refs: ["ASVS-5.0:V13"], evidence_ids: ["EVD-006"]}
   - {id: "CTL-REC-001", domain: "RECOVERY", requirement: "Incident steps in SECURITY.md: switch the agent off, rotate the Meta token and app secret, rotate AI keys, rotate the app key if the server is compromised (re-enter secrets after), review the action log, restore from backup if data changed", status: "IMPLEMENTED", owner: "Prince Caleb", acceptance: "Tabletop run of the steps on the staging copy", refs: ["SSDF-1.1:RV.2"], evidence_ids: []}
   - {id: "CTL-REC-002", domain: "RECOVERY", requirement: "Daily database backup kept off the server for 30 days (cPanel backup or the admin backup downloaded by a scheduled job), and one restore rehearsed before go-live", status: "PLANNED", owner: "Prince Caleb", acceptance: "A restore of a backup on staging shows agent orders intact", refs: ["SSDF-1.1:PS.3"], evidence_ids: []}
 gates:
@@ -240,7 +241,7 @@ decisions:
   - {id: "DEC-008", question: "Whose Twilio account holds the JayFoods WhatsApp sender, and who pays the Twilio fees?", owner: "Prince Caleb", required_decision: "Proposed: a separate Twilio subaccount for JayFoods under Caleb's account (so its auth token cannot touch Lisa's numbers), billed to JayFoods through Opskeep", blocks_approval: false, status: "OPEN"}
   - {id: "DEC-007", question: "Is the client's existing customer list imported?", owner: "JayFoods owner", required_decision: "Proposed: not in this change. If later, import only name, phone, area and usual order, with a marketing-consent flag, and never message customers first without consent", blocks_approval: false, status: "OPEN"}
 evidence:
-  - {id: "EVD-001", type: "OWNER_APPROVAL", status: "PASSED", observed_at: "2026-10-23T17:07:24Z", observer: "Prince Caleb", location: "Kafui build session: 0.1.0 approved 2026-10-23T12:33:39Z (digest f08aa843...), 0.2.0 approved 2026-10-23T13:08:35Z (digest bf6e6f80...), 0.3.0 approved 2026-10-23T14:25:08Z (digest 600e7813...), 0.4.0 approved 2026-10-23T17:07:24Z (digest 9a7910f4...)"}
+  - {id: "EVD-001", type: "OWNER_APPROVAL", status: "PASSED", observed_at: "2026-10-23T17:18:46Z", observer: "Prince Caleb", location: "Kafui build session: 0.1.0 approved 2026-10-23T12:33:39Z (digest f08aa843...), 0.2.0 approved 2026-10-23T13:08:35Z (digest bf6e6f80...), 0.3.0 approved 2026-10-23T14:25:08Z (digest 600e7813...), 0.4.0 approved 2026-10-23T17:07:24Z (digest 9a7910f4...), 0.5.0 approved 2026-10-23T17:18:46Z (digest 363effad...)"}
   - {id: "EVD-002", type: "CI_RUN", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-003", type: "CONFIG_INSPECTION", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
   - {id: "EVD-004", type: "TEST_RESULT", status: "NOT_YET_BUILT", observed_at: null, observer: null, location: null}
@@ -253,8 +254,8 @@ monitoring:
     provider: "NONE"
     owner: "Prince Caleb"
     configuration_status: "NOT_CONFIGURED"
-    baseline_version: "0.4.0"
-    record_digest: "9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf"
+    baseline_version: "0.5.0"
+    record_digest: "363effad56c4b35ccf546984df38ed82f90981046f85dcfeec6f89c49602ccd0"
     environments: ["production"]
     handed_off_at: null
     acknowledged_at: null
@@ -319,9 +320,9 @@ ai_profile:
 approval:
   decision: "APPROVED"
   approver: "Prince Caleb"
-  approved_at: "2026-10-23T17:07:24Z"
-  baseline_version: "0.4.0"
-  record_digest: "9a7910f415965a0d2476f5f8a545e2f67b6dafec93b6f0789daff4b5224d34bf"
+  approved_at: "2026-10-23T17:18:46Z"
+  baseline_version: "0.5.0"
+  record_digest: "363effad56c4b35ccf546984df38ed82f90981046f85dcfeec6f89c49602ccd0"
   scope: ["development", "staging:test number and local copy", "production:jayfoods live site and business WhatsApp number"]
   expires_at: null
 changes:
@@ -360,4 +361,16 @@ changes:
     affected: ["ID-004", "CMP-002", "CMP-008", "CTL-AUTHZ-004", "CTL-LOG-001", "CTL-LOG-003", "THR-006"]
     impact: "Narrows what most admin accounts can reach, so a staff login that leaks no longer exposes provider keys, WhatsApp settings or backups. Adds a public endpoint that accepts browser error reports (rate-limited, size-capped, write-only, never shown back to the public) and a new store of error text, masked before saving and kept 30 days. The provider details that used to appear in a chat note now show only in the super admin's views."
     compensating_controls: ["CTL-AUTHZ-004", "CTL-LOG-003", "CTL-LOG-001", "CTL-SEC-001"]
+    status: "PROPOSED"
+  - id: "CHG-004"
+    type: "MODIFIED"
+    material: true
+    summary: "Deploys update the database by themselves and browsers stop using old site files. The first web request after a cPanel pull runs the database migration once, under a lock; pages, scripts and styles are sent with Cache-Control: no-cache."
+    old_rule: "After every pull someone ran php database/migrate.php by hand in the cPanel terminal; until then new code ran against the old database (on 23 Oct 2026 this took the admin down)"
+    new_rule: "The web process runs the idempotent migration when the schema files change (CTL-REC-003); running it by hand stays possible"
+    reason: "Caleb (23 Oct 2026): make the migration run on every cPanel pull and stop browsers using old admin files after a deploy"
+    security_impact: "LOW"
+    affected: ["CMP-008", "CMP-010", "CTL-REC-003", "THR-016", "DEC-006"]
+    impact: "The web server process now applies schema changes, which it could already do (it owns the database file). Only code from the repository runs; nothing a visitor sends decides whether or what migrates. A failed migration no longer needs someone at the terminal to notice it: it shows in the error log. On a brand-new database the first-admin password goes to a server-only file instead of the terminal."
+    compensating_controls: ["CTL-REC-003", "CTL-LOG-003", "CTL-SC-001"]
     status: "PROPOSED"
