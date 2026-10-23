@@ -27,7 +27,10 @@ final class KafuiTools
     /** @return list<string> */
     public static function allowedFor(string $role): array
     {
-        return $role === 'owner' ? array_merge(self::CUSTOMER_TOOLS, self::OWNER_TOOLS) : self::CUSTOMER_TOOLS;
+        // Owners ask about the business: their "orders" are everyone's (list_orders), not their own number's,
+        // so the customer look-ups are left out and Kafui cannot pick the wrong one.
+        if ($role === 'owner') return array_merge(array_values(array_diff(self::CUSTOMER_TOOLS, ['my_orders', 'request_invoice'])), self::OWNER_TOOLS);
+        return self::CUSTOMER_TOOLS;
     }
 
     /** Tool definitions (JSON schema) for the tools this role may call. */
@@ -74,7 +77,7 @@ final class KafuiTools
                 'reason' => ['type' => 'string'],
             ], ['reason']],
             'sales_summary' => ['Owner only: orders and sales between two dates.', ['from' => $date, 'to' => $date], ['from', 'to']],
-            'list_orders' => ['Owner only: recent orders, optionally by status or day.', [
+            'list_orders' => ['Owner only: recent orders for the whole business from all customers (newest first), optionally by status or day. Use this whenever the owner asks about orders.', [
                 'status' => ['type' => 'string', 'enum' => ['pending', 'confirmed', 'processing', 'delivered', 'cancelled']],
                 'date' => $date,
             ], []],
