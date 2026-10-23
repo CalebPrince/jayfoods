@@ -14,7 +14,7 @@ Jay foods is a lightweight juice catalogue, ordering, payment, and administratio
 - Customer and administrator email notifications through SMTP (a cPanel mailbox or Gmail)
 - Admin dashboard for products, orders, messages, payments, and account settings
 - Admin order search, status/payment filters, and CSV export
-- Print-ready invoices with customer, payment, delivery, item, discount, and total details
+- Branded PDF invoices (logo, contact details from Site content) from the admin order screen and through Kafui on WhatsApp
 - Private administrator notes for delivery and payment follow-ups on each order
 - Timestamped order-status history for administrators and customer tracking
 - Customer directory with order counts, paid lifetime value, calling, and WhatsApp actions

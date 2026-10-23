@@ -93,7 +93,7 @@
       const row = el('a', 'kf-row' + (c.needs_attention ? ' attention' : ''));
       row.href = '#/kafui/c/' + c.id;
       const top = el('div', 'kf-row-top');
-      top.appendChild(el('b', null, c.name || (c.phone ? '+' + c.phone : 'Website visitor')));
+      top.appendChild(el('b', null, c.name || (c.phone ? (c.whatsapp_id ? 'WhatsApp ID ' + c.phone : '+' + c.phone) : 'Website visitor')));
       top.appendChild(el('span', 'pill ' + (c.channel === 'whatsapp' ? 'type-bulk' : 'type-single'), c.channel === 'whatsapp' ? 'WhatsApp' : 'Website'));
       top.appendChild(el('span', 'pill ' + (c.mode === 'staff' ? 'off' : 'on'), c.mode === 'staff' ? 'Staff answering' : 'Kafui answering'));
       if (c.needs_attention) top.appendChild(el('span', 'pill kf-need', 'Needs a person'));
@@ -114,7 +114,7 @@
     const panel = el('div', 'panel kf-chat');
     const head = el('div', 'panel-head');
     const title = el('div');
-    title.appendChild(el('h2', null, (c.name || 'Customer') + (c.phone ? ' (+' + c.phone + ')' : '')));
+    title.appendChild(el('h2', null, (c.name || 'Customer') + (c.phone ? (c.whatsapp_id ? ' (WhatsApp ID ' + c.phone + ')' : ' (+' + c.phone + ')') : '')));
     title.appendChild(el('div', 'sub', (c.channel === 'whatsapp' ? 'WhatsApp' : 'Website chat') + (c.is_owner ? ', owner number' : '') + ', ' + (c.mode === 'staff' ? 'staff answering, Kafui is quiet' : 'Kafui answering')));
     head.appendChild(title);
     const actions = el('div', 'kf-actions');
@@ -288,7 +288,7 @@
         ${field(key + '_fallback_model', 'Backup model', s[key + '_fallback_model'], 'Optional. Tried if the main model fails, before the next provider.')}
         ${secret(key + '_key', 'API key', '')}
       </div>`).join('');
-    const owners = (data.owner_numbers.length ? data.owner_numbers : [{ number: '', label: '' }]).concat([{ number: '', label: '' }]).slice(0, 3);
+    const owners = (data.owner_numbers.length ? data.owner_numbers : [{ number: '', label: '' }]).concat([{ number: '', label: '' }]).slice(0, 5);
 
     const panel = el('div', 'panel');
     panel.innerHTML = `
@@ -326,7 +326,7 @@
         <p class="sub">Kafui tries Anthropic, then OpenAI, then OpenRouter, then Groq. If a provider fails or is too slow, its backup model is tried, then the next provider. If every one fails, the customer is told a person will reply and the chat goes to staff. Turn on at least two for a real fallback, with keys and model names from each provider's own site, and set a monthly spend limit at each.</p>
         <div class="kf-providers">${providerRows}</div>
         <h3>4. Owner and staff</h3>
-        <p class="sub">The owner's WhatsApp number unlocks sales summaries, order and booking lists and invoices, on WhatsApp only. Use the full number with country code.</p>
+        <p class="sub">The owner's WhatsApp number unlocks sales summaries, order and booking lists and invoices, on WhatsApp only. Use the full number with country code. If an owner's WhatsApp hides their number, the inbox shows a "WhatsApp ID" for them instead: add that ID here.</p>
         <div id="kf-owners">${owners.map((o, i) => `<div class="form-2col kf-owner"><div class="field"><label for="kf-on-${i}">Owner number ${i + 1}</label><input id="kf-on-${i}" data-owner="number" value="${h.esc(o.number)}" placeholder="233246328461" inputmode="numeric"></div><div class="field"><label for="kf-ol-${i}">Name</label><input id="kf-ol-${i}" data-owner="label" value="${h.esc(o.label)}" placeholder="Owner"></div></div>`).join('')}</div>
         <div class="form-2col">
           ${field('owner_email', 'Owner email', s.owner_email, 'Invoices and owner-request notices go here. Blank uses ' + h.esc(data.smtp_notification_email || 'the SMTP notification email') + '.', 'email')}

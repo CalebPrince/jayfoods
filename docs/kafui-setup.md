@@ -49,9 +49,10 @@ Sign in to the JayFoods admin and open **Kafui**, then **Settings**.
    - Turn on at least two providers for a real fallback.
    - Set a **monthly spend limit** at each provider's billing page before going live.
    - Where the provider offers it, turn off training on API data.
-5. **Owner numbers:** the owner's WhatsApp number with country code, for example `233XXXXXXXXX`. Up to three. Only these numbers get sales summaries, order and booking lists and invoices, and only on WhatsApp.
-6. **Owner email** and **alert email:** where invoices, owner-request notices and warnings go. Blank uses the SMTP notification email, so check Settings, Email sending (SMTP) works first (Send test email).
-7. **Orders:** leave pickup off unless JayFoods confirms a pickup place and times. Check the payment sentence (placeholder, see below).
+5. **Owner numbers:** the owner's WhatsApp number with country code, for example `233XXXXXXXXX`. Up to five. If an owner's WhatsApp hides their number, Kafui, Inbox shows a "WhatsApp ID" for them instead: add that ID here. Only these numbers get sales summaries, order and booking lists and invoices, and only on WhatsApp.
+6. **Invoices** use the contact details in admin, **Site content**: headquarters name, address, phone, WhatsApp number and **Public email address**, plus the Live site address. Fill them in before sending invoices.
+7. **Owner email** and **alert email:** where invoices, owner-request notices and warnings go. Blank uses the SMTP notification email, so check Settings, Email sending (SMTP) works first (Send test email).
+8. **Orders:** leave pickup off unless JayFoods confirms a pickup place and times. Check the payment sentence (placeholder, see below).
 8. Save.
 
 ## 4. Twilio: point the sender at Kafui

@@ -21,12 +21,12 @@ final class WhatsAppSender
     /** @return array{ok:bool,id:?string,error:?string} */
     public static function sendText(string $to, string $text): array
     {
-        return self::provider() === 'meta' ? WhatsAppCloud::sendText($to, $text) : TwilioWhatsApp::sendText($to, $text);
+        return self::provider() === 'meta' ? WhatsAppCloud::sendText(KafuiText::digits($to), $text) : TwilioWhatsApp::sendText($to, $text);
     }
 
     /** @return array{ok:bool,id:?string,error:?string} */
     public static function sendDocument(string $to, string $link, string $filename, string $caption): array
     {
-        return self::provider() === 'meta' ? WhatsAppCloud::sendDocument($to, $link, $filename, $caption) : TwilioWhatsApp::sendDocument($to, $link, $filename, $caption);
+        return self::provider() === 'meta' ? WhatsAppCloud::sendDocument(KafuiText::digits($to), $link, $filename, $caption) : TwilioWhatsApp::sendDocument($to, $link, $filename, $caption);
     }
 }

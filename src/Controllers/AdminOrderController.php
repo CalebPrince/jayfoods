@@ -155,6 +155,18 @@ final class AdminOrderController
         Response::json(['data' => ['ok' => true, 'status' => $status]]);
     }
 
+    /** GET /api/v1/admin/orders/{id}/invoice: the branded invoice PDF, built on request and not stored. */
+    public function invoicePdf(int $id): void
+    {
+        try { ['pdf' => $pdf, 'order' => $order] = Invoices::render($id); }
+        catch (RuntimeException $e) { Response::json(['error' => 'Order not found.'], 404); return; }
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: inline; filename="JayFoods-invoice-' . preg_replace('/[^A-Za-z0-9-]/', '', (string) $order['reference']) . '.pdf"');
+        header('Cache-Control: private, no-store');
+        header('Content-Length: ' . strlen($pdf));
+        echo $pdf;
+    }
+
     public function updateNotes(int $id): void
     {
         $input=json_decode((string)file_get_contents('php://input'),true);$notes=trim((string)($input['admin_notes']??''));

@@ -91,6 +91,10 @@ $convCols = array_column($pdo->query('PRAGMA table_info(conversations)')->fetchA
 if (!in_array('test_role', $convCols, true)) {
     $pdo->exec("ALTER TABLE conversations ADD COLUMN test_role TEXT NOT NULL DEFAULT ''");
 }
+if (!in_array('reply_to', $convCols, true)) {
+    $pdo->exec("ALTER TABLE conversations ADD COLUMN reply_to TEXT NOT NULL DEFAULT ''");
+    echo "[migrate] Added conversations.reply_to\n";
+}
 @mkdir($root . '/database/invoices', 0700, true);
 // Brand spelling is "Jay foods" (Caleb, 23 Oct 2026): update text saved before the change.
 $pdo->exec("UPDATE site_content SET value=replace(value,'fooDs','foods') WHERE value LIKE '%fooDs%'");

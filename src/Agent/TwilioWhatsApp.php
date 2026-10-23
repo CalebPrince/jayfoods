@@ -99,11 +99,18 @@ final class TwilioWhatsApp
     /** @return array{ok:bool,id:?string,error:?string} */
     private static function create(string $to, array $fields): array
     {
-        $to = KafuiText::digits($to);
-        if (!preg_match('/^[1-9]\d{7,14}$/', $to)) return ['ok' => false, 'id' => null, 'error' => 'Invalid recipient number.'];
+        // An exact address from Twilio (whatsapp:+..., possibly a WhatsApp user ID) is used as it is.
+        if (preg_match('/^whatsapp:\+?[0-9A-Za-z._-]{5,40}$/', $to)) {
+            $address = $to;
+        } else {
+            $digits = KafuiText::digits($to);
+            if (!preg_match('/^[1-9]\d{7,19}$/', $digits)) return ['ok' => false, 'id' => null, 'error' => 'Invalid recipient number.'];
+            $address = 'whatsapp:+' . $digits;
+        }
+        $to = KafuiText::digits($address);
         if (!self::isConfigured()) return ['ok' => false, 'id' => null, 'error' => 'Twilio is not connected in the Kafui settings.'];
         $sid = preg_replace('/[^A-Za-z0-9]/', '', AgentSettings::get('twilio_account_sid')) ?? '';
-        $fields = array_merge(['To' => 'whatsapp:+' . $to, 'From' => 'whatsapp:+' . self::senderDigits()], $fields);
+        $fields = array_merge(['To' => $address, 'From' => 'whatsapp:+' . self::senderDigits()], $fields);
         if (($fields['Body'] ?? null) === '') unset($fields['Body']);
         $res = AgentHttp::request('POST', self::API_BASE . '/Accounts/' . $sid . '/Messages.json', [
             'Authorization: Basic ' . base64_encode($sid . ':' . AgentSettings::secret('twilio_auth_token')),

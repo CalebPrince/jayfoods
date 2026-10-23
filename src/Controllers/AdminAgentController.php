@@ -66,10 +66,11 @@ final class AdminAgentController
             $n = KafuiText::digits((string) ($o['number'] ?? ''));
             if ($n === '') continue;
             if (str_starts_with($n, '0') && strlen($n) === 10) $n = '233' . substr($n, 1);
-            if (!preg_match('/^[1-9]\d{9,14}$/', $n)) { $errors['owner_numbers'] = 'Owner numbers need the country code, for example 233246328461.'; break; }
+            // Phone numbers with country code, or a WhatsApp ID (up to 20 digits) for owners whose WhatsApp hides their number.
+            if (!preg_match('/^[1-9]\d{9,19}$/', $n)) { $errors['owner_numbers'] = 'Owner numbers need the country code, for example 233246328461, or the WhatsApp ID shown in the inbox.'; break; }
             $owners[$n] = KafuiText::field($o['label'] ?? '', 40);
         }
-        if (count($owners) > 3) $errors['owner_numbers'] = 'Add at most three owner numbers.';
+        if (count($owners) > 5) $errors['owner_numbers'] = 'Add at most five owner numbers.';
         if ($errors) { Response::json(['error' => 'Please correct the highlighted fields.', 'fields' => $errors], 422); return; }
 
         foreach (AgentSettings::PLAIN as $k => $default) {
@@ -150,7 +151,7 @@ final class AdminAgentController
         if ($filter === 'whatsapp' || $filter === 'web') $where .= " AND channel='" . $filter . "'";
         $rows = $this->db->query("SELECT c.*, (SELECT body FROM conversation_messages m WHERE m.conversation_id=c.id ORDER BY m.id DESC LIMIT 1) AS last_body FROM conversations c WHERE $where ORDER BY needs_attention DESC, last_message_at DESC LIMIT 200")->fetchAll();
         Response::json(['data' => array_map(static fn($c) => [
-            'id' => (int) $c['id'], 'channel' => $c['channel'], 'name' => $c['contact_name'], 'phone' => $c['phone'], 'mode' => $c['mode'],
+            'id' => (int) $c['id'], 'channel' => $c['channel'], 'name' => $c['contact_name'], 'phone' => $c['phone'], 'whatsapp_id' => KafuiStore::isWhatsAppId((string) $c['phone']), 'mode' => $c['mode'],
             'needs_attention' => (bool) $c['needs_attention'], 'unread' => (int) $c['unread'], 'last_message_at' => $c['last_message_at'],
             'last_body' => mb_substr((string) $c['last_body'], 0, 120), 'window_open' => $c['channel'] === 'whatsapp' ? KafuiStore::windowOpen($c) : true,
         ], $rows)]);
@@ -170,7 +171,7 @@ final class AdminAgentController
         $actions = $this->db->prepare('SELECT tool,status,detail,created_at FROM agent_actions WHERE conversation_id=:c ORDER BY id DESC LIMIT 50');
         $actions->execute([':c' => $id]);
         Response::json(['data' => [
-            'id' => (int) $c['id'], 'channel' => $c['channel'], 'name' => $c['contact_name'], 'phone' => $c['phone'], 'mode' => $c['mode'],
+            'id' => (int) $c['id'], 'channel' => $c['channel'], 'name' => $c['contact_name'], 'phone' => $c['phone'], 'whatsapp_id' => KafuiStore::isWhatsAppId((string) $c['phone']), 'mode' => $c['mode'],
             'needs_attention' => (bool) $c['needs_attention'], 'window_open' => $c['channel'] === 'whatsapp' ? KafuiStore::windowOpen($c) : true,
             'is_owner' => $c['channel'] === 'whatsapp' && AgentSettings::isOwnerNumber((string) $c['phone']),
             'messages' => array_reverse($msgs->fetchAll()), 'orders' => $orders->fetchAll(), 'bookings' => $bookings->fetchAll(), 'actions' => $actions->fetchAll(),
@@ -190,7 +191,7 @@ final class AdminAgentController
                 Response::json(['error' => 'WhatsApp only allows replies within 24 hours of the customer\'s last message. Call the customer on +' . $c['phone'] . ' instead.'], 409);
                 return;
             }
-            $sent = WhatsAppSender::sendText((string) $c['phone'], $text);
+            $sent = WhatsAppSender::sendText(KafuiStore::replyAddress($c), $text);
             if (!$sent['ok']) { Response::json(['error' => 'WhatsApp did not accept the message: ' . $sent['error']], 502); return; }
         }
         $admin = Auth::user();

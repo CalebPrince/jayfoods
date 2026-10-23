@@ -60,6 +60,12 @@ final class TwilioWebhookController
         if ($text === '') $text = '[sent a message Kafui cannot read]';
 
         $conv = KafuiStore::findOrCreate('whatsapp', $from, KafuiText::field($post['ProfileName'] ?? '', 80), $from);
+        // Reply to exactly what Twilio sent: WhatsApp may give a user ID instead of a phone number.
+        $raw = trim((string) $post['From']);
+        if (preg_match('/^whatsapp:\+?[0-9A-Za-z._-]{5,40}$/', $raw) && ($conv['reply_to'] ?? '') !== $raw) {
+            Database::connection()->prepare('UPDATE conversations SET reply_to=:r WHERE id=:id')->execute([':r' => $raw, ':id' => $conv['id']]);
+            $conv['reply_to'] = $raw;
+        }
         $messageId = KafuiStore::add((int) $conv['id'], 'customer', mb_substr($text, 0, 1000), $sid);
         if ($messageId === null) return []; // Twilio retry of a message we already have.
         return [['conversation' => $conv, 'message_id' => $messageId, 'text' => $text]];

@@ -63,7 +63,7 @@ final class SiteContentController
             'contact' => [
                 'contact_eyebrow'=>['Eyebrow','Find our office','text'],'contact_heading'=>['Heading','Get in touch with Jay foods','text'],'contact_body'=>['Body',"Interested in wholesale supply, event dispensers, or a retail order? Reach out and we'll respond quickly.",'textarea'],
                 'headquarters_label'=>['Headquarters label','Headquarters','text'],'headquarters_name'=>['Headquarters name','Jay foods Ghana','text'],'contact_address'=>['Headquarters address','Accra, Ghana — delivery across the Greater Accra region.','textarea'],
-                'hotline_label'=>['Hotline label','Direct hotline','text'],'telephone_number'=>['Telephone link number','+233246328461','tel'],'telephone_display'=>['Displayed telephone','0246 328 461','text'],'whatsapp_number'=>['WhatsApp number','233246328461','tel'],'whatsapp_link_text'=>['WhatsApp link text','Chat on WhatsApp →','text'],
+                'hotline_label'=>['Hotline label','Direct hotline','text'],'telephone_number'=>['Telephone link number','+233246328461','tel'],'telephone_display'=>['Displayed telephone','0246 328 461','text'],'whatsapp_number'=>['WhatsApp number','233246328461','tel'],'contact_email'=>['Public email address (shown on invoices)','','text'],'whatsapp_link_text'=>['WhatsApp link text','Chat on WhatsApp →','text'],
                 'opening_label'=>['Opening-hours label','Opening hours','text'],'opening_days'=>['Opening days','Monday to Sunday','text'],'opening_hours'=>['Opening-hours text','8:30am – 6:00pm, including weekends.','text'],
             ],
             'footer' => [

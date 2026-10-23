@@ -77,6 +77,22 @@ final class KafuiStore
         return (int) $s->fetchColumn();
     }
 
+    /**
+     * Where to send WhatsApp replies: the exact address the provider gave
+     * (WhatsApp can send a user ID instead of a phone number), else the number.
+     */
+    public static function replyAddress(array $conversation): string
+    {
+        $to = (string) ($conversation['reply_to'] ?? '');
+        return $to !== '' ? $to : (string) $conversation['phone'];
+    }
+
+    /** WhatsApp sent an ID rather than a phone number (more than 15 digits). */
+    public static function isWhatsAppId(string $phone): bool
+    {
+        return strlen(KafuiText::digits($phone)) > 15;
+    }
+
     /** Whether WhatsApp's 24-hour customer service window is open. */
     public static function windowOpen(array $conversation): bool
     {

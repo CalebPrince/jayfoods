@@ -225,6 +225,7 @@ CREATE TABLE IF NOT EXISTS conversations (
     unread          INTEGER NOT NULL DEFAULT 0,
     failed_answers  INTEGER NOT NULL DEFAULT 0,
     test_role       TEXT NOT NULL DEFAULT '',  -- admin test chats only: customer or owner
+    reply_to        TEXT NOT NULL DEFAULT '',  -- exact address the provider sent from, e.g. whatsapp:+233...
     last_inbound_at TEXT NOT NULL DEFAULT '',
     last_message_at TEXT NOT NULL DEFAULT (datetime('now')),
     created_at      TEXT NOT NULL DEFAULT (datetime('now')),
